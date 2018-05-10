@@ -1,0 +1,24 @@
+<div id="minimizedDialog" class="resultsDialog" *ngIf="visible==false">
+    <material-button icon (trigger)="visible=true">
+        <material-icon icon="compare_arrows"></material-icon>
+    </material-button>
+</div>
+<div id="resultsDialog" class="resultsDialog" *ngIf="visible">
+    <results-viewer>
+        <table>
+        <td>
+            <material-button icon (trigger)="closeButtonClick()">
+                <material-icon icon="close" size="x-small"></material-icon>
+            </material-button>
+        </td><td>
+            <material-button icon (trigger)="removeButtonClick()">
+                <material-icon icon="remove_circle" size="x-small"></material-icon>
+            </material-button>
+    </td><td>
+            <material-button icon (trigger)="visible=false">
+                <material-icon icon="compare_arrows" size="x-small"></material-icon>
+            </material-button>
+        </td>
+        </table>
+    </results-viewer>
+</div>

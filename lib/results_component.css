@@ -1,0 +1,8 @@
+:host {
+    /* This is equivalent of the 'body' selector of a page. */
+    all: unset;
+}
+img {
+    height:50px;
+    width:50px;
+}

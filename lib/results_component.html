@@ -1,0 +1,59 @@
+<link
+        rel="stylesheet"
+        type="text/css"
+        href="https://fonts.googleapis.com/icon?family=Material+Icons">
+
+<table style="width: 100%">
+    <tr>
+        <td style="width: auto;">
+            <material-button icon (trigger)="refreshButtonClick()">
+                <material-icon icon="refresh" size="x-small"></material-icon>
+            </material-button>
+        </td>
+        <td *ngIf="loaded" style="width: 99%; white-space: nowrap;">
+            Artist: {{ results.artist }} ({{results.results.length}})
+        </td>
+        <td>
+            <ng-content></ng-content>
+        </td>
+    </tr>
+</table>
+
+<span *ngIf="loaded">
+<table style="width: 100%">
+    <tr>
+        <td>
+            <material-button icon (trigger)="openAllButtonClick()">
+                <material-icon icon="open_in_new" size="x-small"></material-icon>
+            </material-button>
+        </td>
+        <td style="width: 99%; white-space: nowrap;">
+            <material-checkbox [(ngModel)]="waitForLoad" label="Wait for each tab" no-ink></material-checkbox>
+        </td>
+        <td>
+            <material-button icon (trigger)="downloadButtonClick()">
+                <material-icon icon="file_download" size="x-small"></material-icon>
+            </material-button>
+        </td>
+        <td>
+            <material-button icon (trigger)="downloadButtonClick(true)">
+                <material-icon icon="file_download" size="x-small"></material-icon>
+                <material-icon icon="close" size="x-small"></material-icon>
+            </material-button>
+        </td>
+
+    </tr>
+</table>
+
+Error:{{results.error}}<br/>
+    <material-progress [activeProgress]="progress" *ngIf="processing"></material-progress>
+
+    <table>
+    <tr *ngFor="let r of results.results">
+        <td><material-checkbox [(ngModel)]="r.select"></material-checkbox></td>
+        <td><img [src]="r.thumbnail"/></td>
+        <td style="white-space: nowrap; text-overflow:ellipsis;" >{{r.filename}}</td>
+    </tr>
+</table>
+
+</span>
