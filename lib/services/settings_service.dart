@@ -4,7 +4,7 @@ import 'package:chrome/chrome_ext.dart' as chrome;
 
 
 class SettingsService {
-  final _log = new Logger("SettingsService");
+  static final Logger _log = new Logger("SettingsService");
 
   static const String _mappingStore = "mappingStore";
   static const String _settingsStore = "settingsStore";
@@ -21,9 +21,8 @@ class SettingsService {
   String _artistPath(String name) => "${_mappingStore}_$name";
 
   Future<Null> setMapping(String name, String path) async {
-    if(name?.trim().isEmpty??false) {
+    if(name?.trim()?.isEmpty??false)
       throw new ArgumentError.notNull("name");
-    }
     name = name.toLowerCase();
     path = cleanPath(path);
     Map artistData = {_pathField: path };
@@ -33,6 +32,8 @@ class SettingsService {
   }
 
   Future<Null> removeMapping(String name) async {
+    if(name?.trim()?.isEmpty??false)
+      throw new ArgumentError.notNull("name");
     await chrome.storage.local.remove(_artistPath(name));
     _log.info("Removed mapping for " + name);
   }
@@ -91,6 +92,9 @@ class SettingsService {
 
 
   Future<String> getMapping(String name) async {
+    if(name?.trim()?.isEmpty??false)
+      throw new ArgumentError.notNull("name");
+    name = name.trim().toLowerCase();
     Map results = await chrome.storage.local.get(_artistPath(name));
     if(results.isEmpty)
       return "";

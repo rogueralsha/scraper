@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:html';
 import 'package:chrome/chrome_ext.dart' as chrome;
 import 'package:logging/logging.dart';
 import 'package:uuid/uuid.dart';
@@ -32,7 +33,7 @@ const String linkInfoEvent = "linkInfo";
 
 final RegExp siteRegexp = new RegExp("https?://([^/]+)/.*", caseSensitive: false);
 
-final _log = new Logger("globals");
+final Logger _log = new Logger("globals");
 
 void closeTab({int tabId}) {
   _log.info("Sending close tab message");
@@ -55,5 +56,13 @@ Future<int> getCurrentTabId() async {
     return e.message[messageFieldTabId];
   } finally {
     p.disconnect();
+  }
+}
+
+bool inIframe () {
+  try {
+    return window.self != window.top;
+  } catch (e) {
+  return true;
   }
 }

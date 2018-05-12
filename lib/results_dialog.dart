@@ -17,7 +17,7 @@ import 'globals.dart';
   providers: [const ClassProvider(ScraperService), materialProviders],
 )
 class ResultsDialog {
-  final _log = new Logger("ResultsDialog");
+  static final Logger _log = new Logger("ResultsDialog");
 
   bool visible = true;
 

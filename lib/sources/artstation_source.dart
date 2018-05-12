@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:html';
 import 'a_source.dart';
 import 'package:logging/logging.dart';
+import 'src/simple_url_scraper.dart';
 
 class ArtStationSource extends ASource {
-  final _log = new Logger("ArtstationSource");
+  static final Logger logImpl = new Logger("ArtstationSource");
+
   static final RegExp _regExp = new RegExp(
       "https?://www\\.artstation\\.com/artwork/.*",
       caseSensitive: false);
@@ -23,7 +25,9 @@ class ArtStationSource extends ASource {
     this.urlScrapers.add(new SimpleUrlScraper(
         this,
         _regExp,
-        [new SimpleUrlScraperCriteria(LinkType.image,"div.asset-actions a:first-of-type")],
+        [new SimpleUrlScraperCriteria(LinkType.image,"div.asset-actions a",
+        validateLinkInfo: (LinkInfo li, Element e) => !li.url.contains("&dl=1")
+        )],
         pif: scrapeImagePageInfo));
 
     this.urlScrapers.add(new SimpleUrlScraper(

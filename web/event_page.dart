@@ -6,7 +6,7 @@ import 'package:chrome/chrome_ext.dart' as chrome;
 import 'package:logging/logging.dart';
 import 'package:logging_handlers/logging_handlers_shared.dart';
 
-final _log = new Logger("event_page.dart");
+final Logger _log = new Logger("event_page.dart");
 
 void main() {
   Logger.root.level = Level.ALL;

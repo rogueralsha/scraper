@@ -2,12 +2,14 @@
 import 'package:logging/logging.dart';
 import 'serializable.dart';
 
-enum LinkType { image, page, video, flash }
+import 'link_type.dart';
+export 'link_type.dart';
 
 class LinkInfo extends Serializable {
-  static final _log = new Logger("LinkInfo");
+  static final Logger _log = new Logger("LinkInfo");
 
   String url;
+  String sourceUrl;
   LinkType type;
   DateTime date;
   String filename;
@@ -16,7 +18,7 @@ class LinkInfo extends Serializable {
   bool select;
   bool autoDownload;
 
-  LinkInfo({this.url, this.type, this.date, this.filename, this.thumbnail, this.select, this.autoDownload, this.referrer});
+  LinkInfo({this.url, this.sourceUrl, this.type, this.date, this.filename, this.thumbnail, this.select, this.autoDownload, this.referrer});
 
   LinkInfo.fromJson(Map data) {
     this.url = data["url"];

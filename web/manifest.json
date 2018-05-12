@@ -21,16 +21,23 @@
         "https://*.deviantart.com/*",
         "http://*.hentai-foundry.com/*",
         "https://*.hentai-foundry.com/*",
+        "http://*.instagram.com/*",
+        "https://*.instagram.com/*",
+        "http://*.gfycat.com/*",
+        "https://*.gfycat.com/*",
         "http://*.paheal.net/*",
         "https://*.paheal.net/*",
         "http://*.reddit.com/*",
         "https://*.reddit.com/*",
+        "http://*.imgur.com/*",
+        "https://*.imgur.com/*",
         "http://*.redd.it/*",
         "https://*.redd.it/*"
       ],
       "js": [
         "content.dart.js"
       ],
+      "css": ["content.css"],
       "all_frames": true
     }
   ],

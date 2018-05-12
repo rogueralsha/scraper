@@ -2,9 +2,11 @@ import 'dart:async';
 import 'dart:html';
 import 'a_source.dart';
 import 'package:logging/logging.dart';
+import 'src/url_scraper.dart';
+import 'src/link_info_impl.dart';
 
 class DeviantArtSource extends ASource {
-  final _log = new Logger("DeviantArtSource");
+  static final Logger _log = new Logger("DeviantArtSource");
 
   static final RegExp _galleryRegExp = new RegExp(
       "https?://([^\\.]+)\\.deviantart\\.com/gallery/.*",
@@ -18,8 +20,9 @@ class DeviantArtSource extends ASource {
 
   List<String> _seenLinks = <String>[];
 
-  void _scrapeNode(Node node) {
-    ElementList eles = document.querySelectorAll(_galleryItemSelector);
+  void _scrapeNode(dynamic node, String url) {
+    _log.finest("_scrapeNode($node)");
+    ElementList eles = node.querySelectorAll(_galleryItemSelector);
     for (int i = 0; i < eles.length; i++) {
       Element ele = eles[i];
       ImageElement imgEle = ele.querySelector("img");
@@ -27,7 +30,7 @@ class DeviantArtSource extends ASource {
         if (_seenLinks.contains(ele.href)) continue;
         _log.info("Found URL: " + ele.href);
         _seenLinks.add(ele.href);
-        LinkInfo info = new LinkInfoImpl(ele.href,
+        LinkInfo info = new LinkInfoImpl(ele.href, url,
             type: LinkType.page, thumbnail: imgEle.src);
         sendLinkInfo(info);
       }
@@ -76,11 +79,11 @@ class DeviantArtSource extends ASource {
         }
       } else {
         _log.info("Found URL: " + imgEle.src);
-        sendLinkInfo(new LinkInfoImpl(imgEle.src, type: LinkType.image));
+        sendLinkInfo(new LinkInfoImpl(imgEle.src, url, type: LinkType.image));
       }
     } else {
       _log.info("Found URL: " + downloadEle.href);
-      sendLinkInfo(new LinkInfoImpl(downloadEle.href, type: LinkType.image));
+      sendLinkInfo(new LinkInfoImpl(downloadEle.href, url, type: LinkType.image));
     }
   }
 
@@ -89,7 +92,7 @@ class DeviantArtSource extends ASource {
     EmbedElement ele = document.querySelector("embed#sandboxembed");
     if (ele != null) {
       String link = ele.src;
-      sendLinkInfo(new LinkInfoImpl(link));
+      sendLinkInfo(new LinkInfoImpl(link, url));
     }
   }
 
@@ -103,7 +106,7 @@ class DeviantArtSource extends ASource {
 
   Future<Null> scrapeGalleryPageLinks(String url, Document doc) async {
     _seenLinks.clear();
-    _scrapeNode(document);
+    _scrapeNode(document, url);
     if (galleryObserver == null) {
       galleryObserver = new MutationObserver((List<MutationRecord> mutations, MutationObserver observer) {
         for(MutationRecord mutation in mutations) {
@@ -112,7 +115,7 @@ class DeviantArtSource extends ASource {
           }
           for (int j = 0; j < mutation.addedNodes.length; j++) {
             Node node = mutation.addedNodes[j];
-            _scrapeNode(node);
+            _scrapeNode(node, url);
           }
         }
         sendScrapeDone();

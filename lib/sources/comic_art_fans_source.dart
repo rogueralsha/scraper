@@ -1,9 +1,10 @@
 import 'dart:html';
 import 'a_source.dart';
 import 'package:logging/logging.dart';
+import 'src/simple_url_scraper.dart';
 
 class ComicArtFansSource extends ASource {
-  final _log = new Logger("ComicArtFansSource");
+  static final Logger _log = new Logger("ComicArtFansSource");
   static final RegExp _artistRegexp = new RegExp("^https?://.+\\.comicartfans\\.com/comic\\-artists/([^\\.]+)\\.asp.*", caseSensitive: false);
 
   static final RegExp _pieceRegexp = new RegExp("^https?://.+\\.comicartfans\\.com/GalleryPiece.asp\\?Piece=([^&]+).+", caseSensitive: false);
@@ -13,18 +14,19 @@ class ComicArtFansSource extends ASource {
         [new SimpleUrlScraperCriteria(LinkType.image, "div#sharewrap img")]));
     this.urlScrapers.add(new SimpleUrlScraper(this, _artistRegexp, [
           new SimpleUrlScraperCriteria(LinkType.page, "div#content-left div.padding div div a",
-              validateLinkElement: this.validateLinkElement),
+              validateLinkInfo: this.validateLinkElement),
           new SimpleUrlScraperCriteria(
               LinkType.page, "div.grey-rounded table td a",
-              validateLinkElement: validatePaginationLinkElement)
+              validateLinkInfo: validatePaginationLinkElement)
         ]));
   }
 
-  bool validateLinkElement(Element e, String url) {
+  bool validateLinkElement(LinkInfo li, Element e) {
+    _log.finest("validateLinkElement");
     if(e is AnchorElement) {
       return _pieceRegexp.hasMatch(e.href)&&!e.href.contains("#Comment");
     }
     return false;
   }
-  bool validatePaginationLinkElement(Element e, String url) => e.innerHtml.contains("Next");
+  bool validatePaginationLinkElement(LinkInfo li, Element e) => e.innerHtml.contains("Next");
 }

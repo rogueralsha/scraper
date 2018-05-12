@@ -3,7 +3,7 @@
     bottom: 0;
     right: 0;
     width: auto;
-    z-index: 200;
+    z-index: 10000;
     background-color: white;
     height:auto;
     min-width: 200px;
@@ -11,6 +11,7 @@
     overflow: auto;
     border: solid 1px black;
 }
+
 #resultsDialog {
 }
 #minimizedDialog {

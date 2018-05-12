@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:angular/angular.dart';
 import 'package:angular_components/angular_components.dart';
-import 'src/todo_list/todo_list_component.dart';
 import 'package:logging/logging.dart';
 import 'services/settings_service.dart';
 import 'results_component.dart';
@@ -10,11 +9,11 @@ import 'results_component.dart';
   selector: 'options-page',
   styleUrls: ['options_component.css'],
   templateUrl: 'options_component.html',
-  directives: [TodoListComponent, NgFor, materialDirectives, NgIf, ResultsComponent],
+  directives: [NgFor, materialDirectives, NgIf, ResultsComponent],
   providers: [const ClassProvider(SettingsService), materialProviders],
 )
 class OptionsComponent implements OnInit {
-  final _log = new Logger("ResultsDialog");
+  static final Logger _log = new Logger("ResultsDialog");
 
   final SettingsService _settings;
 

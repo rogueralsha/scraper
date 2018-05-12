@@ -6,18 +6,14 @@ import 'package:scraper/globals.dart';
 import 'package:scraper/results/page_info.dart';
 
 import 'sources.dart';
+import 'src/url_scraper.dart';
+import 'src/link_info_impl.dart';
 
 export 'package:scraper/results/page_info.dart';
-
-export 'link_info_impl.dart';
-
-typedef Future<Null> LinkInfoScraper(String s, Document d);
-typedef Future<Null> PageInfoScraper(
-    PageInfo pi, Match m, String s, Document d);
-typedef bool ValidateLinkElement(Element e, String url);
+export 'package:scraper/sources/src/link_info_impl.dart';
 
 abstract class ASource {
-  static final _log = new Logger("ASource");
+  static final Logger _log = new Logger("ASource");
 
   final List<UrlScraper> urlScrapers = <UrlScraper>[];
 
@@ -32,7 +28,8 @@ abstract class ASource {
     pageInfo.artist = m.group(1);
   }
   bool canScrapePage(String url, {Document document}) {
-    for (UrlScraper us in urlScrapers) {
+    _log.finest("canScrapePage");
+      for (UrlScraper us in urlScrapers) {
       if (us.isMatch(url)) return true;
     }
     return false;
@@ -45,7 +42,7 @@ abstract class ASource {
   Future<Null> emptyPageScraper(
       PageInfo pi, Match m, String s, Document doc) async {}
 
-  void evaluateLink(String link, {bool select: true}) {
+  void evaluateLink(String sourceUrl, String link, {bool select: true}) {
     SupportedLinkResult result = isSupportedPage(link);
     if (result.result) {
       String thumbnail = null;
@@ -54,12 +51,12 @@ abstract class ASource {
       }
       LinkInfo li;
       if (result.directLink) {
-        li = new LinkInfoImpl(link,
+        li = new LinkInfoImpl(link, sourceUrl,
             select: select,
             thumbnail: thumbnail,
             autoDownload: result.autoDownload);
       } else {
-        li = new LinkInfoImpl(link,
+        li = new LinkInfoImpl(link,sourceUrl,
             type: LinkType.page,
             select: select,
             thumbnail: thumbnail,
@@ -74,7 +71,8 @@ abstract class ASource {
     }
   }
   Future<Null> selfLinkScraper(String url, Document d) async {
-    LinkInfo li = new LinkInfoImpl(url);
+    _log.finest("selfLinkScraper");
+    LinkInfo li = new LinkInfoImpl(url, url);
     sendLinkInfo(li);
   }
   void sendLinkInfo(LinkInfo li) {
@@ -93,6 +91,7 @@ abstract class ASource {
   }
 
   Future<Null> startScrapingPage(String url, Document document) async {
+    _log.finest("startScrapingPage");
     final PageInfo pageInfo = new PageInfo(await getCurrentTabId());
     for (UrlScraper us in urlScrapers) {
       if (us.isMatch(url)) {
@@ -107,6 +106,8 @@ abstract class ASource {
   }
 
   static SupportedLinkResult isSupportedPage(String link) {
+    _log.finest("isSupportedPage");
+
     SupportedLinkResult output = new SupportedLinkResult();
     for (ASource source in sourceInstances) {
       if (source.canScrapePage(link)) {
@@ -141,83 +142,8 @@ abstract class ASource {
   }
 }
 
-class SimpleUrlScraper extends UrlScraper {
-  static final _log = new Logger("SimpleUrlScraper");
-  final ASource _source;
-  final List<SimpleUrlScraperCriteria> criteria;
 
-  SimpleUrlScraper(this._source, RegExp urlRegexp, this.criteria,
-      {PageInfoScraper pif: null})
-      : super(urlRegexp, pif ?? _source.artistFromRegExpPageScraper, null) {
-    this._linkInfoScraper = _linkInfoScraperImpl;
-  }
 
-  Future<Null> _linkInfoScraperImpl(String url, Document document) async {
-    int total = 0;
-    _log.finest("_linkInfoScraperImpl($url, $document) start");
-    for (SimpleUrlScraperCriteria criteria in this.criteria) {
-      _log.finest("Querying with ${criteria.linkSelector}");
-      ElementList eles = document.querySelectorAll(criteria.linkSelector);
-      _log.finest("${eles.length} elements found");
-      for (Element ele in eles) {
-        if (criteria.validateLinkElement != null) {
-          if (!criteria.validateLinkElement(ele, url)) continue;
-        }
-
-        String link;
-        String thumbnail = null;
-        if (ele is AnchorElement) {
-          _log.finest("AnchorElement found");
-          link = ele.href;
-          if (criteria.thumbnailSubSelector?.isNotEmpty ?? false) {
-            _log.finest("Querying with ${criteria.thumbnailSubSelector}");
-            Element thumbEle = ele.querySelector(criteria.thumbnailSubSelector);
-            if (thumbEle != null) {
-              _log.info("Thumbnail element found");
-              if (thumbEle is AnchorElement) {
-                _log.finest("AnchorElement found for thumbnail");
-                thumbnail = thumbEle.href;
-              } else if (thumbEle is ImageElement) {
-                _log.finest("ImageElement found for thumbnail");
-                thumbnail = thumbEle.src;
-              } else {
-                _log.info("Unsupported element found for thumbnail, skipping");
-              }
-            } else {
-              _log.finest("Thumbnail element not found");
-            }
-          }
-        } else if (ele is ImageElement) {
-          _log.finest("ImageElement found");
-          link = ele.src;
-        } else if(ele is EmbedElement) {
-          _log.finest("EmbedElement found");
-          link = ele.src;
-        } else {
-          _log.info("Unsupported element found, skipping");
-          continue;
-        }
-        LinkInfo li = new LinkInfoImpl(link,
-            type: criteria.linkType, thumbnail: thumbnail);
-        _source.sendLinkInfo(li);
-        total++;
-        if(total>=criteria.limit) {
-          break;
-        }
-      }
-    }
-  }
-}
-
-class SimpleUrlScraperCriteria {
-  final LinkType linkType;
-  final String linkSelector;
-  final String thumbnailSubSelector;
-  final ValidateLinkElement validateLinkElement;
-  final int limit;
-  SimpleUrlScraperCriteria(this.linkType, this.linkSelector,
-      {this.thumbnailSubSelector: "img", this.validateLinkElement: null, this.limit: -1});
-}
 
 class SupportedLinkResult {
   bool result = false;
@@ -226,24 +152,4 @@ class SupportedLinkResult {
   bool autoDownload = true;
 }
 
-class UrlScraper {
-  static final _log = new Logger("UrlScraper");
-  final RegExp _urlRegExp;
-  final PageInfoScraper _pageInfoScraper;
-  LinkInfoScraper _linkInfoScraper;
-  UrlScraper(this._urlRegExp, this._pageInfoScraper, this._linkInfoScraper);
 
-  bool isMatch(String url) {
-    _log.finest("Checking url $url against regex $_urlRegExp");
-    return _urlRegExp.hasMatch(url);
-  }
-
-  Future<Null> scrapePageInfo(
-          PageInfo pageInfo, String url, Document document) =>
-      this._pageInfoScraper(
-          pageInfo, _urlRegExp.firstMatch(url), url, document);
-
-  Future<Null> startLinkInfoScraping(String url, Document document) async {
-    await this._linkInfoScraper(url, document);
-  }
-}

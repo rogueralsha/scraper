@@ -1,9 +1,10 @@
 import 'dart:html';
 import 'a_source.dart';
 import 'package:logging/logging.dart';
+import 'src/simple_url_scraper.dart';
 
 class ComicArtCommunitySource extends ASource {
-  final _log = new Logger("ComicArtCommunitySource");
+  static final Logger logImpl = new Logger("ComicArtCommunitySource");
   static final RegExp _galleryRegexp = new RegExp(
       "^https?:\\/\\/.*\\.?comicartcommunity\\.com\\/gallery\\/categories.php\\?cat_id=(\\d+).*",
       caseSensitive: false);
@@ -22,9 +23,9 @@ class ComicArtCommunitySource extends ASource {
           new SimpleUrlScraperCriteria(LinkType.page, "tr td span a"),
           new SimpleUrlScraperCriteria(
               LinkType.page, "div.wide.column a.button.mini",
-              validateLinkElement: validatePaginationLinkElement)
+              validateLinkInfo: validatePaginationLinkElement)
         ]));
   }
 
-  bool validatePaginationLinkElement(Element e, String url) => e.innerHtml.contains("»");
+  bool validatePaginationLinkElement(LinkInfo li,  Element e) => e.innerHtml.contains("»");
 }

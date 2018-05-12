@@ -5,7 +5,7 @@ export 'link_info.dart';
 
 
 class PageInfo extends Serializable {
-  final _log = new Logger("PageInfo");
+  static final Logger _log = new Logger("PageInfo");
 
   String artist;
   String error;

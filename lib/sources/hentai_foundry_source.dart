@@ -2,9 +2,10 @@ import 'dart:async';
 import 'dart:html';
 import 'a_source.dart';
 import 'package:logging/logging.dart';
+import 'src/simple_url_scraper.dart';
 
 class HentaiFoundrySource extends ASource {
-  final _log = new Logger("HentaiFoundrySource");
+  static final Logger logImpl = new Logger("HentaiFoundrySource");
   static final RegExp _regExp = new RegExp(
       "https?://www\\.artstation\\.com/artwork/.*",
       caseSensitive: false);
@@ -17,11 +18,11 @@ class HentaiFoundrySource extends ASource {
 
   HentaiFoundrySource() {
     this.urlScrapers.add(new SimpleUrlScraper(this, _hfGalleryRegExp, [
-          new SimpleUrlScraperCriteria(LinkType.page, "a.thumbLink", limit: 1),
+          new SimpleUrlScraperCriteria(LinkType.page, "a.thumbLink"),
           new SimpleUrlScraperCriteria(LinkType.page, "li.next a", limit: 1,
-              validateLinkElement: (Element e, String url) {
+              validateLinkInfo: (LinkInfo li, Element e) {
             if (e is AnchorElement) {
-              if (e.href != url) return true;
+              if (e.href != li.sourceUrl) return true;
             }
             return false;
           })
@@ -33,13 +34,13 @@ class HentaiFoundrySource extends ASource {
           [
             new SimpleUrlScraperCriteria(
                 LinkType.image, "div.container div.boxbody img",
-                validateLinkElement: (Element e, String url) {
+                validateLinkInfo: (LinkInfo li, Element e) {
               if (e is ImageElement) {
                 if (e.src.contains("vote_happy.png")) return false;
                 return true;
               }
               return false;
-            }),
+            }, limit: 1),
             new SimpleUrlScraperCriteria(
                 LinkType.flash, "div.container div.boxbody embed")
           ],

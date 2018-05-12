@@ -34,7 +34,7 @@ class ResultsComponent implements OnInit {
   static final RegExp _urlMatcherRegex =
       new RegExp("^https?:\\/\\/(.+)\$", caseSensitive: false);
 
-  final _log = new Logger("ResultsComponent");
+  static final Logger _log = new Logger("ResultsComponent");
   bool showSpinner = false;
   bool showProgress = false;
   bool savePath = false;
@@ -45,25 +45,31 @@ class ResultsComponent implements OnInit {
   int progressCurrent = 0;
 
   List<RelativePosition> tooltipPosition = [RelativePosition.AdjacentLeft];
-
   List<LinkInfo> links = <LinkInfo>[];
+
   List<String> availablePathPrefixes = [];
 
   final SettingsService _settings;
-
   final PageStreamService _pageStream;
 
   PageInfo results = new PageInfo(-1);
 
   ResultsComponent(this._pageStream, this._settings);
-  String get artistDisplay => "${results.artist} (${links.length})";
+
+  String get artistDisplay => "${results.artist} ($selectedLinkCount/$linkCount)";
 
   bool get hasError => (results?.error ?? "").isNotEmpty;
 
+  int get linkCount => links.length;
   bool get loaded => links?.isNotEmpty ?? false;
-// Nothing here yet. All logic is in TodoListComponent.
 
   String get pathDisplay => "Path: $artistPath";
+
+  int get selectedLinkCount => links.where((LinkInfo r) => r.select).length;
+// Nothing here yet. All logic is in TodoListComponent.
+
+  List<LinkInfo> get selectedLinks =>
+      new List<LinkInfo>.from(links.where((LinkInfo r) => r.select));
 
   void addResult(LinkInfo result) {
     String matchedLink = _urlMatcherRegex.firstMatch(result.url).group(1);
@@ -158,7 +164,7 @@ class ResultsComponent implements OnInit {
                 LinkInfo li =
                     new LinkInfo.fromJson(e.message[messageFieldData]);
                 toDownload.insert(insertPosition, li);
-                if(insertPosition>0) {
+                if (insertPosition > 0) {
                   progressMax++;
                 }
                 insertPosition++;
@@ -184,21 +190,20 @@ class ResultsComponent implements OnInit {
               default:
                 throw new Exception("Unupported event: $event");
             }
-          if(event!=scrapeDoneEvent||insertPosition==0) {
-            progressCurrent++;
+            if (event != scrapeDoneEvent || insertPosition == 0) {
+              progressCurrent++;
+            }
+            this.progressPercent =
+                ((progressCurrent / progressMax) * 100).round();
+            if (toDownload.isNotEmpty) {
+              insertPosition = 0;
+              _log.info("Getting next item from queue");
+              r = toDownload.removeAt(0);
+              _sendMessageForScrapeResult(p, r, pathPrefix);
+            } else {
+              break;
+            }
           }
-          this.progressPercent =
-              ((progressCurrent / progressMax) * 100).round();
-          if (toDownload.isNotEmpty) {
-            insertPosition = 0;
-            _log.info("Getting next item from queue");
-            r = toDownload.removeAt(0);
-            _sendMessageForScrapeResult(p, r, pathPrefix);
-          } else {
-            break;
-          }
-          }
-
         }
         if (close) {
           closeTab();

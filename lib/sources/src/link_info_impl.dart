@@ -1,13 +1,13 @@
 import 'package:logging/logging.dart';
-import '../results/link_info.dart';
-import 'imgur_source.dart';
+import 'package:scraper/results/link_info.dart';
+import '../imgur_source.dart';
 import 'dart:html';
-export '../results/link_info.dart';
+export 'package:scraper/results/link_info.dart';
 
 class LinkInfoImpl extends LinkInfo {
-  static final _log = new Logger("ScrapeResultImpl");
+  static final Logger _log = new Logger("ScrapeResultImpl");
 
-  LinkInfoImpl(String url,
+  LinkInfoImpl(String url, String sourceUrl,
       {type: LinkType.image,
       String filename: null,
       autoDownload: true,
@@ -16,19 +16,15 @@ class LinkInfoImpl extends LinkInfo {
       select: true,
         referrer: null})
       : super(
+            sourceUrl: sourceUrl,
             type: type,
             autoDownload: autoDownload,
             thumbnail: thumbnail,
             date: date,
             select: select,
       referrer: referrer) {
-    if (ImgurSource.postRegexp.hasMatch(url)) {
-      // Mobile imgur links redirect, so we need to filter them a bit
-      Match m = ImgurSource.postRegexp.firstMatch(url);
-      if (m.group(1) == "m.") {
-        url = url.replaceAll("//m.imgur.", "//imgur.");
-      }
-    }
+
+    url = ImgurSource.convertMobileUrl(url);
 
     _log.info("Creating " + type.toString() + " link: " + url);
     this.url = _resolvePartialUrl(Uri.decodeComponent(url));

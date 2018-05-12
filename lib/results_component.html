@@ -3,14 +3,14 @@
         type="text/css"
         href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
-<material-expansionpanel *ngIf="loaded" [name]="artistDisplay" [secondaryText]="pathDisplay" [showSaveCancel]="false">
+<material-expansionpanel class="resultsExpander" *ngIf="loaded" [name]="artistDisplay" [secondaryText]="pathDisplay" [showSaveCancel]="false">
     <table style="width: 100%">
         <tr>
             <td>
                 <material-button (click)="showPopup=!showPopup" popupSource #source="popupSource">
                     <material-icon icon="list" size="x-small"></material-icon>
                 </material-button>
-                <material-popup [(visible)]="showPopup" [source]="source">
+                <material-popup [(visible)]="showPopup" [source]="source" [zIndex]="99999">
                     <material-list size="medium">
                         <material-list-item *ngFor="let p of availablePathPrefixes"
                                             (trigger)="artistPath = p + '/' + results.artist">{{p}}</material-list-item>
@@ -28,19 +28,43 @@
 
 <div class="linkResults">
 
-        <div *ngFor="let r of links; let i = index" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
-            <material-button  materialTooltip="Select only this item" [tooltipPositions]="tooltipPosition"  clear-size (trigger)="selectOnly(i)">
-                <material-icon icon="arrow_forward" size="x-small"></material-icon>
-            </material-button>
-            <material-button  materialTooltip="Select this item and the items above it" [tooltipPositions]="tooltipPosition"  clear-size (trigger)="selectAbove(i)">
-                <material-icon icon="arrow_upward" size="x-small"></material-icon>
-            </material-button>
-            <material-button  materialTooltip="Select this item and the items beneath it" [tooltipPositions]="tooltipPosition"  clear-size (trigger)="selectBeneath(i)">
-                <material-icon icon="arrow_downward" size="x-small"></material-icon>
-            </material-button>
-            <material-checkbox [(ngModel)]="r.select"></material-checkbox>
-            <img [src]="r.thumbnail"/>
-            <a href="{{r.url}}" (click)="openTab($event,r.url)">{{r.filename}}</a>
+        <div  style="overflow: hidden; text-overflow: ellipsis;">
+            <table class="resultsTable">
+                <tr *ngFor="let r of links; let i = index"  style="max-height: 50px;">
+                    <td style="width: 32pt;">
+                        <div style="width: 32pt;">
+                        <material-button  materialTooltip="Select only this item" [tooltipPositions]="tooltipPosition"  clear-size (trigger)="selectOnly(i)">
+                            <material-icon icon="arrow_forward" size="x-small"></material-icon>
+                        </material-button>
+                        </div>
+                    </td>
+                    <td style="width: 32pt;">
+                        <div style="width: 32pt;">
+                        <material-button  materialTooltip="Select this item and the items above it" [tooltipPositions]="tooltipPosition"  clear-size (trigger)="selectAbove(i)">
+                            <material-icon icon="arrow_upward" size="x-small"></material-icon>
+                        </material-button>
+                        </div>
+                    </td>
+                    <td style="width: 32pt;">
+                        <div style="width: 32pt;">
+                        <material-button  materialTooltip="Select this item and the items beneath it" [tooltipPositions]="tooltipPosition"  clear-size (trigger)="selectBeneath(i)">
+                            <material-icon icon="arrow_downward" size="x-small"></material-icon>
+                        </material-button>
+                        </div>
+                    </td>
+                    <td style="width: 32pt;">
+                        <div style="width: 32pt;">
+                        <material-checkbox [(ngModel)]="r.select"></material-checkbox>
+                        </div>
+                    </td>
+                    <td style="width:50px;">
+                        <img [src]="r.thumbnail"/>
+                    </td>
+                    <td style="white-space: nowrap; ">
+                        <a href="{{r.url}}" (click)="openTab($event,r.url)" style="color: black;">{{r.filename}}</a>
+                    </td>
+                </tr>
+            </table>
         </div>
 </div>
 </material-expansionpanel>

@@ -10,7 +10,7 @@ export '../results/page_info.dart';
 
 @Injectable()
 class ScraperService {
-  final _log = new Logger("ScraperService");
+  static final Logger _log = new Logger("ScraperService");
 
 
   ScraperService() {

@@ -1,6 +1,9 @@
 :host {
     /* This is equivalent of the 'body' selector of a page. */
     all: unset;
+    align-items: stretch !important;
+    color: black;
+    background: white;
 }
 img {
     height:50px;
@@ -8,6 +11,11 @@ img {
 }
 material-button {
     width: 32pt;
+    white-space: nowrap;
+}
+.resultsTable td{
+    max-height: 50px;
+    overflow: hidden;
 }
 
 .linkResults {
@@ -17,4 +25,8 @@ material-button {
 .linkResults material-button {
     width: 18pt;
 
+}
+
+.resultsExpander .header {
+    align-items: stretch !important;
 }

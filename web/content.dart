@@ -10,7 +10,7 @@ import 'package:scraper/sources/sources.dart';
 import 'package:scraper/services/scraper_service.dart';
 import 'package:logging_handlers/logging_handlers_shared.dart';
 
-final _log = new Logger("content.dart");
+final Logger _log = new Logger("content.dart");
 
 StreamSubscription pageInfoSub;
 StreamSubscription linkInfoSub;
@@ -84,9 +84,11 @@ Future<Null> main() async {
       }
   });
 
-  document.body.append(document.createElement("results-dialog"));
+  if(!inIframe()) {
+    document.body.append(document.createElement("results-dialog"));
 
-  runApp(ng.ResultsDialogNgFactory);
+    runApp(ng.ResultsDialogNgFactory);
+  }
 }
 
 //

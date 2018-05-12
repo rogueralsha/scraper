@@ -1,0 +1,17 @@
+.resultsDialog div.content {
+    z-index: auto !important;
+    width: auto !important;
+    height: auto !important;
+    margin-right:0 !important;
+    margin-top:0 !important;
+    margin-left:0 !important;
+    margin-bottom:0 !important;
+    align-items: stretch !important;
+}
+.acx-overlay-container {
+    z-index:99999999 !important;
+}
+/* Takes care of some reddit style interference */
+:not(.subscriber) .resultsDialog  div.content {
+    margin-top:0 !important;
+}
