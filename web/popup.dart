@@ -9,6 +9,6 @@ void main() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen(new LogPrintHandler());
 
-  runApp(ng.ResultsComponentNgFactory);
+  //runApp(ng.ResultsComponentNgFactory);
 
 }

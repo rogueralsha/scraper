@@ -1,8 +1,8 @@
 {
   "manifest_version": 2,
-  "name": "Dart Scraper",
-  "description": "Provides various tools to assist with downloading sites and media",
-  "version": "1.0",
+  "name": "Scraper",
+  "description": "Provides various tools to assist with scraping media from sites",
+  "version": "0.1",
   "options_page": "options.html",
   "options_ui": {
     "page": "options.html"
@@ -23,6 +23,8 @@
         "https://*.hentai-foundry.com/*",
         "http://*.instagram.com/*",
         "https://*.instagram.com/*",
+        "http://*.blogspot.com/*",
+        "https://*.blogspot.com/*",
         "http://*.gfycat.com/*",
         "https://*.gfycat.com/*",
         "http://*.paheal.net/*",
@@ -43,7 +45,6 @@
   ],
   "browser_action": {
     "default_icon": "icon.png",
-    "default_popup": "popup.html",
     "default_title": "Dart Scraper"
   },
   "background": {

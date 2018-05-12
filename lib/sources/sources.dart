@@ -10,6 +10,7 @@ import 'instagram_source.dart';
 import 'imgur_source.dart';
 import 'gfycat_source.dart';
 export 'a_source.dart';
+import 'blogger_source.dart';
 
 final List<ASource> sourceInstances = <ASource>[
   new DeviantArtSource(),
@@ -21,5 +22,6 @@ final List<ASource> sourceInstances = <ASource>[
   new HentaiFoundrySource(),
   new InstagramSource(),
   new ImgurSource(),
-  new GfycatSource()
+  new GfycatSource(),
+  new BloggerSource()
 ];
