@@ -3,7 +3,6 @@
   "name": "Scraper",
   "description": "Provides various tools to assist with scraping media from sites",
   "version": "0.1",
-  "options_page": "options.html",
   "options_ui": {
     "page": "options.html"
   },
@@ -52,6 +51,12 @@
       "event_page.dart.js"
     ]
   },
+  "web_accessible_resources":[
+    "packages/*",
+    "*.dart",
+    "*.js.map",
+    "*.js.deps"
+  ],
   "permissions": [
     "tabs",
     "activeTab",
