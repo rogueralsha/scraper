@@ -10,8 +10,23 @@
   "content_scripts": [
     {
       "run_at": "document_end",
-      "matches": ["http://*.deviantart.com/*",
-        "https://*.deviantart.com/*"
+      "matches": [
+        "http://*.artstation.com/*",
+        "https://*.artstation.com/*",
+        "http://*.comicartcommunity.com/*",
+        "https://*.comicartcommunity.com/*",
+        "http://*.comicartfans.com/*",
+        "https://*.comicartfans.com/*",
+        "http://*.deviantart.com/*",
+        "https://*.deviantart.com/*",
+        "http://*.hentai-foundry.com/*",
+        "https://*.hentai-foundry.com/*",
+        "http://*.paheal.net/*",
+        "https://*.paheal.net/*",
+        "http://*.reddit.com/*",
+        "https://*.reddit.com/*",
+        "http://*.redd.it/*",
+        "https://*.redd.it/*"
       ],
       "js": [
         "content.dart.js"

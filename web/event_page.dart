@@ -1,9 +1,7 @@
 import 'dart:js';
-import 'dart:convert';
 import 'package:uuid/uuid.dart';
 import 'dart:async';
 import 'package:scraper/globals.dart';
-import 'package:angular/angular.dart';
 import 'package:chrome/chrome_ext.dart' as chrome;
 import 'package:logging/logging.dart';
 import 'package:logging_handlers/logging_handlers_shared.dart';
@@ -19,81 +17,173 @@ void main() {
     StreamSubscription messageSub;
     StreamSubscription disconnectSub;
 
-    disconnectSub = p.onDisconnect.listen((dynamic) {
-      messageSub.cancel();
-      disconnectSub.cancel();
+    disconnectSub = p.onDisconnect.listen((dynamic) async {
+      await messageSub.cancel();
+      await disconnectSub.cancel();
       p.disconnect();
     });
 
     messageSub = p.onMessage.listen((chrome.OnMessageEvent e) async {
       _log.info("Mesage received");
       JsObject message = e.message;
-      _log.info(context['JSON'].callMethod('stringify',[message]));
-      String command = message["command"];
-      _log.info("Command received: ${command}");
-      _log.info("Sender ${p.sender}");
-      _log.info("Sender tab ${p.sender?.tab?.id}");
-      _log.info("Sender window ${p?.sender?.tab?.windowId}");
-    _log.fine("Command switch");
-      switch (command) {
-        case scrapePageCommand:
-          await scrapePage(
-              p, p.sender?.tab?.windowId, message[messageFieldTabId]??p.sender?.tab?.id, message[messageFieldUrl]);
-          break;
-        case openTabCommand:
+      _log.finer(context['JSON'].callMethod('stringify', [message]));
+      _log.fine("Sender ${p.sender}");
+      _log.fine("Sender tab ${p.sender?.tab?.id}");
+      _log.fine("Sender window ${p?.sender?.tab?.windowId}");
 
-          Map result =
-              await _openTab(message[messageFieldUrl], p.sender?.tab?.windowId);
-          _log.info("Sending response");
-          _log.info(result);
-          p.postMessage(result);
-          break;
-        case getTabIdCommand:
-          _log.info("Current tab Id requested, returning ${p.sender.tab.id}");
-          p.postMessage({messageFieldTabId: p.sender.tab.id});
-          break;
-        case closeTabCommand:
-          await closeTab(p.sender.tab.windowId, message[messageFieldTabId]);
-          break;
-        case downloadCommand:
-          int id = await chrome.downloads.download(new chrome.DownloadOptions(
-              url: message[messageFieldUrl],
-              filename: message[messageFieldFilename],
-              conflictAction: chrome.FilenameConflictAction.UNIQUIFY,
-              method: chrome.HttpMethod.GET,
-              headers: message[messageFieldHeaders]));
-          _log.info("Download created: $id");
-          p.postMessage({messageFieldEvent: fileDownloadedEvent });
-          break;
-        default:
-          throw new Exception("Message command not recognized: $command");
+      if(message.hasProperty(messageFieldCommand)) {
+        String command = message["command"];
+        _log.info("Command received: ${command}");
+        _log.fine("Command switch");
+        switch (command) {
+          case scrapePageCommand:
+            await scrapePage(
+                p,
+                p.sender?.tab?.windowId,
+                message[messageFieldTabId] ?? p.sender?.tab?.id,
+                message[messageFieldUrl]);
+            break;
+          case openTabCommand:
+            Map result =
+            await _openTab(message[messageFieldUrl], p.sender?.tab?.windowId);
+            _log.info("Sending response");
+            _log.info(result);
+            p.postMessage(result);
+            break;
+          case getTabIdCommand:
+            _log.info("Current tab Id requested, returning ${p.sender.tab.id}");
+            p.postMessage({messageFieldTabId: p.sender.tab.id});
+            break;
+          case closeTabCommand:
+            await closeTab(p.sender.tab.windowId, message[messageFieldTabId]);
+            break;
+          case downloadCommand:
+            String path = message[messageFieldFilename];
+            if (path.startsWith("/")) path = path.substring(1);
+            path = path.replaceAll("//", "/").replaceAll(":", "_");
+            _log.info("Final path: $path");
+            int id = await chrome.downloads.download(new chrome.DownloadOptions(
+                url: message[messageFieldUrl],
+                filename: path,
+                conflictAction: chrome.FilenameConflictAction.UNIQUIFY,
+                method: chrome.HttpMethod.GET,
+                headers: message[messageFieldHeaders]));
+            _log.info("Download created: $id");
+            p.postMessage({messageFieldEvent: fileDownloadedEvent});
+            break;
+          case subscribeCommand:
+            subscribeToPage(p, message[messageFieldTabId]);
+            break;
+          case unsubscribeCommand:
+            await unsubscribeFromPage(p, message[messageFieldTabId]);
+            break;
+          case startScrapeCommand:
+            await chrome.tabs.sendMessage(message[messageFieldTabId],
+                {messageFieldCommand: startScrapeCommand});
+            break;
+          default:
+            throw new Exception("Message command not recognized: $command");
+        }
+      } else if(message.hasProperty(messageFieldEvent)) {
+
+      } else {
+        throw new Exception("Unknown message received");
       }
     });
+
   });
   chrome.runtime.onMessage.listen((chrome.OnMessageEvent e) async {
-    _log.info("Message received");
-    _log.info(context['JSON'].callMethod('stringify',[e.message]));
-    Map message = e.message;
-    String command = message[messageFieldCommand];
-    _log.info("Message command: $command");
-    switch (command) {
-      case closeTabMessageEvent:
-        await closeTab(e.sender.tab.windowId, message[messageFieldTabId]);
-        break;
-      default:
-        throw new Exception("Message command not known: $command");
+    try {
+      _log.info("Message received");
+      _log.fine(context['JSON'].callMethod('stringify', [e.message]));
+      JsObject message = e.message;
+      if (message.hasProperty(messageFieldCommand)) {
+        String command = message[messageFieldCommand];
+        _log.info("Message command: $command");
+        switch (command) {
+          case closeTabCommand:
+            await closeTab(e.sender.tab.windowId,
+                message[messageFieldTabId] ?? e.sender.tab.id);
+            break;
+          case openTabCommand:
+            await _openTab(message[messageFieldUrl], e.sender?.tab?.windowId);
+            break;
+          default:
+            throw new Exception("Message command not known: $command");
+        }
+      } else if (message.hasProperty(messageFieldEvent)) {
+        String event = message[messageFieldEvent];
+        _log.info("Message event: $event");
+        switch (event) {
+          case pageInfoEvent:
+          case linkInfoEvent:
+          case scrapeDoneEvent:
+            _log.info("Sending data to PageUpdateEvent");
+            PageUpdateEvent pageUpdateEvent = new PageUpdateEvent(
+                e.sender.tab.id, e.message);
+            _pageSubscriptionController.add(pageUpdateEvent);
+            break;
+          default:
+            throw new Exception("Message event not known: $event");
+        }
+      } else {
+        throw new Exception("Unknow message format");
+      }
+    } finally {
+      (e.sendResponse as JsFunction).apply(["response"]);
     }
   });
 }
 
+class PageUpdateEvent {
+  int tabId;
+  dynamic data;
+  PageUpdateEvent(this.tabId, this.data);
+}
+
+Stream<PageUpdateEvent> get onPageSubscriptionUpdate => _pageSubscriptionController.stream;
+StreamController<PageUpdateEvent> _pageSubscriptionController =
+    new StreamController<PageUpdateEvent>.broadcast();
+
+final Map<String,Map<int,StreamSubscription>> pageSubscriptions = <String,Map<int,StreamSubscription>>{};
+
+Future<Null> unsubscribeFromPage(chrome.Port p, int tabId) async {
+  if(pageSubscriptions.containsKey(p.name)&&pageSubscriptions[p.name].containsKey(tabId)) {
+    _log.fine("Unsubscribing port ${p.name} from tab $tabId");
+    await pageSubscriptions[p.name][tabId].cancel();
+    pageSubscriptions[p.name].remove(tabId);
+  } else {
+    _log.warning("Port ${p.name} does not have a subscription to tab $tabId");
+  }
+}
+
+void subscribeToPage(chrome.Port p, int tabId)  {
+  StreamSubscription pageSub;
+  pageSub = onPageSubscriptionUpdate.listen((PageUpdateEvent e) {
+    if (tabId == e.tabId) {
+      _log.info("Page update tab id matches subscription, forwarding to listener");
+      p.postMessage(e.data);
+    }
+  });
+  if(!pageSubscriptions.containsKey(p.name)) {
+      pageSubscriptions[p.name] = <int,StreamSubscription>{};
+  }
+  pageSubscriptions[p.name][tabId] = pageSub;
+  // ignore: unawaited_futures
+  p.onDisconnect.first.then((e) async {
+    await pageSub.cancel();
+    pageSubscriptions[p.name].remove(tabId);
+  });
+}
+
 Future<Null> closeTab(int windowId, int tabId) async {
-  chrome.Tab tab = await determineTab(
-      windowId, tabId);
+  chrome.Tab tab = await determineTab(windowId, tabId);
   _log.info("Closing tab ${tab.id}");
   await chrome.tabs.remove(tab.id);
 }
 
-Future<Null> scrapePage(chrome.Port sourcePort, int windowId, int tabId, String url) async {
+Future<Null> scrapePage(
+    chrome.Port sourcePort, int windowId, int tabId, String url) async {
   final chrome.Tab tab = await determineTab(windowId, tabId);
 
   _log.fine("Connecting to tab ${tab.id}");
@@ -106,7 +196,7 @@ Future<Null> scrapePage(chrome.Port sourcePort, int windowId, int tabId, String 
     _log.info("Listening for response");
     await for (chrome.OnMessageEvent tabE in tabPort.onMessage) {
       _log.info("Message received, forwarding to page");
-      _log.info(context['JSON'].callMethod('stringify',[tabE.message]));
+      _log.fine(context['JSON'].callMethod('stringify', [tabE.message]));
       sourcePort.postMessage(tabE.message);
       if (tabE.message == endMessageEvent) {
         _log.info("End message event received, disconnecting");
@@ -117,19 +207,18 @@ Future<Null> scrapePage(chrome.Port sourcePort, int windowId, int tabId, String 
     tabPort.disconnect();
   }
 
-  _log.fine("scrapePage() end");
+  _log.finest("scrapePage() end");
 }
 
 Future<Map> _openTab(String url, int windowId) async {
-  _log.fine("openTab($url, $windowId) start");
+  _log.finest("openTab($url, $windowId) start");
   try {
     Map output = {messageFieldEvent: tabLoadedMessageEvent};
-    chrome.Tab tab = await chrome.tabs.create(
-        new chrome.TabsCreateParams(
-            url: url, active: false, windowId: windowId));
+    chrome.Tab tab = await chrome.tabs.create(new chrome.TabsCreateParams(
+        url: url, active: false, windowId: windowId));
     _log.info("Tab created: ${tab.id}");
     _log.info("Waiting for tab to finish loading");
-    await for(chrome.OnUpdatedEvent updatedEvent in chrome.tabs.onUpdated) {
+    await for (chrome.OnUpdatedEvent updatedEvent in chrome.tabs.onUpdated) {
       if (updatedEvent.tabId == tab.id &&
           updatedEvent.changeInfo["status"] == "complete") {
         _log.info("New tab open complete: ${updatedEvent.tabId}");
@@ -139,7 +228,7 @@ Future<Map> _openTab(String url, int windowId) async {
     }
     return output;
   } finally {
-    _log.fine("openTab($url, $windowId) end");
+    _log.finest("openTab($url, $windowId) end");
   }
 }
 
@@ -151,8 +240,7 @@ Future<chrome.Tab> determineTab(int windowId, int tabId) async {
   } else {
     _log.info("tabId not provided, detecting current tab");
     // This is the page requesting the media from an iframe, we just forward it right back to the tab
-    chrome.TabsQueryParams params =
-        new chrome.TabsQueryParams();
+    chrome.TabsQueryParams params = new chrome.TabsQueryParams();
     if (windowId != null) {
       _log.info("Window ID provided: $windowId");
       params.windowId = windowId;

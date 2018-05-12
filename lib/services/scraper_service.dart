@@ -1,17 +1,25 @@
 import 'package:uuid/uuid.dart';
 import 'dart:js';
 import 'dart:async';
-import 'dart:html';
 import 'package:logging/logging.dart';
 import 'package:angular/angular.dart';
 import 'package:chrome/chrome_ext.dart' as chrome;
-import 'package:scraper/results/scrape_results.dart';
+import 'package:scraper/results/page_info.dart';
 import 'package:scraper/globals.dart';
-export '../results/scrape_results.dart';
+export '../results/page_info.dart';
 
 @Injectable()
 class ScraperService {
   final _log = new Logger("ScraperService");
+
+
+  ScraperService() {
+
+  }
+
+
+
+
 
   Future<chrome.Port> openPort() async  {
     try {
@@ -31,12 +39,12 @@ class ScraperService {
     }
   }
 
-  Future<ScrapeResults> getScrapeResults(String url) async {
-    _log.fine("getScrapeResults start");
+  Future<PageInfo> getScrapeResults(String url) async {
+    _log.finest("getScrapeResults start");
 
     try {
       final chrome.Port p = await openPort();
-      ScrapeResults results;
+      PageInfo results;
       try {
         p.postMessage({messageFieldUrl: url, messageFieldCommand: scrapePageCommand});
         await for (chrome.OnMessageEvent e in p.onMessage) {
@@ -44,7 +52,7 @@ class ScraperService {
           if (message[messageFieldEvent]==scrapeDoneEvent) {
             _log.info("Reults message received");
             _log.info(e.message);
-            results = new ScrapeResults.fromJsObject(e.message[messageFieldData]);
+            results = new PageInfo.fromJsObject(e.message[messageFieldData]);
             break;
           } else {
             throw new Exception("Unrecognized object received in message");
@@ -56,7 +64,7 @@ class ScraperService {
       }
       return results;
     } finally {
-      _log.fine("getScrapeResults end");
+      _log.finest("getScrapeResults end");
     }
   }
 }

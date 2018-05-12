@@ -1,5 +1,3 @@
-import 'dart:html';
-import 'dart:async';
 import 'package:angular/angular.dart';
 import 'package:angular_components/angular_components.dart';
 import 'src/todo_list/todo_list_component.dart';

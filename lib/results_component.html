@@ -3,57 +3,89 @@
         type="text/css"
         href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
-<table style="width: 100%">
+<material-expansionpanel *ngIf="loaded" [name]="artistDisplay" [secondaryText]="pathDisplay" [showSaveCancel]="false">
+    <table style="width: 100%">
+        <tr>
+            <td>
+                <material-button (click)="showPopup=!showPopup" popupSource #source="popupSource">
+                    <material-icon icon="list" size="x-small"></material-icon>
+                </material-button>
+                <material-popup [(visible)]="showPopup" [source]="source">
+                    <material-list size="medium">
+                        <material-list-item *ngFor="let p of availablePathPrefixes"
+                                            (trigger)="artistPath = p + '/' + results.artist">{{p}}</material-list-item>
+                    </material-list>
+                </material-popup>
+            </td>
+            <td style="width: 99%; white-space: nowrap;">
+                <material-input [(ngModel)]="artistPath" label="Save Path"></material-input>
+            </td>
+            <td style="white-space: nowrap;">
+                <material-checkbox [(ngModel)]="savePath" label="Save" no-ink></material-checkbox>
+            </td>
+        </tr>
+    </table>
+
+<div class="linkResults">
+
+        <div *ngFor="let r of links; let i = index" style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">
+            <material-button  materialTooltip="Select only this item" [tooltipPositions]="tooltipPosition"  clear-size (trigger)="selectOnly(i)">
+                <material-icon icon="arrow_forward" size="x-small"></material-icon>
+            </material-button>
+            <material-button  materialTooltip="Select this item and the items above it" [tooltipPositions]="tooltipPosition"  clear-size (trigger)="selectAbove(i)">
+                <material-icon icon="arrow_upward" size="x-small"></material-icon>
+            </material-button>
+            <material-button  materialTooltip="Select this item and the items beneath it" [tooltipPositions]="tooltipPosition"  clear-size (trigger)="selectBeneath(i)">
+                <material-icon icon="arrow_downward" size="x-small"></material-icon>
+            </material-button>
+            <material-checkbox [(ngModel)]="r.select"></material-checkbox>
+            <img [src]="r.thumbnail"/>
+            <a href="{{r.url}}" (click)="openTab($event,r.url)">{{r.filename}}</a>
+        </div>
+</div>
+</material-expansionpanel>
+
+<material-progress [activeProgress]="progressPercent" *ngIf="showProgress"></material-progress>
+
+<table style="float: right;" >
     <tr>
-        <td style="width: auto;">
-            <material-button icon (trigger)="refreshButtonClick()">
+        <td *ngIf="showProgress">
+            {{progressCurrent}}/{{progressMax}}
+        </td>
+        <td *ngIf="showSpinner">
+            <material-spinner ></material-spinner>
+        </td>
+        <td >
+            <material-button materialTooltip="Refresh" [tooltipPositions]="tooltipPosition"  clear-size (trigger)="refreshButtonClick()">
                 <material-icon icon="refresh" size="x-small"></material-icon>
             </material-button>
         </td>
-        <td *ngIf="loaded" style="width: 99%; white-space: nowrap;">
-            Artist: {{ results.artist }} ({{results.results.length}})
-        </td>
-        <td>
-            <ng-content></ng-content>
-        </td>
-    </tr>
-</table>
-
-<span *ngIf="loaded">
-<table style="width: 100%">
-    <tr>
-        <td>
-            <material-button icon (trigger)="openAllButtonClick()">
+        <td *ngIf="loaded">
+            <material-button materialTooltip="Open links in new tabs" [tooltipPositions]="tooltipPosition" clear-size (trigger)="openAllButtonClick(false)">
                 <material-icon icon="open_in_new" size="x-small"></material-icon>
             </material-button>
         </td>
-        <td style="width: 99%; white-space: nowrap;">
-            <material-checkbox [(ngModel)]="waitForLoad" label="Wait for each tab" no-ink></material-checkbox>
+        <td  *ngIf="loaded">
+            <material-button materialTooltip="Open links in new tabs, waiting for each tab to load" [tooltipPositions]="tooltipPosition" clear-size (trigger)="openAllButtonClick(true)">
+                <material-icon icon="open_in_new" size="x-small"></material-icon>+
+                <material-icon icon="timelapse" size="x-small"></material-icon>
+            </material-button>
         </td>
-        <td>
-            <material-button icon (trigger)="downloadButtonClick()">
+        <td *ngIf="loaded">
+            <material-button materialTooltip="Download all" [tooltipPositions]="tooltipPosition" clear-size (trigger)="downloadButtonClick(false)">
                 <material-icon icon="file_download" size="x-small"></material-icon>
             </material-button>
         </td>
-        <td>
-            <material-button icon (trigger)="downloadButtonClick(true)">
-                <material-icon icon="file_download" size="x-small"></material-icon>
+        <td *ngIf="loaded">
+            <material-button materialTooltip="Download all, then close this tab" [tooltipPositions]="tooltipPosition" clear-size (trigger)="downloadButtonClick(true)">
+                <material-icon icon="file_download" size="x-small"></material-icon>+
                 <material-icon icon="close" size="x-small"></material-icon>
             </material-button>
         </td>
-
+        <td>
+            <material-button materialTooltip="Close this tab" [tooltipPositions]="tooltipPosition" clear-size (trigger)="closeButtonClick()">
+                <material-icon icon="close" size="x-small"></material-icon>
+            </material-button>
+        </td>
     </tr>
 </table>
-
-Error:{{results.error}}<br/>
-    <material-progress [activeProgress]="progress" *ngIf="processing"></material-progress>
-
-    <table>
-    <tr *ngFor="let r of results.results">
-        <td><material-checkbox [(ngModel)]="r.select"></material-checkbox></td>
-        <td><img [src]="r.thumbnail"/></td>
-        <td style="white-space: nowrap; text-overflow:ellipsis;" >{{r.filename}}</td>
-    </tr>
-</table>
-
-</span>

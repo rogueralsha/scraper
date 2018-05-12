@@ -1,0 +1,23 @@
+<material-expansionpanel name="Prefix paths" (save)="savePaths()" (cancel)="loadPaths()" (open)="loadPaths()">
+    <material-list>
+        <material-list-item *ngFor="let m of prefixPaths; let i = index">{{m}}
+            <material-button (click)="prefixPaths.removeAt(i)" icon>
+                <material-icon icon="remove" size="x-small"></material-icon>
+            </material-button>
+        </material-list-item>
+    </material-list>
+    <material-input [(ngModel)]="newPrefixPath" label="New Prefix Path"></material-input>
+    <material-button (click)="addPrefixPath()" icon>
+        <material-icon icon="add"></material-icon>
+    </material-button>
+</material-expansionpanel>
+
+<material-expansionpanel name="Mappings" (save)="saveMappings()" (cancel)="loadMappings()" (open)="loadMappings()">
+<material-list>
+    <material-list-item *ngFor="let m of mappings.keys">{{m}} - {{mappings[m]}}
+        <material-button (click)="mappings.remove(m)" icon>
+            <material-icon icon="remove" size="x-small"></material-icon>
+        </material-button>
+    </material-list-item>
+</material-list>
+</material-expansionpanel>

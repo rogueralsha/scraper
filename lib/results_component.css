@@ -6,3 +6,15 @@ img {
     height:50px;
     width:50px;
 }
+material-button {
+    width: 32pt;
+}
+
+.linkResults {
+    max-height:400px;
+    overflow-y: auto;
+}
+.linkResults material-button {
+    width: 18pt;
+
+}

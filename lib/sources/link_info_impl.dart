@@ -1,14 +1,14 @@
 import 'package:logging/logging.dart';
-import '../results/scrape_result.dart';
+import '../results/link_info.dart';
 import 'imgur_source.dart';
 import 'dart:html';
-export '../results/scrape_result.dart';
+export '../results/link_info.dart';
 
-class ScrapeResultImpl extends ScrapeResult {
+class LinkInfoImpl extends LinkInfo {
   static final _log = new Logger("ScrapeResultImpl");
 
-  ScrapeResultImpl(String url,
-      {type: ResultTypes.image,
+  LinkInfoImpl(String url,
+      {type: LinkType.image,
       String filename: null,
       autoDownload: true,
       thumbnail: null,
@@ -43,7 +43,7 @@ class ScrapeResultImpl extends ScrapeResult {
       this.filename = filename;
     }
 
-    if (thumbnail == null && type == ResultTypes.image) {
+    if (thumbnail == null && type == LinkType.image) {
       this.thumbnail = url;
     }
   }

@@ -2,13 +2,13 @@
 import 'package:logging/logging.dart';
 import 'serializable.dart';
 
-enum ResultTypes { image, page }
+enum LinkType { image, page, video, flash }
 
-class ScrapeResult extends Serializable {
-  static final _log = new Logger("ScrapeResult");
+class LinkInfo extends Serializable {
+  static final _log = new Logger("LinkInfo");
 
   String url;
-  ResultTypes type;
+  LinkType type;
   DateTime date;
   String filename;
   String thumbnail;
@@ -16,11 +16,11 @@ class ScrapeResult extends Serializable {
   bool select;
   bool autoDownload;
 
-  ScrapeResult({this.url, this.type, this.date, this.filename, this.thumbnail, this.select, this.autoDownload, this.referrer});
+  LinkInfo({this.url, this.type, this.date, this.filename, this.thumbnail, this.select, this.autoDownload, this.referrer});
 
-  ScrapeResult.fromJson(Map data) {
+  LinkInfo.fromJson(Map data) {
     this.url = data["url"];
-    this.type = ResultTypes.values[data["type"]];
+    this.type = LinkType.values[data["type"]];
     this.date = data["date"];
     this.filename = data["filename"];
     this.thumbnail = data["thumbnail"];
@@ -40,4 +40,7 @@ class ScrapeResult extends Serializable {
 
     return output;
   }
+
+
+
 }
