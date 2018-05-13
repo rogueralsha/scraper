@@ -32,6 +32,8 @@
         "https://*.reddit.com/*",
         "http://*.imgur.com/*",
         "https://*.imgur.com/*",
+        "http://*.tumblr.com/*",
+        "https://*.tumblr.com/*",
         "http://*.redd.it/*",
         "https://*.redd.it/*"
       ],

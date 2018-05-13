@@ -1,5 +1,3 @@
-import 'dart:async';
-import 'dart:html';
 import 'a_source.dart';
 import 'package:logging/logging.dart';
 import 'src/simple_url_scraper.dart';

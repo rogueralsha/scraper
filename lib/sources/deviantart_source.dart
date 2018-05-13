@@ -18,8 +18,6 @@ class DeviantArtSource extends ASource {
       new RegExp("https?://sandbox\\.deviantart\\.com.*", caseSensitive: false);
   static const String _galleryItemSelector = "a.torpedo-thumb-link";
 
-  List<String> _seenLinks = <String>[];
-
   void _scrapeNode(dynamic node, String url) {
     _log.finest("_scrapeNode($node)");
     ElementList eles = node.querySelectorAll(_galleryItemSelector);
@@ -27,9 +25,6 @@ class DeviantArtSource extends ASource {
       Element ele = eles[i];
       ImageElement imgEle = ele.querySelector("img");
       if (ele is AnchorElement) {
-        if (_seenLinks.contains(ele.href)) continue;
-        _log.info("Found URL: " + ele.href);
-        _seenLinks.add(ele.href);
         LinkInfo info = new LinkInfoImpl(ele.href, url,
             type: LinkType.page, thumbnail: imgEle.src);
         sendLinkInfo(info);
@@ -105,7 +100,6 @@ class DeviantArtSource extends ASource {
   }
 
   Future<Null> scrapeGalleryPageLinks(String url, Document doc) async {
-    _seenLinks.clear();
     _scrapeNode(document, url);
     if (galleryObserver == null) {
       galleryObserver = new MutationObserver((List<MutationRecord> mutations, MutationObserver observer) {

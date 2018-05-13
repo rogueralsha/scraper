@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'dart:html';
 import 'a_source.dart';
 import 'package:logging/logging.dart';
@@ -6,9 +5,6 @@ import 'src/simple_url_scraper.dart';
 
 class HentaiFoundrySource extends ASource {
   static final Logger logImpl = new Logger("HentaiFoundrySource");
-  static final RegExp _regExp = new RegExp(
-      "https?://www\\.artstation\\.com/artwork/.*",
-      caseSensitive: false);
   static final RegExp _hfRegExp = new RegExp(
       "https?://www\\.hentai-foundry\\.com/pictures/user/([^/]+)/.*",
       caseSensitive: false);

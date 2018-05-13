@@ -9,8 +9,9 @@ import 'hentai_foundry_source.dart';
 import 'instagram_source.dart';
 import 'imgur_source.dart';
 import 'gfycat_source.dart';
-export 'a_source.dart';
+import 'tumblr_source.dart';
 import 'blogger_source.dart';
+export 'a_source.dart';
 
 final List<ASource> sourceInstances = <ASource>[
   new DeviantArtSource(),
@@ -23,5 +24,6 @@ final List<ASource> sourceInstances = <ASource>[
   new InstagramSource(),
   new ImgurSource(),
   new GfycatSource(),
-  new BloggerSource()
+  new BloggerSource(),
+  new TumbleSource()
 ];

@@ -22,6 +22,9 @@ abstract class ASource {
 
   Stream<dynamic> get onScrapeUpdateEvent => _scrapeUpdateStream.stream;
 
+  List<String> _seenLinks = <String>[];
+  bool get sentLinks => _seenLinks.isNotEmpty;
+
   Future<Null> artistFromRegExpPageScraper(
       PageInfo pageInfo, Match m, String url, Document doc) async {
     _log.info("artistFromRegExpPageScraper");
@@ -75,9 +78,18 @@ abstract class ASource {
     LinkInfo li = new LinkInfoImpl(url, url);
     sendLinkInfo(li);
   }
+
+  void createAndSendLinkInfo(String link, String sourceUrl, {LinkType type:  LinkType.image}) {
+    LinkInfo li = new LinkInfoImpl(link, sourceUrl, type: type);
+    sendLinkInfo(li);
+  }
+
   void sendLinkInfo(LinkInfo li) {
     _log.finer("Sending LinkInfo event");
-    _scrapeUpdateStream.add(li);
+    if (!this._seenLinks.contains(li.url)) {
+      this._seenLinks.add(li.url);
+      _scrapeUpdateStream.add(li);
+    }
   }
 
   void sendPageInfo(PageInfo pi) {
@@ -92,8 +104,10 @@ abstract class ASource {
 
   Future<Null> startScrapingPage(String url, Document document) async {
     _log.finest("startScrapingPage");
+    _seenLinks.clear();
     final PageInfo pageInfo = new PageInfo(await getCurrentTabId());
     for (UrlScraper us in urlScrapers) {
+      _log.finest("Using url scraper: ${us.urlRegExp}");
       if (us.isMatch(url)) {
         await us.scrapePageInfo(pageInfo, url, document);
         _log.info("Artist: " + pageInfo.artist);
@@ -103,6 +117,24 @@ abstract class ASource {
         break;
       }
     }
+  }
+
+
+  Future<bool> urlExists(String url) async {
+    HttpRequest request = new HttpRequest();
+    request.open("HEAD", url);
+    request.send();
+    await for (Event e in request.onReadyStateChange) {
+      if (request.readyState == HttpRequest.DONE) {
+        if (request.status >= 200 && request.status <= 299) {
+          return true;
+        } else {
+          _log.warning(request.status);
+          return false;
+        }
+      }
+    }
+    return false;
   }
 
   static SupportedLinkResult isSupportedPage(String link) {
