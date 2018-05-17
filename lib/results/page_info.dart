@@ -3,7 +3,6 @@ import 'package:logging/logging.dart';
 import 'serializable.dart';
 export 'link_info.dart';
 
-
 class PageInfo extends Serializable {
   static final Logger _log = new Logger("PageInfo");
 
@@ -12,7 +11,6 @@ class PageInfo extends Serializable {
   int tabId;
 
   bool saveByDefault = true;
-
 
   PageInfo(this.tabId);
 
@@ -23,14 +21,12 @@ class PageInfo extends Serializable {
     this.tabId = data["tabId"];
   }
 
-  Map<String,dynamic> toJson() {
-    Map<String,dynamic> output = <String,dynamic>{};
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> output = <String, dynamic>{};
     output["artist"] = artist;
     output["error"] = error;
     output["tabId"] = tabId;
 
     return output;
   }
-
-
 }

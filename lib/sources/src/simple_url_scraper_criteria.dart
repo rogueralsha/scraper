@@ -10,5 +10,7 @@ class SimpleUrlScraperCriteria {
   final ValidateLinkInfo validateLinkInfo;
   final int limit;
   SimpleUrlScraperCriteria(this.linkType, this.linkSelector,
-      {this.thumbnailSubSelector: "img", this.validateLinkInfo: null, this.limit: -1});
+      {this.thumbnailSubSelector: "img",
+      this.validateLinkInfo: null,
+      this.limit: -1});
 }

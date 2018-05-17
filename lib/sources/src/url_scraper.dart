@@ -17,9 +17,8 @@ class UrlScraper {
   }
 
   Future<Null> scrapePageInfo(
-      PageInfo pageInfo, String url, Document document) =>
-      this.pageInfoScraper(
-          pageInfo, urlRegExp.firstMatch(url), url, document);
+          PageInfo pageInfo, String url, Document document) =>
+      this.pageInfoScraper(pageInfo, urlRegExp.firstMatch(url), url, document);
 
   Future<Null> startLinkInfoScraping(String url, Document document) async {
     await this.linkInfoScraper(url, document);

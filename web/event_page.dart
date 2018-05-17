@@ -5,12 +5,16 @@ import 'package:scraper/globals.dart';
 import 'package:chrome/chrome_ext.dart' as chrome;
 import 'package:logging/logging.dart';
 import 'package:logging_handlers/logging_handlers_shared.dart';
+import 'package:scraper/services/settings_service.dart';
 
 final Logger _log = new Logger("event_page.dart");
 
-void main() {
-  Logger.root.level = Level.ALL;
+SettingsService settings = new SettingsService();
+
+Future<Null> main() async {
+  Logger.root.level = await settings.getLoggingLevel();
   Logger.root.onRecord.listen(new LogPrintHandler());
+  _log.info("Logging set to ${Logger.root.level.name}");
 
   chrome.runtime.onConnect.listen((chrome.Port p) async {
     _log.info("Connection opening: ${p.name}");
@@ -31,7 +35,7 @@ void main() {
       _log.fine("Sender tab ${p.sender?.tab?.id}");
       _log.fine("Sender window ${p?.sender?.tab?.windowId}");
 
-      if(message.hasProperty(messageFieldCommand)) {
+      if (message.hasProperty(messageFieldCommand)) {
         String command = message["command"];
         _log.info("Command received: ${command}");
         _log.fine("Command switch");
@@ -44,15 +48,16 @@ void main() {
                 message[messageFieldUrl]);
             break;
           case openTabCommand:
-            Map result =
-            await _openTab(message[messageFieldUrl], p.sender?.tab?.windowId);
+            Map result = await _openTab(
+                message[messageFieldUrl], p.sender?.tab?.windowId);
             _log.info("Sending response");
             _log.info(result);
             p.postMessage(result);
             break;
           case getTabIdCommand:
             _log.info("Current tab Id requested, returning ${p.sender.tab.id}");
-            p.postMessage({messageFieldTabId: p.sender.tab.id});
+            p.postMessage(
+                <String, dynamic>{messageFieldTabId: p.sender.tab.id});
             break;
           case closeTabCommand:
             await closeTab(p.sender.tab.windowId, message[messageFieldTabId]);
@@ -84,13 +89,11 @@ void main() {
           default:
             throw new Exception("Message command not recognized: $command");
         }
-      } else if(message.hasProperty(messageFieldEvent)) {
-
+      } else if (message.hasProperty(messageFieldEvent)) {
       } else {
         throw new Exception("Unknown message received");
       }
     });
-
   });
   chrome.runtime.onMessage.listen((chrome.OnMessageEvent e) async {
     try {
@@ -119,8 +122,8 @@ void main() {
           case linkInfoEvent:
           case scrapeDoneEvent:
             _log.info("Sending data to PageUpdateEvent");
-            PageUpdateEvent pageUpdateEvent = new PageUpdateEvent(
-                e.sender.tab.id, e.message);
+            PageUpdateEvent pageUpdateEvent =
+                new PageUpdateEvent(e.sender.tab.id, e.message);
             _pageSubscriptionController.add(pageUpdateEvent);
             break;
           default:
@@ -130,7 +133,7 @@ void main() {
         throw new Exception("Unknow message format");
       }
     } finally {
-      (e.sendResponse as JsFunction).apply(["response"]);
+      //(e.sendResponse as JsFunction).apply(["response"]);
     }
   });
 }
@@ -141,14 +144,17 @@ class PageUpdateEvent {
   PageUpdateEvent(this.tabId, this.data);
 }
 
-Stream<PageUpdateEvent> get onPageSubscriptionUpdate => _pageSubscriptionController.stream;
+Stream<PageUpdateEvent> get onPageSubscriptionUpdate =>
+    _pageSubscriptionController.stream;
 StreamController<PageUpdateEvent> _pageSubscriptionController =
     new StreamController<PageUpdateEvent>.broadcast();
 
-final Map<String,Map<int,StreamSubscription>> pageSubscriptions = <String,Map<int,StreamSubscription>>{};
+final Map<String, Map<int, StreamSubscription>> pageSubscriptions =
+    <String, Map<int, StreamSubscription>>{};
 
 Future<Null> unsubscribeFromPage(chrome.Port p, int tabId) async {
-  if(pageSubscriptions.containsKey(p.name)&&pageSubscriptions[p.name].containsKey(tabId)) {
+  if (pageSubscriptions.containsKey(p.name) &&
+      pageSubscriptions[p.name].containsKey(tabId)) {
     _log.fine("Unsubscribing port ${p.name} from tab $tabId");
     await pageSubscriptions[p.name][tabId].cancel();
     pageSubscriptions[p.name].remove(tabId);
@@ -157,16 +163,17 @@ Future<Null> unsubscribeFromPage(chrome.Port p, int tabId) async {
   }
 }
 
-void subscribeToPage(chrome.Port p, int tabId)  {
+void subscribeToPage(chrome.Port p, int tabId) {
   StreamSubscription pageSub;
   pageSub = onPageSubscriptionUpdate.listen((PageUpdateEvent e) {
     if (tabId == e.tabId) {
-      _log.info("Page update tab id matches subscription, forwarding to listener");
+      _log.info(
+          "Page update tab id matches subscription, forwarding to listener");
       p.postMessage(e.data);
     }
   });
-  if(!pageSubscriptions.containsKey(p.name)) {
-      pageSubscriptions[p.name] = <int,StreamSubscription>{};
+  if (!pageSubscriptions.containsKey(p.name)) {
+    pageSubscriptions[p.name] = <int, StreamSubscription>{};
   }
   pageSubscriptions[p.name][tabId] = pageSub;
   // ignore: unawaited_futures

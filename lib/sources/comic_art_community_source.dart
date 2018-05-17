@@ -12,7 +12,6 @@ class ComicArtCommunitySource extends ASource {
       "^https?:\\/\\/.*\\.?comicartcommunity\\.com\\/gallery\\/details.php\\?image_id=(\\d+).*",
       caseSensitive: false);
 
-
   ComicArtCommunitySource() {
     this.urlScrapers.add(new SimpleUrlScraper(this, _imageRegexp,
         [new SimpleUrlScraperCriteria(LinkType.image, "div.wide center img")]));
@@ -24,5 +23,6 @@ class ComicArtCommunitySource extends ASource {
         ]));
   }
 
-  bool validatePaginationLinkElement(LinkInfo li,  Element e) => e.innerHtml.contains("»");
+  bool validatePaginationLinkElement(LinkInfo li, Element e) =>
+      e.innerHtml.contains("»");
 }

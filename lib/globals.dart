@@ -31,13 +31,16 @@ const String scrapeDoneEvent = "scrapeDone";
 const String pageInfoEvent = "pageInfo";
 const String linkInfoEvent = "linkInfo";
 
-final RegExp siteRegexp = new RegExp("https?://([^/]+)/.*", caseSensitive: false);
+final RegExp siteRegexp =
+    new RegExp("https?://([^/]+)/.*", caseSensitive: false);
 
 final Logger _log = new Logger("globals");
 
 void closeTab({int tabId}) {
   _log.info("Sending close tab message");
-  Map message = {messageFieldCommand: closeTabMessageEvent};
+  final Map<String, dynamic> message = <String, dynamic>{
+    messageFieldCommand: closeTabMessageEvent
+  };
   if (tabId != null) {
     message[messageFieldTabId] = tabId;
   }
@@ -47,11 +50,11 @@ void closeTab({int tabId}) {
 
 Future<int> getCurrentTabId() async {
   _log.info("Getting current tab id");
-  chrome.Port p = chrome.runtime
+  final chrome.Port p = chrome.runtime
       .connect(null, new chrome.RuntimeConnectParams(name: new Uuid().v4()));
   try {
     p.postMessage({messageFieldCommand: getTabIdCommand});
-    chrome.OnMessageEvent e = await p.onMessage.first;
+    final chrome.OnMessageEvent e = await p.onMessage.first;
     _log.info("Current tab ID is: ${e.message[messageFieldTabId]}");
     return e.message[messageFieldTabId];
   } finally {
@@ -59,10 +62,10 @@ Future<int> getCurrentTabId() async {
   }
 }
 
-bool inIframe () {
+bool inIframe() {
   try {
     return window.self != window.top;
   } catch (e) {
-  return true;
+    return true;
   }
 }

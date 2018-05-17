@@ -1,6 +1,3 @@
-
 abstract class Serializable {
-
-  Map<String,dynamic> toJson();
-
+  Map<String, dynamic> toJson();
 }

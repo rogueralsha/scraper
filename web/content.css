@@ -8,6 +8,9 @@
     margin-bottom:0 !important;
     align-items: stretch !important;
 }
+.resultsDialog .header {
+    align-items: stretch !important;
+}
 .acx-overlay-container {
     z-index:99999999 !important;
 }

@@ -1,4 +1,3 @@
-
 import 'package:logging/logging.dart';
 import 'serializable.dart';
 
@@ -18,7 +17,16 @@ class LinkInfo extends Serializable {
   bool select;
   bool autoDownload;
 
-  LinkInfo({this.url, this.sourceUrl, this.type, this.date, this.filename, this.thumbnail, this.select, this.autoDownload, this.referrer});
+  LinkInfo(
+      {this.url,
+      this.sourceUrl,
+      this.type,
+      this.date,
+      this.filename,
+      this.thumbnail,
+      this.select,
+      this.autoDownload,
+      this.referrer});
 
   LinkInfo.fromJson(Map data) {
     this.url = data["url"];
@@ -30,11 +38,11 @@ class LinkInfo extends Serializable {
     this.autoDownload = data["autoDownload"];
   }
 
-  Map<String,dynamic> toJson() {
-    Map<String,dynamic> output = <String,dynamic>{};
+  Map<String, dynamic> toJson() {
+    Map<String, dynamic> output = <String, dynamic>{};
     output["url"] = url;
     output["type"] = this.type.index;
-    output["date"] = date?.toIso8601String()??"";
+    output["date"] = date?.toIso8601String() ?? "";
     output["filename"] = filename;
     output["thumbnail"] = thumbnail;
     output["select"] = select;
@@ -42,7 +50,4 @@ class LinkInfo extends Serializable {
 
     return output;
   }
-
-
-
 }

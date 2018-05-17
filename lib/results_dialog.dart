@@ -13,7 +13,13 @@ import 'globals.dart';
   selector: 'results-dialog',
   styleUrls: ['results_dialog.css'],
   templateUrl: 'results_dialog.html',
-  directives: [TodoListComponent, NgFor, materialDirectives, NgIf, ResultsComponent],
+  directives: [
+    TodoListComponent,
+    NgFor,
+    materialDirectives,
+    NgIf,
+    ResultsComponent
+  ],
   providers: [const ClassProvider(ScraperService), materialProviders],
 )
 class ResultsDialog {
@@ -24,10 +30,10 @@ class ResultsDialog {
   void closeButtonClick() async {
     try {
       closeTab();
-    } catch(e,st) {
-      _log.severe("closeButtonClick", e,st);
+    } catch (e, st) {
+      _log.severe("closeButtonClick", e, st);
     }
-
   }
+
   void removeButtonClick() {}
 }

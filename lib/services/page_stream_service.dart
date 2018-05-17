@@ -6,12 +6,10 @@ import 'package:chrome/chrome_ext.dart' as chrome;
 import 'package:scraper/globals.dart';
 import 'package:uuid/uuid.dart';
 
-class PageStreamEvent {
-
-}
+class PageStreamEvent {}
 
 class PageStreamService {
-  static final  _log = new Logger("ScraperService");
+  static final _log = new Logger("ScraperService");
 
   Stream<PageInfo> get onPageInfo => _pageInfoStream.stream;
   StreamController<PageInfo> _pageInfoStream = new StreamController<PageInfo>();
@@ -21,7 +19,9 @@ class PageStreamService {
 
   final chrome.Port p;
 
-  PageStreamService(): p = chrome.runtime.connect(null, new chrome.RuntimeConnectParams(name: new Uuid().v4())) {
+  PageStreamService()
+      : p = chrome.runtime.connect(
+            null, new chrome.RuntimeConnectParams(name: new Uuid().v4())) {
     p.onMessage.listen(messageEvented);
     setUpStreams();
   }
@@ -39,21 +39,24 @@ class PageStreamService {
   }
 
   Future<Null> requestScrapeStart() async {
-    p.postMessage({messageFieldCommand: startScrapeCommand, messageFieldTabId: await getCurrentTabId()});
+    p.postMessage({
+      messageFieldCommand: startScrapeCommand,
+      messageFieldTabId: await getCurrentTabId()
+    });
   }
 
   void messageEvented(chrome.OnMessageEvent e) {
     try {
-      JsObject obj = e.message;
+      final JsObject obj = e.message;
       if (obj.hasProperty(messageFieldEvent)) {
-        String event = obj[messageFieldEvent];
+        final String event = obj[messageFieldEvent];
         switch (event) {
           case pageInfoEvent:
-            PageInfo pi = new PageInfo.fromJsObject(obj[messageFieldData]);
+            final PageInfo pi = new PageInfo.fromJsObject(obj[messageFieldData]);
             _pageInfoStream.add(pi);
             break;
           case linkInfoEvent:
-            LinkInfo li = new LinkInfo.fromJson(obj[messageFieldData]);
+            final LinkInfo li = new LinkInfo.fromJson(obj[messageFieldData]);
             _linkInfoStream.add(li);
             break;
           case scrapeDoneEvent:

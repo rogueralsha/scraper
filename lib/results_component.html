@@ -90,9 +90,21 @@
             </material-button>
         </td>
         <td  *ngIf="loaded">
-            <material-button materialTooltip="Open links in new tabs, waiting for each tab to load" [tooltipPositions]="tooltipPosition" clear-size (trigger)="openAllButtonClick(true)">
-                <material-icon icon="open_in_new" size="x-small"></material-icon>+
-                <material-icon icon="timelapse" size="x-small"></material-icon>
+            <material-button materialTooltip="Open links in new tabs, waiting for each tab to load" [tooltipPositions]="tooltipPosition" clear-size (trigger)="openAllButtonClick(true)" style="width:48pt;">
+                <table>
+                    <tr>
+                        <td>
+                            <material-icon icon="open_in_new" size="x-small"></material-icon>
+                        </td>
+                        <td>
+                            +
+                        </td>
+                        <td>
+                            <material-icon icon="timelapse" size="x-small"></material-icon>
+                        </td>
+                    </tr>
+                </table>
+
             </material-button>
         </td>
         <td *ngIf="loaded">
@@ -101,9 +113,20 @@
             </material-button>
         </td>
         <td *ngIf="loaded">
-            <material-button materialTooltip="Download all, then close this tab" [tooltipPositions]="tooltipPosition" clear-size (trigger)="downloadButtonClick(true)">
-                <material-icon icon="file_download" size="x-small"></material-icon>+
-                <material-icon icon="close" size="x-small"></material-icon>
+            <material-button materialTooltip="Download all, then close this tab" [tooltipPositions]="tooltipPosition" clear-size (trigger)="downloadButtonClick(true)" style="width:48pt;">
+                <table>
+                    <tr>
+                        <td>
+                            <material-icon icon="file_download" size="x-small"></material-icon>
+                        </td>
+                        <td>
+                            +
+                        </td>
+                        <td>
+                            <material-icon icon="close" size="x-small"></material-icon>
+                        </td>
+                    </tr>
+                </table>
             </material-button>
         </td>
         <td>

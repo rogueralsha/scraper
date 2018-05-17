@@ -56,7 +56,8 @@ class ResultsComponent implements OnInit {
 
   ResultsComponent(this._pageStream, this._settings);
 
-  String get artistDisplay => "${results.artist} ($selectedLinkCount/$linkCount)";
+  String get artistDisplay =>
+      "${results.artist} ($selectedLinkCount/$linkCount)";
 
   bool get hasError => (results?.error ?? "").isNotEmpty;
 

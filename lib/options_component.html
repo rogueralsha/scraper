@@ -1,3 +1,13 @@
+Logging Level:
+<material-dropdown-select
+        [buttonText]="selectionValue?.name"
+        [selection]="singleSelectModel"
+        [options]="loggingOptions"
+        [itemRenderer]="levelItemRenderer"
+        [(ngModel)]="selectionValue"
+>
+</material-dropdown-select>
+
 <material-expansionpanel name="Prefix paths" (save)="savePaths()" (cancel)="loadPaths()" (open)="loadPaths()">
     <material-list>
         <material-list-item *ngFor="let m of prefixPaths; let i = index">{{m}}

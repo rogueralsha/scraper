@@ -10,32 +10,9 @@
     {
       "run_at": "document_end",
       "matches": [
-        "http://*.artstation.com/*",
-        "https://*.artstation.com/*",
-        "http://*.comicartcommunity.com/*",
-        "https://*.comicartcommunity.com/*",
-        "http://*.comicartfans.com/*",
-        "https://*.comicartfans.com/*",
-        "http://*.deviantart.com/*",
-        "https://*.deviantart.com/*",
-        "http://*.hentai-foundry.com/*",
-        "https://*.hentai-foundry.com/*",
-        "http://*.instagram.com/*",
-        "https://*.instagram.com/*",
-        "http://*.blogspot.com/*",
-        "https://*.blogspot.com/*",
-        "http://*.gfycat.com/*",
-        "https://*.gfycat.com/*",
-        "http://*.paheal.net/*",
-        "https://*.paheal.net/*",
-        "http://*.reddit.com/*",
-        "https://*.reddit.com/*",
-        "http://*.imgur.com/*",
-        "https://*.imgur.com/*",
-        "http://*.tumblr.com/*",
-        "https://*.tumblr.com/*",
-        "http://*.redd.it/*",
-        "https://*.redd.it/*"
+        "http://*/*",
+        "https://*/*"
+
       ],
       "js": [
         "content.dart.js"
