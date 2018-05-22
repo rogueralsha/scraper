@@ -1,6 +1,5 @@
 import 'package:angular/angular.dart';
 import 'package:angular_components/angular_components.dart';
-import 'src/todo_list/todo_list_component.dart';
 import 'package:logging/logging.dart';
 import 'services/scraper_service.dart';
 import 'results_component.dart';
@@ -14,7 +13,6 @@ import 'globals.dart';
   styleUrls: ['results_dialog.css'],
   templateUrl: 'results_dialog.html',
   directives: [
-    TodoListComponent,
     NgFor,
     materialDirectives,
     NgIf,

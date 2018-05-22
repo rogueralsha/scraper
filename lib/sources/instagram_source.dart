@@ -20,7 +20,7 @@ class InstagramSource extends ASource {
       caseSensitive: false);
 
   InstagramSource() {
-    this.directLinkRegexps.add(_contentRegExp);
+    this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_contentRegExp));
 
     this.urlScrapers.add(new SimpleUrlScraper(
         this,
@@ -30,7 +30,7 @@ class InstagramSource extends ASource {
               LinkType.image, "section main div article div div div div img"),
           new SimpleUrlScraperCriteria(LinkType.video, "video")
         ],
-        pageInfoScraper: scrapePostPageInfo));
+        customPageInfoScraper: scrapePostPageInfo));
 
     this.urlScrapers.add(new SimpleUrlScraper(
         this,
@@ -39,7 +39,7 @@ class InstagramSource extends ASource {
           new SimpleUrlScraperCriteria(
               LinkType.image, "span section main article div div div div a")
         ],
-        pageInfoScraper: scrapeUserPageInfo,
+        customPageInfoScraper: scrapeUserPageInfo,
         watchForUpdates: true));
   }
 

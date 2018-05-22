@@ -30,3 +30,12 @@ material-button {
 .resultsExpander .header {
     align-items: stretch !important;
 }
+
+a.resultFileName {
+    color: black;
+    text-decoration: none;
+}
+
+a.resultFileName:visited {
+    color: gray;
+}

@@ -14,9 +14,11 @@ dependencies:
   logging: any
   logging_handlers: any
   uuid: any
+  meta: any
 
 dev_dependencies:
   angular_test: ^2.0.0-alpha+9
+  angular_compiler: 0.4.0-alpha+11
   build_runner: ^0.8.7
   build_test: ^0.10.0
   build_web_compilers: ^0.3.7

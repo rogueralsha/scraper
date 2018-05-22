@@ -13,7 +13,6 @@ import 'globals.dart';
 import 'services/page_stream_service.dart';
 import 'services/scraper_service.dart';
 import 'services/settings_service.dart';
-import 'src/todo_list/todo_list_component.dart';
 
 // AngularDart info: https://webdev.dartlang.org/angular
 // Components info: https://webdev.dartlang.org/components
@@ -22,7 +21,7 @@ import 'src/todo_list/todo_list_component.dart';
   selector: 'results-viewer',
   styleUrls: ['results_component.css'],
   templateUrl: 'results_component.html',
-  directives: [TodoListComponent, NgFor, materialDirectives, NgIf],
+  directives: [NgFor, materialDirectives, NgIf],
   providers: [
     const ClassProvider(ScraperService),
     const ClassProvider(SettingsService),
@@ -35,7 +34,6 @@ class ResultsComponent implements OnInit {
       new RegExp("^https?:\\/\\/(.+)\$", caseSensitive: false);
 
   static final Logger _log = new Logger("ResultsComponent");
-  bool showSpinner = false;
   bool showProgress = false;
   bool savePath = false;
   bool showPopup = false;
@@ -73,9 +71,9 @@ class ResultsComponent implements OnInit {
       new List<LinkInfo>.from(links.where((LinkInfo r) => r.select));
 
   void addResult(LinkInfo result) {
-    String matchedLink = _urlMatcherRegex.firstMatch(result.url).group(1);
+    final String matchedLink = _urlMatcherRegex.firstMatch(result.url).group(1);
     for (int i = 0; i < this.links.length; i++) {
-      String matchedOtherLink =
+      final String matchedOtherLink =
           _urlMatcherRegex.firstMatch(this.links[i].url).group(1);
 
       if (matchedLink == matchedOtherLink) {
@@ -89,17 +87,19 @@ class ResultsComponent implements OnInit {
   void closeButtonClick() async {
     try {
       closeTab();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _log.severe("closeButtonClick", e, st);
     }
   }
 
+  int _pendingScrapes = 0;
+
+
   void downloadButtonClick(bool close) async {
     _log.finest("downloadButtonClick($close) start");
     try {
-      showSpinner = true;
       showProgress = true;
-      List<LinkInfo> toDownload =
+      final List<LinkInfo> toDownload =
           new List<LinkInfo>.from(links.where((LinkInfo r) => r.select));
 
       if (toDownload.isEmpty) {
@@ -120,10 +120,15 @@ class ResultsComponent implements OnInit {
         }
       }
 
+      final int maxConcurrentDownloads = await _settings.getMaxConcurrentDownloads();
+      _log.info("Max concurrent downloads is set to $maxConcurrentDownloads");
+      int concurrentDownloads = 0;
+
       this.progressMax = toDownload.length;
       this.progressCurrent = 0;
+      _pendingScrapes = 0;
 
-      chrome.Port p = chrome.runtime.connect(
+      final chrome.Port p = chrome.runtime.connect(
           null, new chrome.RuntimeConnectParams(name: new Uuid().v4()));
       try {
         _log.info("Getting first item from queue");
@@ -135,11 +140,15 @@ class ResultsComponent implements OnInit {
 
         _sendMessageForScrapeResult(p, r, pathPrefix);
         await for (chrome.OnMessageEvent e in p.onMessage) {
-          _log.info("Message received during download process");
-          _log.finer(context['JSON'].callMethod('stringify', [e.message]));
+          this.progressPercent =
+              ((progressCurrent / progressMax) * 100).round();
+
+          _log
+              ..info("Message received during download process")
+              ..finer(context['JSON'].callMethod('stringify', [e.message]));
 
           if (e.message.hasProperty(messageFieldEvent)) {
-            String event = e.message[messageFieldEvent];
+            final String event = e.message[messageFieldEvent];
             _log.finest("Event received: $event");
             switch (event) {
               case tabLoadedMessageEvent:
@@ -149,12 +158,13 @@ class ResultsComponent implements OnInit {
                 // Send a message to the event page to subscribe to the new page's scraping
                 p.postMessage({
                   messageFieldCommand: subscribeCommand,
-                  messageFieldTabId: e.message[messageFieldTabId]
+                  messageFieldTabId: e.message[messageFieldTabId],
                 });
                 // Ask the page to start scraping
                 p.postMessage({
                   messageFieldCommand: startScrapeCommand,
-                  messageFieldTabId: e.message[messageFieldTabId]
+                  messageFieldTabId: e.message[messageFieldTabId],
+                  messageFieldUrl: e.message[messageFieldUrl]
                 });
                 continue;
               case pageInfoEvent:
@@ -162,7 +172,7 @@ class ResultsComponent implements OnInit {
                 continue;
               case linkInfoEvent:
                 _log.finest("Link info received, adding to queue");
-                LinkInfo li =
+                final LinkInfo li =
                     new LinkInfo.fromJson(e.message[messageFieldData]);
                 toDownload.insert(insertPosition, li);
                 if (insertPosition > 0) {
@@ -172,6 +182,7 @@ class ResultsComponent implements OnInit {
                 _log.finest("Queue length: ${toDownload.length}");
                 continue;
               case scrapeDoneEvent:
+                _pendingScrapes--;
                 _log.info(
                     "Ubsubscribing from tab: ${e.message[messageFieldTabId]}");
                 p.postMessage({
@@ -184,24 +195,39 @@ class ResultsComponent implements OnInit {
                   messageFieldTabId: e.message[messageFieldTabId]
                 });
                 break;
-              case fileDownloadedEvent:
-                _log.info("File downloaded event received");
-                // Great, continue to the next file
+              case fileDownloadStartEvent:
+                _log.info("File download start event received");
+                concurrentDownloads++;
                 break;
+              case fileDownloadCompleteEvent:
+                _log.info("File download complete event received");
+                concurrentDownloads--;
+                progressCurrent++;
+                break;
+              case fileDownloadErrorEvent:
+                _log.info("File download error event received");
+                window.alert(
+                    "An error occured for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}");
+                throw new Exception("An error occured for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}");
               default:
                 throw new Exception("Unupported event: $event");
             }
-            if (event != scrapeDoneEvent || insertPosition == 0) {
-              progressCurrent++;
-            }
+
             this.progressPercent =
                 ((progressCurrent / progressMax) * 100).round();
+            _log.finer("Progress is currently at $progressCurrent/$progressMax");
+
+            _log.finer("Concurrent downloads at $concurrentDownloads/$maxConcurrentDownloads");
+            _log.finer("Pending scrapes at $_pendingScrapes");
+            if (concurrentDownloads >= maxConcurrentDownloads) {
+              continue;
+            }
             if (toDownload.isNotEmpty) {
               insertPosition = 0;
-              _log.info("Getting next item from queue");
+              _log.finer("Getting next item from queue");
               r = toDownload.removeAt(0);
               _sendMessageForScrapeResult(p, r, pathPrefix);
-            } else {
+            } else if(concurrentDownloads==0&&_pendingScrapes==0) {
               break;
             }
           }
@@ -212,15 +238,15 @@ class ResultsComponent implements OnInit {
       } finally {
         p.disconnect();
       }
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _log.severe("downloadButtonClick($close)", e, st);
     } finally {
-      showSpinner = false;
       showProgress = false;
       _log.finest("downloadButtonClick($close) end");
     }
   }
 
+  @override
   Future<Null> ngOnInit() async {
     _log.finest("AppComponent.ngOnInit start");
     try {
@@ -239,15 +265,12 @@ class ResultsComponent implements OnInit {
         await _pageStream.requestScrapeStart();
       } else {
         // ignore: unawaited_futures
-        document.onVisibilityChange.firstWhere((Event e) {
-          return !document.hidden;
-        }).then((e) {
-          {
+        document.onVisibilityChange.firstWhere((Event e) => !document.hidden).then((e) {{
             _pageStream.requestScrapeStart();
           }
         });
       }
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _log.severe("AppComponent.ngOnInit error", e, st);
     } finally {
       _log.finest("AppComponent.ngOnInit end");
@@ -256,7 +279,6 @@ class ResultsComponent implements OnInit {
 
   Future<Null> openAllButtonClick(bool waitForLoad) async {
     try {
-      showSpinner = true;
       showProgress = true;
       Queue<LinkInfo> toOpen =
           new Queue<LinkInfo>.of(links.where((LinkInfo r) => r.select));
@@ -271,11 +293,11 @@ class ResultsComponent implements OnInit {
 
       _log.info("Wait is set to $waitForLoad");
 
-      chrome.Port p = chrome.runtime.connect(
+      final chrome.Port p = chrome.runtime.connect(
           null, new chrome.RuntimeConnectParams(name: new Uuid().v4()));
       try {
         if (waitForLoad) {
-          LinkInfo r = toOpen.removeFirst();
+          final LinkInfo r = toOpen.removeFirst();
           p.postMessage(
               {messageFieldCommand: openTabCommand, messageFieldUrl: r.url});
 
@@ -287,7 +309,7 @@ class ResultsComponent implements OnInit {
             this.progressPercent =
                 ((this.progressCurrent / this.progressMax) * 100).round();
             if (waitForLoad && toOpen.isNotEmpty) {
-              LinkInfo r = toOpen.removeFirst();
+              final LinkInfo r = toOpen.removeFirst();
               p.postMessage({
                 messageFieldCommand: openTabCommand,
                 messageFieldUrl: r.url
@@ -304,10 +326,9 @@ class ResultsComponent implements OnInit {
       } finally {
         p.disconnect();
       }
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _log.severe("openAllButtonClick", e, st);
     } finally {
-      showSpinner = false;
       showProgress = false;
     }
   }
@@ -326,7 +347,7 @@ class ResultsComponent implements OnInit {
       artistPath = "";
       availablePathPrefixes = [];
       await _pageStream.requestScrapeStart();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _log.severe("refreshButtonClick", e, st);
     }
   }
@@ -353,16 +374,18 @@ class ResultsComponent implements OnInit {
       chrome.Port p, LinkInfo r, String prefixPath) {
     if (r.type == LinkType.page) {
       _log.fine("Item is of type page, opening page to scrape");
+      _pendingScrapes++;
       p.postMessage(
           {messageFieldCommand: openTabCommand, messageFieldUrl: r.url});
     } else {
-      StringBuffer pathBuffer = new StringBuffer();
+      final StringBuffer pathBuffer = new StringBuffer();
       if (prefixPath.isNotEmpty) {
-        pathBuffer.write(prefixPath);
-        pathBuffer.write("/");
+        pathBuffer
+            ..write(prefixPath)
+            ..write("/");
       }
       pathBuffer.write(r.filename);
-      String fullPath = pathBuffer.toString();
+      final String fullPath = pathBuffer.toString();
 
       _log.fine("Downloading item: ${r.url} to $fullPath");
       p.postMessage({

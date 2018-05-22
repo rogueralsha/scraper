@@ -10,7 +10,7 @@ class FacebookSource extends ASource {
   //static final RegExp _photoRegExp = new RegExp("https?://[^\\.]+\\.facebook\\.com/.*\\/photos\\/.*", caseSensitive: false);
 
   FacebookSource() {
-    this.directLinkRegexps.add(_contentServerRegExp);
+    this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_contentServerRegExp));
 
 //    this.urlScrapers.add(new SimpleUrlScraper(this, _albumRegExp, [
 //      new SimpleUrlScraperCriteria(LinkType.page, "div#content_container ._2eea a")]));

@@ -1,20 +1,23 @@
+import 'dart:html';
+
 import 'package:logging/logging.dart';
 import 'package:scraper/results/link_info.dart';
+
 import '../imgur_source.dart';
-import 'dart:html';
+
 export 'package:scraper/results/link_info.dart';
 
 class LinkInfoImpl extends LinkInfo {
   static final Logger _log = new Logger("LinkInfoImpl");
 
   LinkInfoImpl(String url, String sourceUrl,
-      {type: LinkType.image,
-      String filename: null,
-      autoDownload: true,
-      thumbnail: null,
-      date: null,
-      select: true,
-      referrer: null})
+      {LinkType type = LinkType.image,
+      String filename,
+      bool autoDownload = true,
+      String thumbnail,
+      DateTime date,
+      bool select = true,
+      String referrer})
       : super(
             sourceUrl: sourceUrl,
             type: type,
@@ -32,16 +35,16 @@ class LinkInfoImpl extends LinkInfo {
 
     url = ImgurSource.convertMobileUrl(url);
 
-    _log.fine("Creating " + type.toString() + " link: " + url);
+    _log.fine("Creating ${type.toString()} link: $url");
     this.url = _resolvePartialUrl(Uri.decodeComponent(url));
 
     if (filename == null) {
       this.filename = _getFileName(url);
-      if (this.filename.length == 0) {
+      if (this.filename.isEmpty) {
         this.filename = url;
       }
     } else {
-      _log.fine("Provided filename: " + filename);
+      _log.fine("Provided filename: $filename");
       this.filename = filename;
     }
 
@@ -50,12 +53,12 @@ class LinkInfoImpl extends LinkInfo {
     }
   }
 
-  String _resolvePartialUrl(url) {
-    AnchorElement ele = document.createElement("a");
+  String _getFileName(String link) => Uri
+      .decodeComponent(link.substring(link.lastIndexOf('/') + 1).split("?")[0]);
+
+  String _resolvePartialUrl(String url) {
+    final AnchorElement ele = document.createElement("a");
     ele.href = url;
     return ele.href;
   }
-
-  String _getFileName(link) => Uri
-      .decodeComponent(link.substring(link.lastIndexOf('/') + 1).split("?")[0]);
 }

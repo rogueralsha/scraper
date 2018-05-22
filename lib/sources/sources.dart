@@ -7,6 +7,7 @@ import 'comic_art_fans_source.dart';
 import 'deviantart_source.dart';
 import 'etc_source.dart';
 import 'facebook_source.dart';
+import 'patreon_source.dart';
 import 'gfycat_source.dart';
 import 'hentai_foundry_source.dart';
 import 'imgur_source.dart';
@@ -17,6 +18,8 @@ import 'tumblr_source.dart';
 import 'twitter_source.dart';
 import 'tiny_tiny_rss_source.dart';
 import 'package:logging/logging.dart';
+import 'erome_source.dart';
+import 'wordpress_source.dart';
 export 'a_source.dart';
 
 
@@ -38,7 +41,10 @@ final List<ASource> sourceInstances = <ASource>[
   new TwitterSource(),
   new FacebookSource(),
   new EtcSource(),
-  new TinyTinyRSSSource()
+  new TinyTinyRSSSource(),
+  new EromeSource(),
+  new PatreonSource(),
+  new WordpressSource()
 ];
 
 ASource getScraperForSite(String url, Document document) {

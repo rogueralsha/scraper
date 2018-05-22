@@ -11,10 +11,14 @@ import 'package:scraper/results_dialog.template.dart' as ng;
 import 'package:scraper/services/scraper_service.dart';
 import 'package:scraper/services/settings_service.dart';
 import 'package:scraper/sources/sources.dart';
+import 'package:uuid/uuid.dart';
+
+String pageId = new Uuid().v4().toString();
 
 Future<Null> main() async {
+
   Logger.root.level = await settings.getLoggingLevel();
-  Logger.root.onRecord.listen(new LogPrintHandler());
+  Logger.root.onRecord.listen(new LogPrintHandler(messageFormat: "%t\t$pageId\t%n\t[%p]:\t%m"));
   _log.info("Logging set to ${Logger.root.level.name}");
   _log.finest("main()");
 
@@ -35,15 +39,18 @@ Future<Null> main() async {
         final String command = request[messageFieldCommand];
         if (command != startScrapeCommand) return;
 
+        final String targetUrl = request[messageFieldUrl];
+        if(targetUrl!=url) {
+          _log.warning("Scrape request is not for this url ($url), it is for $targetUrl");
+          return;
+        }
+        _log.finer("Request matches this url $url");
+
         _log.info(
             "Message to start scraping ${request[messageFieldUrl]} receive, starting scraping");
         if (pageInfoSub != null) {
           await pageInfoSub.cancel();
           pageInfoSub = null;
-        }
-        if (linkInfoSub != null) {
-          await linkInfoSub.cancel();
-          linkInfoSub = null;
         }
         pageInfoSub = source.onScrapeUpdateEvent.listen((dynamic e) async {
           _log.fine("onScrapeUpdateEvent stream event received");
@@ -87,10 +94,7 @@ Future<Null> main() async {
   }
 }
 
-StreamSubscription linkInfoSub;
 StreamSubscription pageInfoSub;
-StreamSubscription scrapeDoneSub;
 SettingsService settings = new SettingsService();
 
 final Logger _log = new Logger("content.dart");
-

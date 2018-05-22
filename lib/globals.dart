@@ -11,6 +11,8 @@ const String messageFieldCommand = "command";
 const String messageFieldFilename = "filename";
 const String messageFieldHeaders = "headers";
 const String messageFieldData = "data";
+const String messageFieldError= "error";
+const String messageFieldDownloadId= "downloadId";
 
 const String startScrapeCommand = "startScrape";
 const String scrapePageCommand = "scrapePage";
@@ -25,7 +27,9 @@ const String unsubscribeCommand = "unsubscribe";
 const String closeTabMessageEvent = "closeTab";
 const String tabLoadedMessageEvent = "tabLoaded";
 const String endMessageEvent = "endMessage";
-const String fileDownloadedEvent = "fileDownloaded";
+const String fileDownloadStartEvent = "fileDownloadStarted";
+const String fileDownloadCompleteEvent = "fileDownloadComplete";
+const String fileDownloadErrorEvent = "fileDownloadError";
 const String scrapeDoneEvent = "scrapeDone";
 
 const String pageInfoEvent = "pageInfo";

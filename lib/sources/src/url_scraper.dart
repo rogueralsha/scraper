@@ -9,7 +9,9 @@ class UrlScraper {
   final RegExp urlRegExp;
   PageInfoScraper pageInfoScraper;
   LinkInfoScraper linkInfoScraper;
-  UrlScraper(this.urlRegExp, this.pageInfoScraper, this.linkInfoScraper);
+  final bool useForEvaluation;
+
+  UrlScraper(this.urlRegExp, this.pageInfoScraper, this.linkInfoScraper, {this.useForEvaluation = false});
 
   bool isMatch(String url) {
     _log.finest("Checking url $url against regex $urlRegExp");

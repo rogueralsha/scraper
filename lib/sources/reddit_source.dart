@@ -7,17 +7,17 @@ import 'src/url_scraper.dart';
 class RedditSource extends ASource {
   static final Logger _log = new Logger("RedditSource");
   static final RegExp _regExp = new RegExp(
-      "https?://www\\.reddit\\.com/r/([^\\/]+)\\/.*",
+      r"https?://(www|old)\.reddit\.com/r/([^/]+)/.*",
       caseSensitive: false);
   static final RegExp _postRegexp = new RegExp(
-      "https?://www\\.reddit\\.com/r/([^\\/]+)/comments/.*",
+      r"https?://(www|old)\.reddit\.com/r/([^/]+)/comments/.*",
       caseSensitive: false);
   static final RegExp _imageRegexp = new RegExp(
-      "https?://i\\.(redd\\.it|redditmedia\\.com)/.*",
+      r"https?://i\.(redd\.it|redditmedia\.com)/.*",
       caseSensitive: false);
 
   RedditSource() {
-    this.directLinkRegexps.add(_imageRegexp);
+    this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.image,_imageRegexp));
 
     this.urlScrapers.add(new UrlScraper(
         _regExp, scrapeSubredditPageInfo, scrapeSubredditPageLinks));
@@ -29,8 +29,9 @@ class RedditSource extends ASource {
   Future<Null> scrapeSubredditPageInfo(
       PageInfo pageInfo, Match m, String url, Document doc) async {
     _log.finest("scrapeSubredditPageInfo");
-    pageInfo.saveByDefault = false;
-    pageInfo.artist = m.group(1);
+    pageInfo
+      ..saveByDefault = false
+      ..artist = m.group(2);
   }
 
   Future<Null> scrapeSubredditPageLinks(String url, Document doc) async {
@@ -42,7 +43,7 @@ class RedditSource extends ASource {
       if (_postRegexp.hasMatch(link)) {
         //continue;
       } else {
-        evaluateLink(url, link);
+        evaluateLink(link, url);
       }
     }
 
@@ -53,7 +54,7 @@ class RedditSource extends ASource {
       if (_postRegexp.hasMatch(link)) {
         //continue;
       } else {
-        evaluateLink(url, link, select: false);
+        evaluateLink(link, url, select: false);
       }
     }
 

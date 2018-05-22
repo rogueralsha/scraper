@@ -13,7 +13,14 @@ class BloggerSource extends ASource {
       "https?://([^\\.]+)\\.blogspot\\.com/\\d{4}\\/\\d{2}\\/.*",
       caseSensitive: false);
 
+  static final RegExp _contentRegExp = new RegExp(
+      "https?://\\d+\\.([^\\.]+)\\.blogspot\\.com/\\-.+",
+      caseSensitive: false);
+
+
   BloggerSource() {
+    this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file, _contentRegExp));
+
     this.urlScrapers.add(new SimpleUrlScraper(this, _postRegExp,
         [new SimpleUrlScraperCriteria(LinkType.image, "div.post-body a")]));
 

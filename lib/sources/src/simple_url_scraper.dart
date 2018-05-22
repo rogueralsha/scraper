@@ -7,6 +7,7 @@ import 'url_scraper.dart';
 import '../a_source.dart';
 import 'simple_url_scraper_criteria.dart';
 export 'simple_url_scraper_criteria.dart';
+export 'url_scraper.dart';
 
 class SimpleUrlScraper extends UrlScraper {
   static final Logger _log = new Logger("SimpleUrlScraper");
@@ -14,21 +15,30 @@ class SimpleUrlScraper extends UrlScraper {
   final List<SimpleUrlScraperCriteria> criteria;
   final bool saveByDefault;
   final bool watchForUpdates;
+  final int urlRegexGroup;
+  final PageInfoScraper customPageInfoScraper;
 
   SimpleUrlScraper(this._source, RegExp urlRegexp, this.criteria,
-      {PageInfoScraper pageInfoScraper: null,
-      this.saveByDefault: true,
-      this.watchForUpdates: false})
-      : super(urlRegexp, null, null) {
-    this.pageInfoScraper = pageInfoScraper ?? _pageInfoScraperImpl;
+      {this.customPageInfoScraper,
+      this.saveByDefault= true,
+      this.watchForUpdates= false,
+      this.urlRegexGroup= 1,
+      bool useForEvaluation=false})
+      : super(urlRegexp, null, null, useForEvaluation: useForEvaluation) {
+    this.pageInfoScraper = _pageInfoScraperImpl;
     this.linkInfoScraper = _linkInfoScraperImpl;
   }
 
   Future<Null> _pageInfoScraperImpl(
       PageInfo pageInfo, Match m, String url, Document doc) async {
     _log.info("_pageInfoScraperImpl");
-    await _source.artistFromRegExpPageScraper(pageInfo, m, url, doc);
     pageInfo.saveByDefault = this.saveByDefault;
+    if(customPageInfoScraper==null) {
+      await _source.artistFromRegExpPageScraper(
+          pageInfo, m, url, doc, group: urlRegexGroup);
+    } else {
+      await customPageInfoScraper(pageInfo, m, url, doc);
+    }
   }
 
   MutationObserver _observer;
@@ -72,6 +82,17 @@ class SimpleUrlScraper extends UrlScraper {
             thumbnailSubSelector:  criteria.thumbnailSubSelector,
             defaultLinkType:  criteria.linkType);
 
+        if(li==null)
+          continue;
+
+        if(criteria.linkRegExp!=null) {
+          _log.finest("linkRegExp (${criteria.linkRegExp}) specified, checking against url ${li.url}");
+          if(!criteria.linkRegExp.hasMatch(li.url)) {
+            _log.finest("Did not pass");
+            continue;
+          }
+        }
+
         if (criteria.validateLinkInfo != null) {
           _log.finest("validateLinkInfo specified, testing");
 
@@ -82,7 +103,12 @@ class SimpleUrlScraper extends UrlScraper {
           _log.finest("Passed validation");
         }
 
-        _source.sendLinkInfo(li);
+
+        if(criteria.evaluateLinks) {
+          _source.evaluateLink(li.url, url);
+        } else {
+          _source.sendLinkInfo(li);
+        }
         total++;
         if (criteria.limit > 0 && total >= criteria.limit) {
           _log.info(

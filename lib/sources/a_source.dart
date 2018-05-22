@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:html';
 
+import 'package:meta/meta.dart';
 import 'package:logging/logging.dart';
 import 'package:scraper/globals.dart';
 import 'package:scraper/results/page_info.dart';
@@ -8,19 +9,21 @@ import 'package:scraper/results/page_info.dart';
 import 'sources.dart';
 import 'src/link_info_impl.dart';
 import 'src/url_scraper.dart';
+import 'src/direct_link_regexp.dart';
 
 export 'package:scraper/results/page_info.dart';
 export 'package:scraper/sources/src/link_info_impl.dart';
+export 'src/direct_link_regexp.dart';
 
 abstract class ASource {
   static final Logger _log = new Logger("ASource");
 
-  final List<RegExp> directLinkRegexps = <RegExp>[];
+  final List<DirectLinkRegExp> directLinkRegexps = <DirectLinkRegExp>[];
 
   final List<UrlScraper> urlScrapers = <UrlScraper>[];
 
   final StreamController<dynamic> _scrapeUpdateStream =
-      new StreamController<dynamic>.broadcast();
+  new StreamController<dynamic>.broadcast();
 
   MutationObserver galleryObserver;
 
@@ -29,15 +32,19 @@ abstract class ASource {
   ASource();
 
   Stream<dynamic> get onScrapeUpdateEvent => _scrapeUpdateStream.stream;
+
   bool get sentLinks => _seenLinks.isNotEmpty;
 
-  Future<Null> artistFromRegExpPageScraper(
-      PageInfo pageInfo, Match m, String url, Document doc) async {
+  int get sentLinkCount => _seenLinks.length;
+
+  Future<Null> artistFromRegExpPageScraper(PageInfo pageInfo, Match m,
+      String url, Document doc, {int group = 1}) async {
     _log.info("artistFromRegExpPageScraper");
-    pageInfo.artist = m.group(1);
+    pageInfo.artist = m.group(group);
   }
 
-  bool canScrapePage(String url, {Document document}) {
+  bool canScrapePage(String url,
+      {Document document, bool forEvaluation = false}) {
     _log.finest("canScrapePage");
     for (UrlScraper us in urlScrapers) {
       if (us.isMatch(url)) return true;
@@ -46,60 +53,62 @@ abstract class ASource {
   }
 
   void createAndSendLinkInfo(String link, String sourceUrl,
-      {LinkType type= LinkType.image, String filename}) {
+      {LinkType type = LinkType.image, String filename, String thumbnail}) {
     if (!this._seenLinks.contains(link)) {
       this._seenLinks.add(link);
       final LinkInfo li =
-          new LinkInfoImpl(link, sourceUrl, type: type, filename: filename);
+      new LinkInfoImpl(link, sourceUrl, type: type,
+          filename: filename,
+          thumbnail: thumbnail);
       _sendLinkInfoInternal(li);
     }
   }
 
-  bool determineIfDirectFileLink(String url) {
-    for (RegExp r in this.directLinkRegexps) {
-      if (r.hasMatch(url)) return true;
-    }
-    return false;
-  }
-
   String determineThumbnail(String url) => null;
+
   Future<Null> emptyLinkScraper(String s, Document d) async {}
 
-  Future<Null> emptyPageScraper(
-      PageInfo pi, Match m, String url, Document doc) async {
+  Future<Null> emptyPageScraper(PageInfo pi, Match m, String url,
+      Document doc) async {
     final Match m = siteRegexp.firstMatch(url);
     pi.artist = m[1];
   }
 
-  void evaluateLink(String sourceUrl, String link, {bool select = true}) {
-    _log.finest('evaluateLink($sourceUrl, $link, {$select})');
-    final SupportedLinkResult result = isSupportedPage(link);
-    if (result.result) {
-      String thumbnail;
-      if (result.thumbnail != null) {
-        thumbnail = result.thumbnail;
+  @protected
+  LinkInfo evaluateLinkImpl(String link, String sourceUrl) {
+    for (DirectLinkRegExp directRegExp in this.directLinkRegexps) {
+      if (directRegExp.regExp.hasMatch(link)) {
+        _log.finest("Direct link regexp match found in source $this");
+        final LinkInfo li = new LinkInfoImpl(link, sourceUrl, type: directRegExp.linkType,
+            thumbnail: determineThumbnail(link));
+        return reEvaluateLink(li, directRegExp.regExp);
       }
-      LinkInfo li;
-      if (result.directLink) {
-        li = new LinkInfoImpl(link, sourceUrl,
-            select: select,
-            thumbnail: thumbnail,
-            autoDownload: result.autoDownload);
-      } else {
-        li = new LinkInfoImpl(link, sourceUrl,
-            type: LinkType.page,
-            select: select,
-            thumbnail: thumbnail,
-            autoDownload: result.autoDownload);
-      }
+    }
+    for(UrlScraper scraper in this.urlScrapers.where((UrlScraper us) => us.useForEvaluation&&us.urlRegExp.hasMatch(link))) {
+      _log.finest("Compatible UrlScraper found in source $this");
+      final LinkInfo li = new LinkInfoImpl(link, sourceUrl, type: LinkType.page,
+          thumbnail: determineThumbnail(link));
+      return reEvaluateLink(li, scraper.urlRegExp);
+    }
+
+    return null;
+  }
+
+  @protected
+  LinkInfo reEvaluateLink(LinkInfo li, RegExp regExp) => li;
+
+
+  void evaluateLink(String link, String sourceUrl, {bool select = true}) {
+    _log.finest('evaluateLink($link, $sourceUrl, {$select})');
+    for (ASource source in sourceInstances) {
+      final LinkInfo li = source.evaluateLinkImpl(link, sourceUrl);
+      if (li == null)
+        continue;
+      li.select = select;
       sendLinkInfo(li);
-// TODO: Make sure these get re-enabled appropriately
-      //    } else if (mixtapeRegexp.test(link)||webmVideoRegexp.test(link)||armariumRegexp.test(link)||catboxRegexp.test(link)
-//        ||safeMoeRegexp.test(link)||redditSource.imageRegexp.test(link)||uploaddirRegexp.test(link)||dokoMoeRegexp.test(link)
-//        ||userapiRegexp.test(link)) {
-//      output.addLink(createLink({url: link, type: "image", filename: filename, select: select}));
     }
   }
+
 
   Future<Null> selfLinkScraper(String url, Document d) async {
     _log.finest("selfLinkScraper");
@@ -108,7 +117,7 @@ abstract class ASource {
   }
 
   void sendLinkInfo(LinkInfo li) {
-    if(li==null)
+    if (li == null)
       return;
     if (!this._seenLinks.contains(li.url)) {
       this._seenLinks.add(li.url);
@@ -145,7 +154,8 @@ abstract class ASource {
     sendScrapeDone();
   }
 
-  Future<Null> manualScrape(PageInfo pi, String url, Document document) async {}
+  Future<Null> manualScrape(PageInfo pageInfo, String url,
+      Document document) async {}
 
   Future<bool> urlExists(String url) async {
     final HttpRequest request = new HttpRequest()
@@ -174,7 +184,8 @@ abstract class ASource {
   }
 
   LinkInfo createLinkFromElement(Element ele, String sourceUrl,
-      {String thumbnailSubSelector: "img", LinkType defaultLinkType: LinkType.page}) {
+      {String thumbnailSubSelector: "img", LinkType defaultLinkType: LinkType
+          .page}) {
     String link;
     String thumbnail;
 
@@ -215,7 +226,8 @@ abstract class ASource {
       link = ele.src;
       if (link?.isEmpty ?? true) {
         _log.finest("src attribute is empty, checking for source slements");
-        final ElementList<SourceElement> sources = ele.querySelectorAll("source");
+        final ElementList<SourceElement> sources = ele.querySelectorAll(
+            "source");
         for (SourceElement source in sources) {
           _log.finest("Source sub-element found, trying src");
           link = source.src;
@@ -246,55 +258,13 @@ abstract class ASource {
       _log.info("Unsupported element $ele found, skipping");
       return null;
     }
+    if (link?.isEmpty ?? true) {
+      _log.info("Null link, skipping");
+      return null;
+    }
+
     return new LinkInfoImpl(link, sourceUrl,
         type: type, thumbnail: thumbnail);
   }
 
-  static SupportedLinkResult isSupportedPage(String link) {
-    _log.finest("isSupportedPage");
-
-    SupportedLinkResult output = new SupportedLinkResult();
-    for (ASource source in sourceInstances) {
-      if (source.canScrapePage(link)) {
-        output.result = true;
-        output.thumbnail = source.determineThumbnail(link);
-        output.directLink = source.determineIfDirectFileLink(link);
-        break;
-      } else if (source.determineIfDirectFileLink(link)) {
-        output.result = true;
-        output.thumbnail = source.determineThumbnail(link);
-        output.directLink = true;
-        break;
-      }
-    }
-    if (output.result == false) {
-      //TODO: Make sure these are re-enabled appropriately
-//      if (hfRegExp.test(link) ||
-//        flickrRegexp.test(link) ||
-//        eroshareRegexp.test(link) ||
-//        postimgPostRegexp.test(link) ||
-//        postimgAlbumRegexp.test(link) ||
-//        pimpandhostRegexp.test(link) ||
-//        uploadsRuRegexp.test(link)||
-//        imagebamRegexp.test(link)) {
-//        output.result = true;
-//      }
-    }
-    if (output.result == false) {
-//    if (megaRegexp.test(link)||
-//    googleDriveRegexp.test(link)) {
-//    output.result = true;
-//    output.autoDownload = false;
-//    }
-    }
-
-    return output;
-  }
-}
-
-class SupportedLinkResult {
-  bool result = false;
-  String thumbnail = null;
-  bool directLink = false;
-  bool autoDownload = true;
 }

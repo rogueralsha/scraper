@@ -1,3 +1,4 @@
+import 'dart:html';
 import 'dart:js';
 import 'dart:async';
 import 'package:logging/logging.dart';
@@ -38,10 +39,11 @@ class PageStreamService {
     }
   }
 
-  Future<Null> requestScrapeStart() async {
+  Future<Null> requestScrapeStart({String url}) async {
     p.postMessage({
       messageFieldCommand: startScrapeCommand,
-      messageFieldTabId: await getCurrentTabId()
+      messageFieldTabId: await getCurrentTabId(),
+      messageFieldUrl: url??window.location.href
     });
   }
 

@@ -30,7 +30,7 @@ class ArtStationSource extends ASource {
               validateLinkInfo: (LinkInfo li, Element e) =>
                   !li.url.contains("&dl=1"))
         ],
-        pageInfoScraper: scrapeImagePageInfo));
+        customPageInfoScraper: scrapeImagePageInfo));
 
     this.urlScrapers.add(new SimpleUrlScraper(this, _userRegExp, [
           new SimpleUrlScraperCriteria(

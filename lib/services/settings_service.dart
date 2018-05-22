@@ -11,6 +11,7 @@ class SettingsService {
 
   //static const String _artistField = "artist";
   static const String _pathField = "path";
+  static const String _maxConcurrentDownloadsField = "maxConcurrentDownloads";
 
   static const String _availablePrefixesSetting = "availablePrefixes";
 
@@ -111,6 +112,23 @@ class SettingsService {
     }
 
     return Level.INFO;
+  }
+
+  Future<Null> setMaxConcurrentDownloads(int value) async {
+    _log.info("Setting max concurrent downloads to ${value}");
+    await chrome.storage.local
+        .set(<String, dynamic>{"${_settingsStore}_$_maxConcurrentDownloadsField": value});
+  }
+  Future<int> getMaxConcurrentDownloads() async {
+    final Map<dynamic, dynamic> results = await chrome.storage.local
+        .get("${_settingsStore}_$_maxConcurrentDownloadsField");
+
+    if (results?.isNotEmpty ?? false) {
+      final int value = results[results.keys.first];
+      return value??5;
+    }
+
+    return 5;
   }
 
   String _artistPath(String name) => "${_mappingStore}_$name";

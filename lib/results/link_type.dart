@@ -1,1 +1,1 @@
-enum LinkType { image, page, video, flash, embedded }
+enum LinkType { image, page, video, flash, embedded, file }

@@ -6,6 +6,7 @@ import 'package:scraper/globals.dart';
 
 import 'a_source.dart';
 import 'src/link_info_impl.dart';
+import 'package:scraper/services/page_stream_service.dart';
 
 class TumblrSource extends ASource {
   static final Logger _log = new Logger("TumblrSource");
@@ -19,7 +20,7 @@ class TumblrSource extends ASource {
   static final RegExp _archiveRegExp =
       new RegExp("https?://[^\\/]+/archive", caseSensitive: false);
   static final RegExp _redirectRegExp =
-      new RegExp("redirect\\?z=(.+)&t=", caseSensitive: false);
+      new RegExp(r"redirect\?z=(.+)&t=", caseSensitive: false);
 
   static final RegExp _tumblrMediaRegExp = new RegExp(
       "https?://\\d+\\.media\\.tumblr\\.com/.*",
@@ -40,6 +41,7 @@ class TumblrSource extends ASource {
     "li.post",
     "ul.post",
     "div.posts",
+    "div#posts",
     "div.grid_7",
     "div.photoset",
     "div#entry",
@@ -48,33 +50,34 @@ class TumblrSource extends ASource {
     "div#Body"
   ];
 
+  static final PageStreamService streamService = new PageStreamService();
+
   TumblrSource() {
-    this.directLinkRegexps.add(_tumblrMediaRegExp);
+    this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_tumblrMediaRegExp));
   }
 
   @override
-  bool canScrapePage(String url, {Document document}) {
+  bool canScrapePage(String url,
+      {Document document, bool forEvaluation = false}) {
     _log.finest("canScrapePage");
 
     bool possibleTumblrSite = false;
 
-    if(_regExp.hasMatch(url)) {
+    if (_regExp.hasMatch(url)) {
       possibleTumblrSite = true;
     } else {
       if (document == null) {
         return false;
       }
       final MetaElement metaAppName =
-      document.querySelector('meta[property="al:android:app_name"]');
+          document.querySelector('meta[property="al:android:app_name"]');
 
-      possibleTumblrSite =
-        (metaAppName?.content?.toLowerCase() == "tumblr") ||
-        document.querySelector("meta[name='tumblr-theme']") != null;
-
+      possibleTumblrSite = (metaAppName?.content?.toLowerCase() == "tumblr") ||
+          document.querySelector("meta[name='tumblr-theme']") != null;
     }
 
-    if(possibleTumblrSite) {
-      return _postRegExp.hasMatch(url)||_archiveRegExp.hasMatch(url);
+    if (possibleTumblrSite) {
+      return _postRegExp.hasMatch(url) || _archiveRegExp.hasMatch(url);
     }
     return false;
   }
@@ -132,10 +135,26 @@ class TumblrSource extends ASource {
     }
     return output;
   }
+  MutationObserver _observer;
 
+  void _scrapeArchiveLinks(String url) {
+    final ElementList<DivElement> eles =
+    document.querySelectorAll("div.post");
+    for (DivElement postElement in eles) {
+      final AnchorElement linkElement = postElement.querySelector("a.hover");
+      final DivElement thumbnailElement = postElement.querySelector("div.post_thumbnail_container has_imageurl");
+      String thumbnailSource;
+      if(thumbnailElement!=null) {
+        thumbnailSource = thumbnailElement?.dataset["imageurl"];
+      }
+      createAndSendLinkInfo(linkElement.href, url, type: LinkType.page, thumbnail:  thumbnailSource);
+    }
+
+  }
 
   @override
-  Future<Null> manualScrape(PageInfo pageInfo, String url, Document document) async {
+  Future<Null> manualScrape(
+      PageInfo pageInfo, String url, Document document) async {
     _log.finest("manualScrape");
 
     if (_regExp.hasMatch(url)) {
@@ -157,14 +176,18 @@ class TumblrSource extends ASource {
       //     window.scrollTo(0, document.body.scrollHeight);
       // }
       // window.scrollTo(0, document.body.scrollHeight);
-
-      final ElementList<AnchorElement> links =
-          document.querySelectorAll("div.post a.hover");
-      for (int i = 0; i < links.length; i++) {
-        final String link = links[i].href; // + "/mobile";
-        createAndSendLinkInfo(link, url, type: LinkType.page);
-      }
+      _scrapeArchiveLinks(url);
+        if (_observer == null) {
+          _observer = new MutationObserver(
+                  (List<MutationRecord> mutations, MutationObserver observer) {
+                for (MutationRecord mutation in mutations) {
+                  _scrapeArchiveLinks(url);
+                }
+              });
+          _observer.observe(document, childList: true, subtree: true);
+        }
     } else if (_postRegExp.hasMatch(url)) {
+
       _log.info("Tumblr post page");
       if (_mobilePostRegExp.hasMatch(url)) {
         _log.info("Tumblr mobile post page");
@@ -175,53 +198,62 @@ class TumblrSource extends ASource {
       }
 
 
+
+      bool photosetIframeFound = false;
+
       for (String selector in selectors) {
+        _log.finest("Checking page with selector $selector");
         final ElementList<Element> articles =
             document.querySelectorAll(selector);
         if (articles.isEmpty) {
           continue;
         }
-        _log.info("Articles found with selector $selector");
-
+        _log.info("Articles found with selector $selector: ${articles.length}");
         for (Element mainArticle in articles) {
+
+          _log.finest("Checking article candidate $mainArticle");
           await getTumblrImages(url, mainArticle);
 
           final ElementList<AnchorElement> linkEles =
               mainArticle.querySelectorAll("a");
+          _log.finest("Anchor elements found in article: ${linkEles.length}");
           for (AnchorElement linkEle in linkEles) {
             if (_redirectRegExp.hasMatch(linkEle.href)) {
               _log.info("Decoding redirect URL", linkEle.href);
               String link = _redirectRegExp.firstMatch(linkEle.href)[1];
               link = Uri.decodeComponent(link);
               _log.info("Link decoded", link);
-              evaluateLink(url, link);
+              evaluateLink(link, url);
             }
           }
 
-//
-//            ElementList<IFrameElement> iframes = mainArticle.querySelectorAll("iframe.photoset");
-//            if (iframes.isNotEmpty) {
-//              _log.info("Found photoset iframes");
-//              try {
-//                IFrameElement iframe = iframes[0];
-//                _log.info("Getting media from iframe: " + iframe.src);
-//
-//                let results = await getPageContentsFromIframe(iframe.src);
-//                if (results != null) {
-//                  for (let i = 0, len = results.length; i < len; i++) {
-//                    outputData.addLink(results[i]);
-//                  }
-//                }
-//              } catch (err, st) {
-//                _log.severe("Error in the toombles",err,st);
-//              }
-//            }
+          final ElementList<IFrameElement> iframes =
+              mainArticle.querySelectorAll("iframe.photoset");
+          if (iframes.isNotEmpty) {
+            _log.info("Found photoset iframes");
+
+            final IFrameElement iframe = iframes.first;
+            _log.info("Getting media from iframe: ${iframe.src}");
+
+            await streamService.requestScrapeStart(url: iframe.src);
+            photosetIframeFound = true;
+          }
 
           if (sentLinks) {
+            _log.finer(
+                "Links have been sent (${this.sentLinkCount}), breaking article check loop");
+            break;
+          }
+          if (photosetIframeFound) {
             break;
           }
         }
         if (sentLinks) {
+          _log.finer(
+              "Links have been sent (${this.sentLinkCount}), breaking selector check loop");
+          break;
+        }
+        if (photosetIframeFound) {
           break;
         }
       }

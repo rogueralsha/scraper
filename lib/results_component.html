@@ -58,10 +58,10 @@
                         </div>
                     </td>
                     <td style="width:50px;">
-                        <img [src]="r.thumbnail"/>
+                        <img src="{{r.thumbnail}}"/>
                     </td>
                     <td style="white-space: nowrap; ">
-                        <a href="{{r.url}}" (click)="openTab($event,r.url)" style="color: black;">{{r.filename}}</a>
+                        <a href="{{r.url}}" (click)="openTab($event,r.url)" class="resultFileName">{{r.filename}}</a>
                     </td>
                 </tr>
             </table>
@@ -75,9 +75,6 @@
     <tr>
         <td *ngIf="showProgress">
             {{progressCurrent}}/{{progressMax}}
-        </td>
-        <td *ngIf="showSpinner">
-            <material-spinner ></material-spinner>
         </td>
         <td >
             <material-button materialTooltip="Refresh" [tooltipPositions]="tooltipPosition"  clear-size (trigger)="refreshButtonClick()">

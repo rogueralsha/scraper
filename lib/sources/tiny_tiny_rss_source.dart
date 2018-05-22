@@ -15,7 +15,7 @@ class TinyTinyRSSSource extends ASource {
   TinyTinyRSSSource();
 
   @override
-  bool canScrapePage(String url, {Document document}) {
+  bool canScrapePage(String url, {Document document, bool forEvaluation = false}) {
     _log.finest("canScrapePage");
     if(document==null)
       return false;
