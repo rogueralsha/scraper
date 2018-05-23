@@ -5,16 +5,19 @@ class EtcSource extends ASource {
   static final Logger _log = new Logger("EtcSource");
 
   static final RegExp _squareSpaceStaticServerRegExp = new RegExp(
-      r"https?:\/\/static\d+\.squarespace\.com\/.*",
+      r"https?://static\d+\.squarespace\.com/.*",
       caseSensitive: false);
   static final RegExp _catboxRegExp =
-  new RegExp(r"https?:\/\/files\.catbox\.moe\/.*", caseSensitive: false);
+  new RegExp(r"https?://files\.catbox\.moe/.*", caseSensitive: false);
   static final RegExp _uploaddirRegExp =
-  new RegExp(r"https?:\/\/uploadir\.com\/u\/.*", caseSensitive: false);
+  new RegExp(r"https?://uploadir\.com/u/.*", caseSensitive: false);
+  static final RegExp _uploadsRuRegExp =
+  new RegExp(r"https?://sd\.uploads\.ry/.*", caseSensitive: false);
 
   EtcSource() {
     this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_squareSpaceStaticServerRegExp));
     this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_catboxRegExp));
     this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_uploaddirRegExp));
+    this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_uploadsRuRegExp));
   }
 }

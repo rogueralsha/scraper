@@ -8,13 +8,13 @@ class ArtStationSource extends ASource {
   static final Logger logImpl = new Logger("ArtstationSource");
 
   static final RegExp _regExp = new RegExp(
-      "https?://www\\.artstation\\.com/artwork/.*",
+      r"https?://www\.artstation\.com/artwork/.*",
       caseSensitive: false);
   static final RegExp _newRegExp = new RegExp(
-      "https?://([^\\.]+)\\.artstation\\.com/projects/.*",
+      r"https?://([^.]+)\.artstation\.com/projects/.*",
       caseSensitive: false);
   static final RegExp _userRegExp =
-      new RegExp("https?://www\\.artstation\\.com/(.*)", caseSensitive: false);
+      new RegExp(r"https?://www\.artstation\.com/(.*)", caseSensitive: false);
 
   ArtStationSource() {
     this.urlScrapers.add(new SimpleUrlScraper(this, _newRegExp, [

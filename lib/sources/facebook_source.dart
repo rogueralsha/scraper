@@ -5,9 +5,9 @@ class FacebookSource extends ASource {
   static final Logger _log = new Logger("FacebookSource");
 
   static final RegExp _contentServerRegExp =
-      new RegExp("https?://.+\\.fbcdn\\.net/.*", caseSensitive: false);
-  //static final RegExp _albumRegExp = new RegExp("https?://[^\\.]+\\.facebook\\.com/.*album_id=(\\d+)", caseSensitive: false);
-  //static final RegExp _photoRegExp = new RegExp("https?://[^\\.]+\\.facebook\\.com/.*\\/photos\\/.*", caseSensitive: false);
+      new RegExp(r"https?://.+\.fbcdn\.net/.*", caseSensitive: false);
+  //static final RegExp _albumRegExp = new RegExp(r"https?://[^.]+\.facebook\.com/.*album_id=(\d+)", caseSensitive: false);
+  //static final RegExp _photoRegExp = new RegExp(r"https?://[^.]+\.facebook\.com/.*/photos/.*", caseSensitive: false);
 
   FacebookSource() {
     this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_contentServerRegExp));

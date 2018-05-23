@@ -6,11 +6,11 @@ import 'src/simple_url_scraper.dart';
 class ComicArtFansSource extends ASource {
   static final Logger _log = new Logger("ComicArtFansSource");
   static final RegExp _artistRegexp = new RegExp(
-      "^https?://.+\\.comicartfans\\.com/comic\\-artists/([^\\.]+)\\.asp.*",
+      r"^https?://.+\.comicartfans\.com/comic-artists/([^.]+)\.asp.*",
       caseSensitive: false);
 
   static final RegExp _pieceRegexp = new RegExp(
-      "^https?://.+\\.comicartfans\\.com/GalleryPiece.asp\\?Piece=([^&]+).+",
+      r"^https?://.+\.comicartfans\.com/GalleryPiece.asp\?Piece=([^&]+).+",
       caseSensitive: false);
 
   ComicArtFansSource() {

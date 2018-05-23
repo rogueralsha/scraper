@@ -66,6 +66,6 @@ class RedditSource extends ASource {
 
   }
 
-//  imageRegexp: new RegExp("https?://i\\.redd\\.it/.*", 'i'),
+//  imageRegexp: new RegExp(r"https?://i\.redd\.it/.*", 'i'),
 
 }

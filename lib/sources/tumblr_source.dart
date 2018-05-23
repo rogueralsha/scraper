@@ -12,19 +12,19 @@ class TumblrSource extends ASource {
   static final Logger _log = new Logger("TumblrSource");
 
   static final RegExp _regExp =
-      new RegExp("https?://([^\\.]+)\\.tumblr\\.com/", caseSensitive: false);
+      new RegExp(r"https?://([^.]+)\.tumblr\.com/", caseSensitive: false);
   static final RegExp _postRegExp =
-      new RegExp("https?://[^\\/]+/post/.*", caseSensitive: false);
+      new RegExp(r"https?://[^/]+/post/.*", caseSensitive: false);
   static final RegExp _mobilePostRegExp =
-      new RegExp("https?://[^\\/]+/post/.*/mobile", caseSensitive: false);
+      new RegExp(r"https?://[^/]+/post/.*/mobile", caseSensitive: false);
   static final RegExp _archiveRegExp =
-      new RegExp("https?://[^\\/]+/archive", caseSensitive: false);
+      new RegExp(r"https?://[^/]+/archive", caseSensitive: false);
   static final RegExp _redirectRegExp =
       new RegExp(r"redirect\?z=(.+)&t=", caseSensitive: false);
 
 
   static final RegExp _tumblrMediaRegExp = new RegExp(
-      "https?://\\d+\\.media\\.tumblr\\.com/.*",
+      r"https?://\d+\.media\.tumblr\.com/.*",
       caseSensitive: false);
 
   static const List<String> selectors = const <String>[

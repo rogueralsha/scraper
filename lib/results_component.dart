@@ -31,7 +31,7 @@ import 'services/settings_service.dart';
 )
 class ResultsComponent implements OnInit {
   static final RegExp _urlMatcherRegex =
-      new RegExp("^https?:\\/\\/(.+)\$", caseSensitive: false);
+      new RegExp(r"^https?://(.+)$", caseSensitive: false);
 
   static final Logger _log = new Logger("ResultsComponent");
   bool showProgress = false;

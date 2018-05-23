@@ -13,16 +13,16 @@ class ImgurSource extends ASource {
   static final Logger _log = new Logger("ImgurSource");
 
   static final RegExp _albumRegexp = new RegExp(
-      "https?:\\/\\/([mi]\\.)?imgur\\.com\\/(a|gallery)\\/([^\\/]+)",
+      r"https?://([mi]\.)?imgur\.com/(a|gallery)/([^/]+)",
       caseSensitive: false);
   static final RegExp _postRegexp = new RegExp(
-      "https?:\\/\\/([mi]\\.)?imgur\\.com\\/([^\\/]+)\$",
+      r"https?://([mi]\.)?imgur\.com/([^/]+)$",
       caseSensitive: false);
   static final RegExp _videoRegexp = new RegExp(
-      "https?:\\/\\/([mi]\\.)?imgur\\.com\\/([^\\/]+)\.gifv\$",
+      r"https?://([mi]\.)?imgur\.com/([^/]+)\.gifv$",
       caseSensitive: false);
   static final RegExp _directRegexp = new RegExp(
-      "https?:\\/\\/([mi]\\.)?imgur\\.com\\/([^\\/]+)\\.(jpg|png)(\\?.+)?\$",
+      r"https?://([mi]\.)?imgur\.com/([^/]+)\.(jpg|png)(\?.+)?$",
       caseSensitive: false);
 
   ImgurSource() {

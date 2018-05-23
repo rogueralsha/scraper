@@ -7,16 +7,16 @@ class GfycatSource extends ASource {
   static final Logger _log = new Logger("GfycatSource");
 
   static final RegExp _regExp = new RegExp(
-      r"https?:\/\/(www\.)?gfycat\.com\/([^\/]+)$",
+      r"https?://(www\.)?gfycat\.com/([^/]+)$",
       caseSensitive: false);
   static final RegExp _albumRegexp = new RegExp(
-      "https?:\\/\\/(www\\.)?gfycat\.com\\/@([^\\/]+)\\/[^\\/]+\$",
+      r"https?://(www\.)?gfycat\.com/@([^/]+)/[^/]+$",
       caseSensitive: false);
   static final RegExp _albumDetailRegexp = new RegExp(
-      "https?:\\/\\/(www\\.)?gfycat\.com\\/(%40[^\\/]+)\\/[^\\/]+\\/detail\\/([^\\/]+)\$",
+      r"https?://(www\.)?gfycat\.com/(%40[^/]+)/[^/]+/detail/([^/]+)$",
       caseSensitive: false);
   static final RegExp _directRegExp = new RegExp(
-      r"https?:\/\/giant\.gfycat\.com\/([^\/\.]+)\.(webm|mp4)$",
+      r"https?://giant\.gfycat\.com/([^/\.]+)\.(webm|mp4)$",
       caseSensitive: false);
 
   GfycatSource() {

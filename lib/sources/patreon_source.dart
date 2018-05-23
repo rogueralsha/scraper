@@ -8,16 +8,16 @@ class PatreonSource extends ASource {
   static final Logger _log = new Logger("PatreonSource");
 
   static final RegExp _postsRegExp = new RegExp(
-      r"^https?:\/\/www\.patreon\.com/([^\/^?]+)\/posts\/?.*$",
+      r"^https?://www\.patreon\.com/([^/^?]+)/posts/?.*$",
       caseSensitive: false);
   static final RegExp _postRegExp = new RegExp(
-      r"https?:\/\/www\.patreon\.com\/posts\/.*",
+      r"https?://www\.patreon\.com/posts/.*",
       caseSensitive: false);
   static final RegExp _userRegExp = new RegExp(
-      r"^https?:\/\/www\.patreon\.com\/([^\/^?]+)$",
+      r"^https?://www\.patreon\.com/([^/^?]+)$",
       caseSensitive: false);
   static final RegExp _fileRegExp = new RegExp(
-      r"^https?:\/\/www\.patreon\.com\/file\?[^\/]+$",
+      r"^https?://www\.patreon\.com/file\?[^/]+$",
       caseSensitive: false);
 
   PatreonSource() {

@@ -8,7 +8,7 @@ class EromeSource extends ASource {
 
 
   static final RegExp _regExp = new RegExp(
-      "https?:\\/\\/(www\\.)?erome\.com\\/a\\/([^\\/]+)\$",
+      r"https?://(www\.)?erome\.com/a/([^/]+)$",
       caseSensitive: false);
 
   EromeSource() {

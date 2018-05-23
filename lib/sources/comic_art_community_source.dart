@@ -6,10 +6,10 @@ import 'src/simple_url_scraper.dart';
 class ComicArtCommunitySource extends ASource {
   static final Logger logImpl = new Logger("ComicArtCommunitySource");
   static final RegExp _galleryRegexp = new RegExp(
-      "^https?:\\/\\/.*\\.?comicartcommunity\\.com\\/gallery\\/categories.php\\?cat_id=(\\d+).*",
+      r"^https?://.*\.?comicartcommunity\.com/gallery/categories.php\?cat_id=(\d+).*",
       caseSensitive: false);
   static final RegExp _imageRegexp = new RegExp(
-      "^https?:\\/\\/.*\\.?comicartcommunity\\.com\\/gallery\\/details.php\\?image_id=(\\d+).*",
+      r"^https?://.*\.?comicartcommunity\.com/gallery/details.php\?image_id=(\d+).*",
       caseSensitive: false);
 
   ComicArtCommunitySource() {

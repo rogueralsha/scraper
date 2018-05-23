@@ -9,7 +9,7 @@ class WordpressSource extends ASource {
 
 
   static final RegExp _contentRegExp =
-  new RegExp(r"^(https?:\/\/([^\/]+)\/wp-content\/uploads\/\d{4}\/\d{2}\/(.+))\-\d+x\d+(\.[^\/]+)$", caseSensitive: false);
+  new RegExp(r"^(https?://([^/]+)/wp-content/uploads/\d{4}/\d{2}/(.+))-\d+x\d+(\.[^/]+)$", caseSensitive: false);
 
   WordpressSource() {
     this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_contentRegExp));

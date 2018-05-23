@@ -36,7 +36,7 @@ const String pageInfoEvent = "pageInfo";
 const String linkInfoEvent = "linkInfo";
 
 final RegExp siteRegexp =
-    new RegExp("https?://([^/]+)/.*", caseSensitive: false);
+    new RegExp(r"https?://([^/]+)/.*", caseSensitive: false);
 
 final Logger _log = new Logger("globals");
 

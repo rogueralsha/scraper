@@ -8,15 +8,15 @@ class InstagramSource extends ASource {
   static final Logger logImpl = new Logger("InstagramSource");
 
   static final RegExp _regExp =
-      new RegExp("https?://www\\.instagram\\.com/p/.*", caseSensitive: false);
+      new RegExp(r"https?://www\.instagram\.com/p/.*", caseSensitive: false);
   static final RegExp _userRegExp = new RegExp(
-      "https?://www\\.instagram\\.com/([^/]+)/",
+      r"https?://www\.instagram\.com/([^/]+)/",
       caseSensitive: false);
 
-  static final RegExp _metaUserRegexp = new RegExp("\\(@([^\\)]+)\\)");
+  static final RegExp _metaUserRegexp = new RegExp(r"\(@([^)]+)\)");
 
   static final RegExp _contentRegExp = new RegExp(
-      "https?://[^\\.]+\\.cdninstagram\\.com/.+",
+      r"https?://[^.]+\.cdninstagram\.com/.+",
       caseSensitive: false);
 
   InstagramSource() {

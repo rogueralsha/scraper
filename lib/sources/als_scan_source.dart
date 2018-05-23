@@ -1,9 +1,9 @@
 //let alsscanSource = {
-//regexp: new RegExp("^https?://.+\\.alsscan\\.com/.*", 'i'),
-//galleryRegexp: new RegExp("^https?://.+\\.alsscan\\.com/.*model/([^\\/]+)/gallery/\\d+/", 'i'),
-//galleryImageRegexp: new RegExp("^https?://.+\\.alsscan\\.com/.*model/([^\\/]+)/gallery/\\d+/[^\\/]+/image/.+", 'i'),
+//regexp: new RegExp(r"^https?://.+\.alsscan\.com/.*", 'i'),
+//galleryRegexp: new RegExp(r"^https?://.+\.alsscan\.com/.*model/([^/]+)/gallery/\d+/", 'i'),
+//galleryImageRegexp: new RegExp(r"^https?://.+\.alsscan\.com/.*model/([^/]+)/gallery/\d+/[^/]+/image/.+", 'i'),
 //
-//fileDownloadRegex: new RegExp("\\&n\\=([^&]+)&"),
+//fileDownloadRegex: new RegExp(r"\&n\=([^&]+)&"),
 //
 //isSupported: function (url) {
 //return this.regexp.test(url);

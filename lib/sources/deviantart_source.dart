@@ -12,17 +12,17 @@ class DeviantArtSource extends ASource {
   static final Logger _log = new Logger("DeviantArtSource");
 
   static final RegExp _galleryRegExp = new RegExp(
-      "https?://([^\\.]+)\\.deviantart\\.com/gallery/.*",
+      r"https?://([^.]+)\.deviantart\.com/gallery/.*",
       caseSensitive: false);
   static final RegExp _artRegExp = new RegExp(
-      "https?://([^\\.]+)\\.deviantart\\.com/art/.*",
+      r"https?://([^.]+)\.deviantart\.com/art/.*",
       caseSensitive: false);
   static final RegExp _sandboxRegExp =
-      new RegExp("https?://sandbox\\.deviantart\\.com.*", caseSensitive: false);
+      new RegExp(r"https?://sandbox\.deviantart\.com.*", caseSensitive: false);
   static const String _galleryItemSelector = "a.torpedo-thumb-link";
 
   static final RegExp _imageHostRegExp = new RegExp(
-      "https?://(img|pre)\\d+\\.deviantart\\.net/.*",
+      r"https?://(img|pre)\d+\.deviantart\.net/.*",
       caseSensitive: false);
 
   DeviantArtSource() {
