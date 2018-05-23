@@ -21,6 +21,7 @@ class PageInfo extends Serializable {
     this.tabId = data["tabId"];
   }
 
+  @override
   Map<String, dynamic> toJson() {
     Map<String, dynamic> output = <String, dynamic>{};
     output["artist"] = artist;

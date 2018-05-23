@@ -8,6 +8,22 @@ Logging Level:
 >
 </material-dropdown-select>
 
+<table>
+    <tr>
+        <td>
+            <material-button raised (trigger)="exportMappings()">
+                Export Mappings
+            </material-button>
+        </td>
+        <td>
+            <material-button raised (trigger)="importMappings()">
+                Import Mappings
+            </material-button>
+        </td>
+    </tr>
+</table>
+
+
 <material-expansionpanel name="Prefix paths" (save)="savePaths()" (cancel)="loadPaths()" (open)="loadPaths()">
     <material-list>
         <material-list-item *ngFor="let m of prefixPaths; let i = index">{{m}}
@@ -31,3 +47,4 @@ Logging Level:
     </material-list-item>
 </material-list>
 </material-expansionpanel>
+

@@ -59,15 +59,19 @@ class SettingsService {
     _log.info("Removed mapping for $name");
   }
 
-  Future<Null> saveMappings(Map<String, String> mappings) async {
-    Map pairs = await chrome.storage.local.get();
-    for (String key in pairs.keys) {
-      if (key.startsWith(_mappingStore)) {
-        await chrome.storage.local.remove(key);
+  Future<Null> saveMappings(Map<String, String> mappings, bool merge) async {
+    if(!merge) {
+      Map pairs = await chrome.storage.local.get();
+      for (String key in pairs.keys) {
+        if (key.startsWith(_mappingStore)) {
+          await chrome.storage.local.remove(key);
+        }
       }
     }
 
     for (String artist in mappings.keys) {
+      if(artist?.isEmpty??true)
+        continue;
       await setMapping(artist, mappings[artist]);
     }
     _log.info("Saved new paths for artists");
@@ -75,11 +79,11 @@ class SettingsService {
 
   Future<Null> setMapping(String name, String path) async {
     if (name?.trim()?.isEmpty ?? false) throw new ArgumentError.notNull("name");
-    name = name.toLowerCase();
-    path = cleanPath(path);
-    final Map<String, dynamic> artistData = <String, dynamic>{_pathField: path};
-    await chrome.storage.local.set(<String, dynamic>{_artistPath(name): artistData});
-    _log.info("Mapping saved for $name: $path");
+    final String cleaName = name.toLowerCase();
+    final String cleanPath = this.cleanPath(path);
+    final Map<String, dynamic> artistData = <String, dynamic>{_pathField: cleanPath};
+    await chrome.storage.local.set(<String, dynamic>{_artistPath(cleaName): artistData});
+    _log.info("Mapping saved for $cleaName: $cleanPath");
   }
 
   Future<Null> setPrefixPath(List<String> paths) async {

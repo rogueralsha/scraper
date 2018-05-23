@@ -1,5 +1,6 @@
+import 'dart:html';
 import 'dart:async';
-
+import 'dart:convert';
 import 'package:angular/angular.dart';
 import 'package:angular_components/angular_components.dart';
 import 'package:logging/logging.dart';
@@ -26,7 +27,8 @@ class OptionsComponent implements OnInit {
   StringSelectionOptions<Level> loggingOptions =
       new StringSelectionOptions<Level>(Level.LEVELS);
 
-  final SelectionModel<Level> singleSelectModel = new SelectionModel<Level>.single();
+  final SelectionModel<Level> singleSelectModel =
+      new SelectionModel<Level>.single();
 
   Level _loggingLevel;
 
@@ -38,12 +40,14 @@ class OptionsComponent implements OnInit {
     _loggingLevel = level;
     _settings.setLoggingLevel(level);
   }
+
   void addPrefixPath() {
     if ((newPrefixPath?.trim() ?? "").isEmpty) {
       return;
     }
     prefixPaths.add(newPrefixPath);
   }
+
   String levelItemRenderer(Level item) => item.name;
 
   Future<Null> loadMappings() async {
@@ -67,10 +71,36 @@ class OptionsComponent implements OnInit {
   }
 
   Future<Null> saveMappings() async {
-    await _settings.saveMappings(this.mappings);
+    await _settings.saveMappings(this.mappings, false);
   }
 
   Future<Null> savePaths() async {
     await _settings.setPrefixPath(this.prefixPaths);
+  }
+
+  Future<Null> exportMappings() async {
+    final Map<String, String> mappings = await _settings.getMappings();
+    final String output = jsonEncode(mappings);
+
+    final Blob blob = new Blob([output], 'text/plain');
+
+    new AnchorElement()
+      ..download = 'data.json'
+      ..href = Url.createObjectUrlFromBlob(blob)
+      ..click();
+  }
+
+  Future<Null> importMappings() async {
+    final FileUploadInputElement fileUpload = new FileUploadInputElement()
+      ..click();
+
+    Event t = await fileUpload.onChange.first;
+    if (fileUpload.files.isEmpty) return;
+
+    final FileReader reader = new FileReader()..readAsText(fileUpload.files[0]);
+
+    await reader.onLoad.first;
+    final Map<String, String> data = jsonDecode(reader.result);
+    await _settings.saveMappings(data, true);
   }
 }
