@@ -37,6 +37,7 @@ class ResultsComponent implements OnInit {
   bool showProgress = false;
   bool savePath = false;
   bool showPopup = false;
+  bool disableInterface = false;
   String artistPath = "";
   int progressPercent = 0;
   int progressMax = 0;
@@ -99,6 +100,7 @@ class ResultsComponent implements OnInit {
     _log.finest("downloadButtonClick($close) start");
     try {
       showProgress = true;
+      disableInterface = true;
       final List<LinkInfo> toDownload =
           new List<LinkInfo>.from(links.where((LinkInfo r) => r.select));
 
@@ -242,6 +244,7 @@ class ResultsComponent implements OnInit {
       _log.severe("downloadButtonClick($close)", e, st);
     } finally {
       showProgress = false;
+      disableInterface = false;
       _log.finest("downloadButtonClick($close) end");
     }
   }
@@ -280,6 +283,7 @@ class ResultsComponent implements OnInit {
   Future<Null> openAllButtonClick(bool waitForLoad) async {
     try {
       showProgress = true;
+      disableInterface = true;
       Queue<LinkInfo> toOpen =
           new Queue<LinkInfo>.of(links.where((LinkInfo r) => r.select));
 
@@ -330,6 +334,7 @@ class ResultsComponent implements OnInit {
       _log.severe("openAllButtonClick", e, st);
     } finally {
       showProgress = false;
+      disableInterface = false;
     }
   }
 

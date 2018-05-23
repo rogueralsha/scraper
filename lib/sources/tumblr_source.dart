@@ -22,6 +22,7 @@ class TumblrSource extends ASource {
   static final RegExp _redirectRegExp =
       new RegExp(r"redirect\?z=(.+)&t=", caseSensitive: false);
 
+
   static final RegExp _tumblrMediaRegExp = new RegExp(
       "https?://\\d+\\.media\\.tumblr\\.com/.*",
       caseSensitive: false);

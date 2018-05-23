@@ -21,6 +21,7 @@ material-button {
 .linkResults {
     max-height:400px;
     overflow-y: auto;
+    overflow-x:hidden;
 }
 .linkResults material-button {
     width: 18pt;

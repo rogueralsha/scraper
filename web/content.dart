@@ -24,8 +24,7 @@ Future<Null> main() async {
 
   final int tabId = await getCurrentTabId();
 
-  final String url = window.location.href;
-  final ASource source = getScraperForSite(url, document);
+  final ASource source = getScraperForSite(window.location.href, document);
 
   if (source != null) {
     chrome.runtime.onMessage.listen((chrome.OnMessageEvent e) async {
@@ -40,11 +39,11 @@ Future<Null> main() async {
         if (command != startScrapeCommand) return;
 
         final String targetUrl = request[messageFieldUrl];
-        if(targetUrl!=url) {
-          _log.warning("Scrape request is not for this url ($url), it is for $targetUrl");
+        if(targetUrl!=window.location.href) {
+          _log.warning("Scrape request is not for this url (${window.location.href}), it is for $targetUrl");
           return;
         }
-        _log.finer("Request matches this url $url");
+        _log.finer("Request matches this url ${window.location.href}");
 
         _log.info(
             "Message to start scraping ${request[messageFieldUrl]} receive, starting scraping");
@@ -75,7 +74,7 @@ Future<Null> main() async {
           }
         });
 
-        await source.startScrapingPage(url, document);
+        await source.startScrapingPage(window.location.href, document);
         _log.finest("End of source checking loop");
       } on Exception catch (e, st) {
         _log.severe("getPageMedia message", e, st);
