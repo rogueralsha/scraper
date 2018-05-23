@@ -12,7 +12,7 @@ class EtcSource extends ASource {
   static final RegExp _uploaddirRegExp =
   new RegExp(r"https?://uploadir\.com/u/.*", caseSensitive: false);
   static final RegExp _uploadsRuRegExp =
-  new RegExp(r"https?://sd\.uploads\.ry/.*", caseSensitive: false);
+  new RegExp(r"https?://[a-z0-9]+\.uploads\.ru/.*", caseSensitive: false);
 
   EtcSource() {
     this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_squareSpaceStaticServerRegExp));
