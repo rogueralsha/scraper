@@ -22,10 +22,8 @@ class TumblrSource extends ASource {
   static final RegExp _redirectRegExp =
       new RegExp(r"redirect\?z=(.+)&t=", caseSensitive: false);
 
-
-  static final RegExp _tumblrMediaRegExp = new RegExp(
-      r"https?://\d+\.media\.tumblr\.com/.*",
-      caseSensitive: false);
+  static final RegExp _tumblrMediaRegExp =
+      new RegExp(r"https?://\d+\.media\.tumblr\.com/.*", caseSensitive: false);
 
   static const List<String> selectors = const <String>[
     "div.main > article",
@@ -54,7 +52,9 @@ class TumblrSource extends ASource {
   static final PageStreamService streamService = new PageStreamService();
 
   TumblrSource() {
-    this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_tumblrMediaRegExp));
+    this
+        .directLinkRegexps
+        .add(new DirectLinkRegExp(LinkType.file, _tumblrMediaRegExp));
   }
 
   @override
@@ -136,21 +136,22 @@ class TumblrSource extends ASource {
     }
     return output;
   }
+
   MutationObserver _observer;
 
   void _scrapeArchiveLinks(String url) {
-    final ElementList<DivElement> eles =
-    document.querySelectorAll("div.post");
+    final ElementList<DivElement> eles = document.querySelectorAll("div.post");
     for (DivElement postElement in eles) {
       final AnchorElement linkElement = postElement.querySelector("a.hover");
-      final DivElement thumbnailElement = postElement.querySelector("div.post_thumbnail_container has_imageurl");
+      final DivElement thumbnailElement = postElement
+          .querySelector("div.post_thumbnail_container has_imageurl");
       String thumbnailSource;
-      if(thumbnailElement!=null) {
+      if (thumbnailElement != null) {
         thumbnailSource = thumbnailElement?.dataset["imageurl"];
       }
-      createAndSendLinkInfo(linkElement.href, url, type: LinkType.page, thumbnail:  thumbnailSource);
+      createAndSendLinkInfo(linkElement.href, url,
+          type: LinkType.page, thumbnail: thumbnailSource);
     }
-
   }
 
   @override
@@ -178,17 +179,16 @@ class TumblrSource extends ASource {
       // }
       // window.scrollTo(0, document.body.scrollHeight);
       _scrapeArchiveLinks(url);
-        if (_observer == null) {
-          _observer = new MutationObserver(
-                  (List<MutationRecord> mutations, MutationObserver observer) {
-                for (MutationRecord mutation in mutations) {
-                  _scrapeArchiveLinks(url);
-                }
-              });
-          _observer.observe(document, childList: true, subtree: true);
-        }
+      if (_observer == null) {
+        _observer = new MutationObserver(
+            (List<MutationRecord> mutations, MutationObserver observer) {
+          for (MutationRecord mutation in mutations) {
+            _scrapeArchiveLinks(url);
+          }
+        });
+        _observer.observe(document, childList: true, subtree: true);
+      }
     } else if (_postRegExp.hasMatch(url)) {
-
       _log.info("Tumblr post page");
       if (_mobilePostRegExp.hasMatch(url)) {
         _log.info("Tumblr mobile post page");
@@ -197,8 +197,6 @@ class TumblrSource extends ASource {
           return;
         }
       }
-
-
 
       bool photosetIframeFound = false;
 
@@ -211,7 +209,6 @@ class TumblrSource extends ASource {
         }
         _log.info("Articles found with selector $selector: ${articles.length}");
         for (Element mainArticle in articles) {
-
           _log.finest("Checking article candidate $mainArticle");
           await getTumblrImages(url, mainArticle);
 

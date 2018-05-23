@@ -15,10 +15,10 @@ class TinyTinyRSSSource extends ASource {
   TinyTinyRSSSource();
 
   @override
-  bool canScrapePage(String url, {Document document, bool forEvaluation = false}) {
+  bool canScrapePage(String url,
+      {Document document, bool forEvaluation = false}) {
     _log.finest("canScrapePage");
-    if(document==null)
-      return false;
+    if (document == null) return false;
     final List<Node> bodyEle = document.getElementsByClassName("ttrss_main");
     return bodyEle.isNotEmpty;
   }
@@ -30,12 +30,11 @@ class TinyTinyRSSSource extends ASource {
     pi.artist = siteRegexp.firstMatch(url)[1];
     pi.saveByDefault = false;
 
-
     final Element rootEle = document.querySelector("div#headlines-frame");
 
-    if(rootEle!=null) {
+    if (rootEle != null) {
       final ElementList<AnchorElement> linkElements =
-      document.querySelectorAll("div#headlines-frame a.title");
+          document.querySelectorAll("div#headlines-frame a.title");
 
       for (AnchorElement linkElement in linkElements) {
         sendLinkInfo(createLinkFromElement(linkElement, url));
@@ -43,21 +42,20 @@ class TinyTinyRSSSource extends ASource {
 
       if (_observer == null) {
         _observer = new MutationObserver(
-                (List<MutationRecord> mutations, MutationObserver observer) {
-              for (MutationRecord mutation in mutations) {
-                if (mutation.type != "childList" ||
-                    mutation.addedNodes.isEmpty) {
-                  continue;
-                }
-                for (Node node in mutation.addedNodes) {
-                  if (node is AnchorElement && node.classes.contains("title")) {
-                    sendLinkInfo(createLinkFromElement(node, url));
-                  }
-                }
-                break;
+            (List<MutationRecord> mutations, MutationObserver observer) {
+          for (MutationRecord mutation in mutations) {
+            if (mutation.type != "childList" || mutation.addedNodes.isEmpty) {
+              continue;
+            }
+            for (Node node in mutation.addedNodes) {
+              if (node is AnchorElement && node.classes.contains("title")) {
+                sendLinkInfo(createLinkFromElement(node, url));
               }
-              sendScrapeDone();
-            });
+            }
+            break;
+          }
+          sendScrapeDone();
+        });
 
         _observer.observe(rootEle, childList: true, subtree: true);
       }

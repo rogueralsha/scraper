@@ -43,7 +43,7 @@ class PageStreamService {
     p.postMessage({
       messageFieldCommand: startScrapeCommand,
       messageFieldTabId: await getCurrentTabId(),
-      messageFieldUrl: url??window.location.href
+      messageFieldUrl: url ?? window.location.href
     });
   }
 
@@ -54,7 +54,8 @@ class PageStreamService {
         final String event = obj[messageFieldEvent];
         switch (event) {
           case pageInfoEvent:
-            final PageInfo pi = new PageInfo.fromJsObject(obj[messageFieldData]);
+            final PageInfo pi =
+                new PageInfo.fromJsObject(obj[messageFieldData]);
             _pageInfoStream.add(pi);
             break;
           case linkInfoEvent:

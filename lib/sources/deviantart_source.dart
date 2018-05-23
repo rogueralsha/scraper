@@ -26,7 +26,9 @@ class DeviantArtSource extends ASource {
       caseSensitive: false);
 
   DeviantArtSource() {
-    this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_imageHostRegExp));
+    this
+        .directLinkRegexps
+        .add(new DirectLinkRegExp(LinkType.file, _imageHostRegExp));
     this
         .urlScrapers
         .add(new UrlScraper(_artRegExp, scrapeArtPageInfo, scrapeArtPageLinks));

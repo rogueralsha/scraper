@@ -10,9 +10,8 @@ class PatreonSource extends ASource {
   static final RegExp _postsRegExp = new RegExp(
       r"^https?://www\.patreon\.com/([^/^?]+)/posts/?.*$",
       caseSensitive: false);
-  static final RegExp _postRegExp = new RegExp(
-      r"https?://www\.patreon\.com/posts/.*",
-      caseSensitive: false);
+  static final RegExp _postRegExp =
+      new RegExp(r"https?://www\.patreon\.com/posts/.*", caseSensitive: false);
   static final RegExp _userRegExp = new RegExp(
       r"^https?://www\.patreon\.com/([^/^?]+)$",
       caseSensitive: false);
@@ -21,18 +20,19 @@ class PatreonSource extends ASource {
       caseSensitive: false);
 
   PatreonSource() {
-    this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_fileRegExp));
-
     this
-        .urlScrapers
-        .add(new SimpleUrlScraper(this, _postRegExp, <SimpleUrlScraperCriteria>[
+        .directLinkRegexps
+        .add(new DirectLinkRegExp(LinkType.file, _fileRegExp));
+
+    this.urlScrapers.add(
+            new SimpleUrlScraper(this, _postRegExp, <SimpleUrlScraperCriteria>[
           new SimpleUrlScraperCriteria(
               LinkType.image, "div[data-tag='post-card'] img"),
           new SimpleUrlScraperCriteria(LinkType.page, "a",
               linkRegExp: _fileRegExp, validateLinkInfo: validatePostLinkInfo),
-          new SimpleUrlScraperCriteria(LinkType.page, "a",
-              evaluateLinks: true)
-        ], customPageInfoScraper: (PageInfo pi, Match m, String s, Document doc) {
+          new SimpleUrlScraperCriteria(LinkType.page, "a", evaluateLinks: true)
+        ], customPageInfoScraper:
+                (PageInfo pi, Match m, String s, Document doc) {
           final ElementList<AnchorElement> eles =
               document.querySelectorAll("div.mb-md a");
           for (AnchorElement ele in eles) {

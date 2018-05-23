@@ -64,35 +64,48 @@ Future<Null> main() async {
             break;
           case downloadCommand:
             String path = message[messageFieldFilename];
-            if (path.startsWith("/"))
-              path = path.substring(1);
+            if (path.startsWith("/")) path = path.substring(1);
             path = path.replaceAll("//", "/").replaceAll(":", "_");
             _log.info("Final path: $path");
 
-            final int id = await chrome.downloads.download(new chrome.DownloadOptions(
-                url: message[messageFieldUrl],
-                filename: path,
-                conflictAction: chrome.FilenameConflictAction.UNIQUIFY,
-                method: chrome.HttpMethod.GET,
-                headers: message[messageFieldHeaders]));
+            final int id = await chrome.downloads.download(
+                new chrome.DownloadOptions(
+                    url: message[messageFieldUrl],
+                    filename: path,
+                    conflictAction: chrome.FilenameConflictAction.UNIQUIFY,
+                    method: chrome.HttpMethod.GET,
+                    headers: message[messageFieldHeaders]));
             _log.info("Download created: $id");
 
-            p.postMessage({messageFieldEvent: fileDownloadStartEvent, messageFieldDownloadId: id });
+            p.postMessage({
+              messageFieldEvent: fileDownloadStartEvent,
+              messageFieldDownloadId: id
+            });
 
-            await for(chrome.DownloadDelta dd in chrome.downloads.onChanged.where((chrome.DownloadDelta dd) =>dd.id==id)) {
-              if(dd.state!=null) {
-                switch(dd.state.current) {
+            await for (chrome.DownloadDelta dd in chrome.downloads.onChanged
+                .where((chrome.DownloadDelta dd) => dd.id == id)) {
+              if (dd.state != null) {
+                switch (dd.state.current) {
                   case "interrupted":
-                    final List<chrome.DownloadItem> items = await chrome.downloads.search(new chrome.DownloadQuery(id:id));
+                    final List<chrome.DownloadItem> items = await chrome
+                        .downloads
+                        .search(new chrome.DownloadQuery(id: id));
                     String error;
-                    if(items.isNotEmpty) {
+                    if (items.isNotEmpty) {
                       chrome.DownloadItem item = items.first;
                       error = item.error.toString();
                     }
-                    p.postMessage({messageFieldEvent: fileDownloadErrorEvent, messageFieldDownloadId: id, messageFieldError: error });
+                    p.postMessage({
+                      messageFieldEvent: fileDownloadErrorEvent,
+                      messageFieldDownloadId: id,
+                      messageFieldError: error
+                    });
                     return;
                   case "complete":
-                    p.postMessage({messageFieldEvent: fileDownloadCompleteEvent, messageFieldDownloadId: id });
+                    p.postMessage({
+                      messageFieldEvent: fileDownloadCompleteEvent,
+                      messageFieldDownloadId: id
+                    });
                     return;
                 }
               }
@@ -105,8 +118,10 @@ Future<Null> main() async {
             await unsubscribeFromPage(p, message[messageFieldTabId]);
             break;
           case startScrapeCommand:
-            await chrome.tabs.sendMessage(message[messageFieldTabId],
-                {messageFieldCommand: startScrapeCommand, messageFieldUrl: message[messageFieldUrl]});
+            await chrome.tabs.sendMessage(message[messageFieldTabId], {
+              messageFieldCommand: startScrapeCommand,
+              messageFieldUrl: message[messageFieldUrl]
+            });
             break;
           default:
             throw new Exception("Message command not recognized: $command");

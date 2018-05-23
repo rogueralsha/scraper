@@ -126,8 +126,8 @@ class ImgurSource extends ASource {
 
     request
       ..open(
-        "GET", "https://imgur.com/ajaxalbums/getimages/$albumHash/hit.json",
-        async: true)
+          "GET", "https://imgur.com/ajaxalbums/getimages/$albumHash/hit.json",
+          async: true)
       ..send();
 
     return completer.future;

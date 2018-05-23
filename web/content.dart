@@ -16,9 +16,9 @@ import 'package:uuid/uuid.dart';
 String pageId = new Uuid().v4().toString();
 
 Future<Null> main() async {
-
   Logger.root.level = await settings.getLoggingLevel();
-  Logger.root.onRecord.listen(new LogPrintHandler(messageFormat: "%t\t$pageId\t%n\t[%p]:\t%m"));
+  Logger.root.onRecord
+      .listen(new LogPrintHandler(messageFormat: "%t\t$pageId\t%n\t[%p]:\t%m"));
   _log.info("Logging set to ${Logger.root.level.name}");
   _log.finest("main()");
 
@@ -39,8 +39,9 @@ Future<Null> main() async {
         if (command != startScrapeCommand) return;
 
         final String targetUrl = request[messageFieldUrl];
-        if(targetUrl!=window.location.href) {
-          _log.warning("Scrape request is not for this url (${window.location.href}), it is for $targetUrl");
+        if (targetUrl != window.location.href) {
+          _log.warning(
+              "Scrape request is not for this url (${window.location.href}), it is for $targetUrl");
           return;
         }
         _log.finer("Request matches this url ${window.location.href}");

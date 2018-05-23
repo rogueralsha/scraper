@@ -95,7 +95,6 @@ class ResultsComponent implements OnInit {
 
   int _pendingScrapes = 0;
 
-
   void downloadButtonClick(bool close) async {
     _log.finest("downloadButtonClick($close) start");
     try {
@@ -122,7 +121,8 @@ class ResultsComponent implements OnInit {
         }
       }
 
-      final int maxConcurrentDownloads = await _settings.getMaxConcurrentDownloads();
+      final int maxConcurrentDownloads =
+          await _settings.getMaxConcurrentDownloads();
       _log.info("Max concurrent downloads is set to $maxConcurrentDownloads");
       int concurrentDownloads = 0;
 
@@ -146,8 +146,8 @@ class ResultsComponent implements OnInit {
               ((progressCurrent / progressMax) * 100).round();
 
           _log
-              ..info("Message received during download process")
-              ..finer(context['JSON'].callMethod('stringify', [e.message]));
+            ..info("Message received during download process")
+            ..finer(context['JSON'].callMethod('stringify', [e.message]));
 
           if (e.message.hasProperty(messageFieldEvent)) {
             final String event = e.message[messageFieldEvent];
@@ -210,16 +210,19 @@ class ResultsComponent implements OnInit {
                 _log.info("File download error event received");
                 window.alert(
                     "An error occured for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}");
-                throw new Exception("An error occured for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}");
+                throw new Exception(
+                    "An error occured for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}");
               default:
                 throw new Exception("Unupported event: $event");
             }
 
             this.progressPercent =
                 ((progressCurrent / progressMax) * 100).round();
-            _log.finer("Progress is currently at $progressCurrent/$progressMax");
+            _log.finer(
+                "Progress is currently at $progressCurrent/$progressMax");
 
-            _log.finer("Concurrent downloads at $concurrentDownloads/$maxConcurrentDownloads");
+            _log.finer(
+                "Concurrent downloads at $concurrentDownloads/$maxConcurrentDownloads");
             _log.finer("Pending scrapes at $_pendingScrapes");
             if (concurrentDownloads >= maxConcurrentDownloads) {
               continue;
@@ -229,7 +232,7 @@ class ResultsComponent implements OnInit {
               _log.finer("Getting next item from queue");
               r = toDownload.removeAt(0);
               _sendMessageForScrapeResult(p, r, pathPrefix);
-            } else if(concurrentDownloads==0&&_pendingScrapes==0) {
+            } else if (concurrentDownloads == 0 && _pendingScrapes == 0) {
               break;
             }
           }
@@ -268,7 +271,10 @@ class ResultsComponent implements OnInit {
         await _pageStream.requestScrapeStart();
       } else {
         // ignore: unawaited_futures
-        document.onVisibilityChange.firstWhere((Event e) => !document.hidden).then((e) {{
+        document.onVisibilityChange
+            .firstWhere((Event e) => !document.hidden)
+            .then((e) {
+          {
             _pageStream.requestScrapeStart();
           }
         });
@@ -385,9 +391,7 @@ class ResultsComponent implements OnInit {
     } else {
       final StringBuffer pathBuffer = new StringBuffer();
       if (prefixPath.isNotEmpty) {
-        pathBuffer
-            ..write(prefixPath)
-            ..write("/");
+        pathBuffer..write(prefixPath)..write("/");
       }
       pathBuffer.write(r.filename);
       final String fullPath = pathBuffer.toString();

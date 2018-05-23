@@ -17,7 +17,9 @@ class RedditSource extends ASource {
       caseSensitive: false);
 
   RedditSource() {
-    this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.image,_imageRegexp));
+    this
+        .directLinkRegexps
+        .add(new DirectLinkRegExp(LinkType.image, _imageRegexp));
 
     this.urlScrapers.add(new UrlScraper(
         _regExp, scrapeSubredditPageInfo, scrapeSubredditPageLinks));
@@ -58,12 +60,11 @@ class RedditSource extends ASource {
       }
     }
 
-    final ElementList<VideoElement> videoLinks = document.querySelectorAll(
-        "div.reddit-video-player-root video");
-    for (VideoElement videoElement in videoLinks ) {
+    final ElementList<VideoElement> videoLinks =
+        document.querySelectorAll("div.reddit-video-player-root video");
+    for (VideoElement videoElement in videoLinks) {
       sendLinkInfo(createLinkFromElement(videoElement, url));
     }
-
   }
 
 //  imageRegexp: new RegExp(r"https?://i\.redd\.it/.*", 'i'),

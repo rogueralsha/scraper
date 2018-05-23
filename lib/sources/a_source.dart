@@ -23,7 +23,7 @@ abstract class ASource {
   final List<UrlScraper> urlScrapers = <UrlScraper>[];
 
   final StreamController<dynamic> _scrapeUpdateStream =
-  new StreamController<dynamic>.broadcast();
+      new StreamController<dynamic>.broadcast();
 
   MutationObserver galleryObserver;
 
@@ -37,8 +37,9 @@ abstract class ASource {
 
   int get sentLinkCount => _seenLinks.length;
 
-  Future<Null> artistFromRegExpPageScraper(PageInfo pageInfo, Match m,
-      String url, Document doc, {int group = 1}) async {
+  Future<Null> artistFromRegExpPageScraper(
+      PageInfo pageInfo, Match m, String url, Document doc,
+      {int group = 1}) async {
     _log.info("artistFromRegExpPageScraper");
     pageInfo.artist = m.group(group);
   }
@@ -56,10 +57,8 @@ abstract class ASource {
       {LinkType type = LinkType.image, String filename, String thumbnail}) {
     if (!this._seenLinks.contains(link)) {
       this._seenLinks.add(link);
-      final LinkInfo li =
-      new LinkInfoImpl(link, sourceUrl, type: type,
-          filename: filename,
-          thumbnail: thumbnail);
+      final LinkInfo li = new LinkInfoImpl(link, sourceUrl,
+          type: type, filename: filename, thumbnail: thumbnail);
       _sendLinkInfoInternal(li);
     }
   }
@@ -68,8 +67,8 @@ abstract class ASource {
 
   Future<Null> emptyLinkScraper(String s, Document d) async {}
 
-  Future<Null> emptyPageScraper(PageInfo pi, Match m, String url,
-      Document doc) async {
+  Future<Null> emptyPageScraper(
+      PageInfo pi, Match m, String url, Document doc) async {
     final Match m = siteRegexp.firstMatch(url);
     pi.artist = m[1];
   }
@@ -79,15 +78,16 @@ abstract class ASource {
     for (DirectLinkRegExp directRegExp in this.directLinkRegexps) {
       if (directRegExp.regExp.hasMatch(link)) {
         _log.finest("Direct link regexp match found in source $this");
-        final LinkInfo li = new LinkInfoImpl(link, sourceUrl, type: directRegExp.linkType,
-            thumbnail: determineThumbnail(link));
+        final LinkInfo li = new LinkInfoImpl(link, sourceUrl,
+            type: directRegExp.linkType, thumbnail: determineThumbnail(link));
         return reEvaluateLink(li, directRegExp.regExp);
       }
     }
-    for(UrlScraper scraper in this.urlScrapers.where((UrlScraper us) => us.useForEvaluation&&us.urlRegExp.hasMatch(link))) {
+    for (UrlScraper scraper in this.urlScrapers.where((UrlScraper us) =>
+        us.useForEvaluation && us.urlRegExp.hasMatch(link))) {
       _log.finest("Compatible UrlScraper found in source $this");
-      final LinkInfo li = new LinkInfoImpl(link, sourceUrl, type: LinkType.page,
-          thumbnail: determineThumbnail(link));
+      final LinkInfo li = new LinkInfoImpl(link, sourceUrl,
+          type: LinkType.page, thumbnail: determineThumbnail(link));
       return reEvaluateLink(li, scraper.urlRegExp);
     }
 
@@ -97,18 +97,15 @@ abstract class ASource {
   @protected
   LinkInfo reEvaluateLink(LinkInfo li, RegExp regExp) => li;
 
-
   void evaluateLink(String link, String sourceUrl, {bool select = true}) {
     _log.finest('evaluateLink($link, $sourceUrl, {$select})');
     for (ASource source in sourceInstances) {
       final LinkInfo li = source.evaluateLinkImpl(link, sourceUrl);
-      if (li == null)
-        continue;
+      if (li == null) continue;
       li.select = select;
       sendLinkInfo(li);
     }
   }
-
 
   Future<Null> selfLinkScraper(String url, Document d) async {
     _log.finest("selfLinkScraper");
@@ -117,8 +114,7 @@ abstract class ASource {
   }
 
   void sendLinkInfo(LinkInfo li) {
-    if (li == null)
-      return;
+    if (li == null) return;
     if (!this._seenLinks.contains(li.url)) {
       this._seenLinks.add(li.url);
       _sendLinkInfoInternal(li);
@@ -154,8 +150,8 @@ abstract class ASource {
     sendScrapeDone();
   }
 
-  Future<Null> manualScrape(PageInfo pageInfo, String url,
-      Document document) async {}
+  Future<Null> manualScrape(
+      PageInfo pageInfo, String url, Document document) async {}
 
   Future<bool> urlExists(String url) async {
     final HttpRequest request = new HttpRequest()
@@ -184,8 +180,8 @@ abstract class ASource {
   }
 
   LinkInfo createLinkFromElement(Element ele, String sourceUrl,
-      {String thumbnailSubSelector: "img", LinkType defaultLinkType: LinkType
-          .page}) {
+      {String thumbnailSubSelector: "img",
+      LinkType defaultLinkType: LinkType.page}) {
     String link;
     String thumbnail;
 
@@ -226,8 +222,8 @@ abstract class ASource {
       link = ele.src;
       if (link?.isEmpty ?? true) {
         _log.finest("src attribute is empty, checking for source slements");
-        final ElementList<SourceElement> sources = ele.querySelectorAll(
-            "source");
+        final ElementList<SourceElement> sources =
+            ele.querySelectorAll("source");
         for (SourceElement source in sources) {
           _log.finest("Source sub-element found, trying src");
           link = source.src;
@@ -263,8 +259,6 @@ abstract class ASource {
       return null;
     }
 
-    return new LinkInfoImpl(link, sourceUrl,
-        type: type, thumbnail: thumbnail);
+    return new LinkInfoImpl(link, sourceUrl, type: type, thumbnail: thumbnail);
   }
-
 }

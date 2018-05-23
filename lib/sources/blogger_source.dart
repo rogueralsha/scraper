@@ -5,9 +5,8 @@ import 'src/simple_url_scraper.dart';
 class BloggerSource extends ASource {
   static final Logger logImpl = new Logger("BloggerSource");
 
-  static final RegExp _regExp = new RegExp(
-      r"https?://([^.]+)\.blogspot\.com/.*",
-      caseSensitive: false);
+  static final RegExp _regExp =
+      new RegExp(r"https?://([^.]+)\.blogspot\.com/.*", caseSensitive: false);
 
   static final RegExp _postRegExp = new RegExp(
       r"https?://([^.]+)\.blogspot\.com/\d{4}/\d{2}/.*",
@@ -17,9 +16,10 @@ class BloggerSource extends ASource {
       r"https?://\d+\.([^.]+)\.blogspot\.com/-.+",
       caseSensitive: false);
 
-
   BloggerSource() {
-    this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file, _contentRegExp));
+    this
+        .directLinkRegexps
+        .add(new DirectLinkRegExp(LinkType.file, _contentRegExp));
 
     this.urlScrapers.add(new SimpleUrlScraper(this, _postRegExp,
         [new SimpleUrlScraperCriteria(LinkType.image, "div.post-body a")]));

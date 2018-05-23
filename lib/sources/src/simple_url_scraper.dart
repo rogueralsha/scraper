@@ -20,10 +20,10 @@ class SimpleUrlScraper extends UrlScraper {
 
   SimpleUrlScraper(this._source, RegExp urlRegexp, this.criteria,
       {this.customPageInfoScraper,
-      this.saveByDefault= true,
-      this.watchForUpdates= false,
-      this.urlRegexGroup= 1,
-      bool useForEvaluation=false})
+      this.saveByDefault = true,
+      this.watchForUpdates = false,
+      this.urlRegexGroup = 1,
+      bool useForEvaluation = false})
       : super(urlRegexp, null, null, useForEvaluation: useForEvaluation) {
     this.pageInfoScraper = _pageInfoScraperImpl;
     this.linkInfoScraper = _linkInfoScraperImpl;
@@ -33,9 +33,9 @@ class SimpleUrlScraper extends UrlScraper {
       PageInfo pageInfo, Match m, String url, Document doc) async {
     _log.info("_pageInfoScraperImpl");
     pageInfo.saveByDefault = this.saveByDefault;
-    if(customPageInfoScraper==null) {
-      await _source.artistFromRegExpPageScraper(
-          pageInfo, m, url, doc, group: urlRegexGroup);
+    if (customPageInfoScraper == null) {
+      await _source.artistFromRegExpPageScraper(pageInfo, m, url, doc,
+          group: urlRegexGroup);
     } else {
       await customPageInfoScraper(pageInfo, m, url, doc);
     }
@@ -74,20 +74,20 @@ class SimpleUrlScraper extends UrlScraper {
     _log.finest("_linkInfoScraperImpl($url, $element) start");
     for (SimpleUrlScraperCriteria criteria in this.criteria) {
       _log.finest("Querying with ${criteria.linkSelector}");
-      final ElementList<Element> eles = element.querySelectorAll(criteria.linkSelector);
+      final ElementList<Element> eles =
+          element.querySelectorAll(criteria.linkSelector);
       _log.finest("${eles.length} elements found");
       for (Element ele in eles) {
-
         final LinkInfo li = _source.createLinkFromElement(ele, url,
-            thumbnailSubSelector:  criteria.thumbnailSubSelector,
-            defaultLinkType:  criteria.linkType);
+            thumbnailSubSelector: criteria.thumbnailSubSelector,
+            defaultLinkType: criteria.linkType);
 
-        if(li==null)
-          continue;
+        if (li == null) continue;
 
-        if(criteria.linkRegExp!=null) {
-          _log.finest("linkRegExp (${criteria.linkRegExp}) specified, checking against url ${li.url}");
-          if(!criteria.linkRegExp.hasMatch(li.url)) {
+        if (criteria.linkRegExp != null) {
+          _log.finest(
+              "linkRegExp (${criteria.linkRegExp}) specified, checking against url ${li.url}");
+          if (!criteria.linkRegExp.hasMatch(li.url)) {
             _log.finest("Did not pass");
             continue;
           }
@@ -103,8 +103,7 @@ class SimpleUrlScraper extends UrlScraper {
           _log.finest("Passed validation");
         }
 
-
-        if(criteria.evaluateLinks) {
+        if (criteria.evaluateLinks) {
           _source.evaluateLink(li.url, url);
         } else {
           _source.sendLinkInfo(li);

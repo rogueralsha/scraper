@@ -74,7 +74,8 @@ class GfycatSource extends ASource {
 
   @override
   String determineThumbnail(String url) {
-    final String name = _regExp.firstMatch(url)?.group(2) ?? _directRegExp.firstMatch(url)?.group(1);
+    final String name = _regExp.firstMatch(url)?.group(2) ??
+        _directRegExp.firstMatch(url)?.group(1);
     if (name != null) {
       return "https://thumbs.gfycat.com/$name-poster.jpg";
     }

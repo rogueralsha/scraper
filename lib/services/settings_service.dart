@@ -60,7 +60,7 @@ class SettingsService {
   }
 
   Future<Null> saveMappings(Map<String, String> mappings, bool merge) async {
-    if(!merge) {
+    if (!merge) {
       Map pairs = await chrome.storage.local.get();
       for (String key in pairs.keys) {
         if (key.startsWith(_mappingStore)) {
@@ -70,8 +70,7 @@ class SettingsService {
     }
 
     for (String artist in mappings.keys) {
-      if(artist?.isEmpty??true)
-        continue;
+      if (artist?.isEmpty ?? true) continue;
       await setMapping(artist, mappings[artist]);
     }
     _log.info("Saved new paths for artists");
@@ -81,8 +80,11 @@ class SettingsService {
     if (name?.trim()?.isEmpty ?? false) throw new ArgumentError.notNull("name");
     final String cleaName = name.toLowerCase();
     final String cleanPath = this.cleanPath(path);
-    final Map<String, dynamic> artistData = <String, dynamic>{_pathField: cleanPath};
-    await chrome.storage.local.set(<String, dynamic>{_artistPath(cleaName): artistData});
+    final Map<String, dynamic> artistData = <String, dynamic>{
+      _pathField: cleanPath
+    };
+    await chrome.storage.local
+        .set(<String, dynamic>{_artistPath(cleaName): artistData});
     _log.info("Mapping saved for $cleaName: $cleanPath");
   }
 
@@ -91,14 +93,16 @@ class SettingsService {
       paths[i] = cleanPath(paths[i]);
     }
 
-    await chrome.storage.local
-        .set(<String, dynamic>{"${_settingsStore}_$_availablePrefixesSetting": paths});
+    await chrome.storage.local.set(<String, dynamic>{
+      "${_settingsStore}_$_availablePrefixesSetting": paths
+    });
   }
 
   Future<Null> setLoggingLevel(Level level) async {
     _log.info("Setting logging level to ${level.name}");
-    await chrome.storage.local
-        .set(<String, dynamic>{"${_settingsStore}_$_loggingLevelSetting": level.value});
+    await chrome.storage.local.set(<String, dynamic>{
+      "${_settingsStore}_$_loggingLevelSetting": level.value
+    });
   }
 
   Future<Level> getLoggingLevel() async {
@@ -120,16 +124,18 @@ class SettingsService {
 
   Future<Null> setMaxConcurrentDownloads(int value) async {
     _log.info("Setting max concurrent downloads to ${value}");
-    await chrome.storage.local
-        .set(<String, dynamic>{"${_settingsStore}_$_maxConcurrentDownloadsField": value});
+    await chrome.storage.local.set(<String, dynamic>{
+      "${_settingsStore}_$_maxConcurrentDownloadsField": value
+    });
   }
+
   Future<int> getMaxConcurrentDownloads() async {
     final Map<dynamic, dynamic> results = await chrome.storage.local
         .get("${_settingsStore}_$_maxConcurrentDownloadsField");
 
     if (results?.isNotEmpty ?? false) {
       final int value = results[results.keys.first];
-      return value??5;
+      return value ?? 5;
     }
 
     return 5;

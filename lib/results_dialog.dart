@@ -12,12 +12,7 @@ import 'globals.dart';
   selector: 'results-dialog',
   styleUrls: ['results_dialog.css'],
   templateUrl: 'results_dialog.html',
-  directives: [
-    NgFor,
-    materialDirectives,
-    NgIf,
-    ResultsComponent
-  ],
+  directives: [NgFor, materialDirectives, NgIf, ResultsComponent],
   providers: [const ClassProvider(ScraperService), materialProviders],
 )
 class ResultsDialog {

@@ -35,8 +35,8 @@ class ShimmieSource extends ASource {
     _log.finest("manualScrape($pageInfo, $url, $document)");
 
     pageInfo
-        ..artist = siteRegexp.firstMatch(url)[1]
-        ..saveByDefault = false;
+      ..artist = siteRegexp.firstMatch(url)[1]
+      ..saveByDefault = false;
 
     sendPageInfo(pageInfo);
 

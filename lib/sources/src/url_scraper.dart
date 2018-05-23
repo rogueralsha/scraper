@@ -11,7 +11,8 @@ class UrlScraper {
   LinkInfoScraper linkInfoScraper;
   final bool useForEvaluation;
 
-  UrlScraper(this.urlRegExp, this.pageInfoScraper, this.linkInfoScraper, {this.useForEvaluation = false});
+  UrlScraper(this.urlRegExp, this.pageInfoScraper, this.linkInfoScraper,
+      {this.useForEvaluation = false});
 
   bool isMatch(String url) {
     _log.finest("Checking url $url against regex $urlRegExp");

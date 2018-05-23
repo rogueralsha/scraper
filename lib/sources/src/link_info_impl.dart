@@ -57,8 +57,7 @@ class LinkInfoImpl extends LinkInfo {
       .decodeComponent(link.substring(link.lastIndexOf('/') + 1).split("?")[0]);
 
   String _resolvePartialUrl(String url) {
-    final AnchorElement ele = new AnchorElement()
-      ..href = url;
+    final AnchorElement ele = new AnchorElement()..href = url;
     return ele.href;
   }
 }

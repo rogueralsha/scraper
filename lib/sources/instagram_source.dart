@@ -15,12 +15,13 @@ class InstagramSource extends ASource {
 
   static final RegExp _metaUserRegexp = new RegExp(r"\(@([^)]+)\)");
 
-  static final RegExp _contentRegExp = new RegExp(
-      r"https?://[^.]+\.cdninstagram\.com/.+",
-      caseSensitive: false);
+  static final RegExp _contentRegExp =
+      new RegExp(r"https?://[^.]+\.cdninstagram\.com/.+", caseSensitive: false);
 
   InstagramSource() {
-    this.directLinkRegexps.add(new DirectLinkRegExp(LinkType.file,_contentRegExp));
+    this
+        .directLinkRegexps
+        .add(new DirectLinkRegExp(LinkType.file, _contentRegExp));
 
     this.urlScrapers.add(new SimpleUrlScraper(
         this,

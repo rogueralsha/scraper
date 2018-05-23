@@ -11,8 +11,8 @@ const String messageFieldCommand = "command";
 const String messageFieldFilename = "filename";
 const String messageFieldHeaders = "headers";
 const String messageFieldData = "data";
-const String messageFieldError= "error";
-const String messageFieldDownloadId= "downloadId";
+const String messageFieldError = "error";
+const String messageFieldDownloadId = "downloadId";
 
 const String startScrapeCommand = "startScrape";
 const String scrapePageCommand = "scrapePage";
