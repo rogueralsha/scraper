@@ -46,7 +46,8 @@ class TumblrSource extends ASource {
     "div#entry",
     "div.entry",
     "div#root",
-    "div#Body"
+    "div#Body",
+    "div.item"
   ];
 
   static final PageStreamService streamService = new PageStreamService();
@@ -73,8 +74,11 @@ class TumblrSource extends ASource {
       final MetaElement metaAppName =
           document.querySelector('meta[property="al:android:app_name"]');
 
+
+
       possibleTumblrSite = (metaAppName?.content?.toLowerCase() == "tumblr") ||
-          document.querySelector("meta[name='tumblr-theme']") != null;
+          document.querySelector("meta[name='tumblr-theme']") != null ||
+          document.querySelector("meta[property='og:site_name']") != null ;
     }
 
     if (possibleTumblrSite) {
