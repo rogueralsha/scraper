@@ -123,6 +123,7 @@ abstract class ASource {
 
   void sendPageInfo(PageInfo pi) {
     _log.finer("Sending PageInfo event");
+    _log.finer(pi.toJson());
     _scrapeUpdateStream.add(pi);
   }
 
@@ -261,4 +262,6 @@ abstract class ASource {
 
     return new LinkInfoImpl(link, sourceUrl, type: type, thumbnail: thumbnail);
   }
+
+  Future<Null> loadWholePage() async {}
 }

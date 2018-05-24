@@ -16,6 +16,7 @@ class SimpleUrlScraper extends UrlScraper {
   final bool saveByDefault;
   final bool watchForUpdates;
   final int urlRegexGroup;
+  final bool incrementalLoader;
   final PageInfoScraper customPageInfoScraper;
 
   SimpleUrlScraper(this._source, RegExp urlRegexp, this.criteria,
@@ -23,7 +24,8 @@ class SimpleUrlScraper extends UrlScraper {
       this.saveByDefault = true,
       this.watchForUpdates = false,
       this.urlRegexGroup = 1,
-      bool useForEvaluation = false})
+      bool useForEvaluation = false,
+      this.incrementalLoader})
       : super(urlRegexp, null, null, useForEvaluation: useForEvaluation) {
     this.pageInfoScraper = _pageInfoScraperImpl;
     this.linkInfoScraper = _linkInfoScraperImpl;
@@ -39,6 +41,7 @@ class SimpleUrlScraper extends UrlScraper {
     } else {
       await customPageInfoScraper(pageInfo, m, url, doc);
     }
+    pageInfo.incrementalLoader = this.incrementalLoader;
   }
 
   MutationObserver _observer;

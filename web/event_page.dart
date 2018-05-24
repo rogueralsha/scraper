@@ -123,6 +123,12 @@ Future<Null> main() async {
               messageFieldUrl: message[messageFieldUrl]
             });
             break;
+          case loadWholePageCommand:
+            await chrome.tabs.sendMessage(message[messageFieldTabId], {
+              messageFieldCommand: loadWholePageCommand,
+              messageFieldUrl: message[messageFieldUrl]
+            });
+            break;
           default:
             throw new Exception("Message command not recognized: $command");
         }

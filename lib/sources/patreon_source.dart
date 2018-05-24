@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'dart:html';
-import 'a_source.dart';
+
 import 'package:logging/logging.dart';
+import 'package:scraper/globals.dart';
+
+import 'a_source.dart';
 import 'src/simple_url_scraper.dart';
 
 class PatreonSource extends ASource {
@@ -24,51 +27,55 @@ class PatreonSource extends ASource {
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.file, _fileRegExp));
 
-    this.urlScrapers.add(
-            new SimpleUrlScraper(this, _postRegExp, <SimpleUrlScraperCriteria>[
-          new SimpleUrlScraperCriteria(
-              LinkType.image, "div[data-tag='post-card'] img"),
-          new SimpleUrlScraperCriteria(LinkType.page, "a",
-              linkRegExp: _fileRegExp, validateLinkInfo: validatePostLinkInfo),
-          new SimpleUrlScraperCriteria(LinkType.page, "a", evaluateLinks: true)
-        ], customPageInfoScraper:
-                (PageInfo pi, Match m, String s, Document doc) {
-          final ElementList<AnchorElement> eles =
-              document.querySelectorAll("div.mb-md a");
-          for (AnchorElement ele in eles) {
-            if (_userRegExp.hasMatch(ele.href)) {
-              pi.artist = _userRegExp.firstMatch(ele.href)[1];
-            }
+    this.urlScrapers
+      ..add(new SimpleUrlScraper(this, _postRegExp, <SimpleUrlScraperCriteria>[
+        new SimpleUrlScraperCriteria(
+            LinkType.image, "div[data-tag='post-card'] img"),
+        new SimpleUrlScraperCriteria(LinkType.page, "a",
+            linkRegExp: _fileRegExp, validateLinkInfo: validatePostLinkInfo),
+        new SimpleUrlScraperCriteria(LinkType.page, "a", evaluateLinks: true)
+      ], customPageInfoScraper: (PageInfo pi, Match m, String s, Document doc) {
+        final ElementList<AnchorElement> eles =
+            document.querySelectorAll("div.mb-md a");
+        for (AnchorElement ele in eles) {
+          if (_userRegExp.hasMatch(ele.href)) {
+            pi.artist = _userRegExp.firstMatch(ele.href)[1];
           }
-        }));
-
-    this.urlScrapers.add(new SimpleUrlScraper(
-        this,
-        _postsRegExp,
-        <SimpleUrlScraperCriteria>[
-          new SimpleUrlScraperCriteria(LinkType.page, "a",
-              linkRegExp: _postRegExp),
-        ],
-        watchForUpdates: true));
+        }
+      }))
+      ..add(new SimpleUrlScraper(
+          this,
+          _postsRegExp,
+          <SimpleUrlScraperCriteria>[
+            new SimpleUrlScraperCriteria(LinkType.page, "a",
+                linkRegExp: _postRegExp),
+          ],
+          watchForUpdates: true,
+          incrementalLoader: true));
   }
+
+  static const String _loadMoreSelector = "button.fuSvdP";
+
+  @override
+  Future<Null> loadWholePage() async {
+    window.scrollTo(0, document.body.scrollHeight);
+    ButtonElement loadMoreButton = document.querySelector(_loadMoreSelector);
+    while (loadMoreButton != null) {
+      loadMoreButton.click();
+      await pause(seconds: 2);
+      window.scrollTo(0, document.body.scrollHeight);
+      loadMoreButton = document.querySelector(_loadMoreSelector);
+    }
+    window.scrollTo(0, document.body.scrollHeight);
+  }
+
   bool validatePostLinkInfo(LinkInfo li, Element e) {
     _log.finest("validatePostLinkInfo($li, $e)");
     if (_fileRegExp.hasMatch(li.url)) {
-      li.filename = e.text;
-      li.type = LinkType.file;
+      li
+        ..filename = e.text
+        ..type = LinkType.file;
     }
     return true;
   }
-
-  //
-//  window.scrollTo(0, document.body.scrollHeight);
-//  let loadMoreButton = document.querySelector("button.bXKbjO");
-//  while (loadMoreButton != null) {
-//  loadMoreButton.click();
-//  await sleep(2000);
-//  window.scrollTo(0, document.body.scrollHeight);
-//  loadMoreButton = document.querySelector("button.bXKbjO");
-//  }
-//  window.scrollTo(0, document.body.scrollHeight);
-
 }

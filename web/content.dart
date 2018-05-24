@@ -7,6 +7,7 @@ import 'package:chrome/chrome_ext.dart' as chrome;
 import 'package:logging/logging.dart';
 import 'package:logging_handlers/logging_handlers_shared.dart';
 import 'package:scraper/globals.dart';
+import 'package:scraper/results_dialog.dart';
 import 'package:scraper/results_dialog.template.dart' as ng;
 import 'package:scraper/services/scraper_service.dart';
 import 'package:scraper/services/settings_service.dart';
@@ -31,12 +32,23 @@ Future<Null> main() async {
       _log.fine("onMesage handler start");
 
       try {
-        _log.fine("Message received");
-        _log.finer(context['JSON'].callMethod('stringify', [e.message]));
+        _log..fine("Message received")
+            ..finer(context['JSON'].callMethod('stringify', [e.message]));
 
         final Map request = e.message;
         final String command = request[messageFieldCommand];
-        if (command != startScrapeCommand) return;
+        _log.finest("Command $command received");
+        switch(command) {
+          case startScrapeCommand:
+            break;
+          case loadWholePageCommand:
+            _log.finest("Start loadWholePage for source");
+            if(source!=null)
+              await source.loadWholePage();
+            return;
+          default:
+            return;
+        }
 
         final String targetUrl = request[messageFieldUrl];
         if (targetUrl != window.location.href) {
@@ -85,7 +97,8 @@ Future<Null> main() async {
     });
 
     if (!inIframe()) {
-      document.body.append(document.createElement("results-dialog"));
+      Element ele = document.createElement("results-dialog");
+      document.body.append(ele);
 
       runApp(ng.ResultsDialogNgFactory);
     }

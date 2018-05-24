@@ -53,6 +53,8 @@ class ResultsComponent implements OnInit {
 
   PageInfo results = new PageInfo(-1);
 
+  bool get showLoadAllButton => loaded&&results.incrementalLoader;
+
   ResultsComponent(this._pageStream, this._settings);
 
   String get artistDisplay =>
@@ -259,9 +261,9 @@ class ResultsComponent implements OnInit {
       _pageStream.onPageInfo.listen((PageInfo pi) async {
         _log.info("PageInfo received, updating component data");
         this.results = pi;
-        savePath = results.saveByDefault;
-        artistPath = await _settings.getMapping(results.artist);
-        availablePathPrefixes = await _settings.getAvailablePrefixes();
+        this.savePath = results.saveByDefault;
+        this.artistPath = await _settings.getMapping(results.artist);
+        this.availablePathPrefixes = await _settings.getAvailablePrefixes();
       });
       _pageStream.onLinkInfo.listen((LinkInfo li) {
         _log.info("LinkInfo received, updating component data");
@@ -405,5 +407,10 @@ class ResultsComponent implements OnInit {
         //messageFieldHeaders: []
       });
     }
+  }
+
+  Future<Null> loadAllItems() async {
+    _log.finest("loadAllItems()");
+    await _pageStream.requestLoadWholePage();
   }
 }

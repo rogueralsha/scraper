@@ -47,6 +47,14 @@ class PageStreamService {
     });
   }
 
+  Future<Null> requestLoadWholePage({String url}) async {
+    p.postMessage({
+      messageFieldCommand: loadWholePageCommand,
+      messageFieldTabId: await getCurrentTabId(),
+      messageFieldUrl: url ?? window.location.href
+    });
+  }
+
   void messageEvented(chrome.OnMessageEvent e) {
     try {
       final JsObject obj = e.message;

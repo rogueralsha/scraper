@@ -81,6 +81,11 @@
                 <material-icon icon="refresh" size="x-small"></material-icon>
             </material-button>
         </td>
+        <td *ngIf="showLoadAllButton">
+            <material-button materialTooltip="Auto-scroll page to load all contents" [tooltipPositions]="tooltipPosition" [disabled]="disableInterface" clear-size (trigger)="loadAllItems()">
+                <material-icon icon="unfold_more" size="x-small"></material-icon>
+            </material-button>
+        </td>
         <td *ngIf="loaded">
             <material-button materialTooltip="Open links in new tabs" [tooltipPositions]="tooltipPosition" [disabled]="disableInterface" clear-size (trigger)="openAllButtonClick(false)">
                 <material-icon icon="open_in_new" size="x-small"></material-icon>

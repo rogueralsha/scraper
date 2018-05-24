@@ -71,7 +71,10 @@ Future<int> getCurrentTabId() async {
 bool inIframe() {
   try {
     return window.self != window.top;
-  } catch (e) {
+  } on Exception catch (e) {
     return true;
   }
 }
+
+Future<Null> pause({int seconds = 0}) =>
+    new Future<Null>.delayed(new Duration(seconds: seconds));

@@ -11,6 +11,7 @@ class PageInfo extends Serializable {
   int tabId;
 
   bool saveByDefault = true;
+  bool incrementalLoader = false;
 
   PageInfo(this.tabId);
 
@@ -19,6 +20,8 @@ class PageInfo extends Serializable {
     this.artist = data["artist"];
     this.error = data["error"];
     this.tabId = data["tabId"];
+    this.saveByDefault = data["saveByDefault"];
+    this.incrementalLoader = data["incrementalLoader"];
   }
 
   @override
@@ -27,6 +30,8 @@ class PageInfo extends Serializable {
     output["artist"] = artist;
     output["error"] = error;
     output["tabId"] = tabId;
+    output["incrementalLoader"] = incrementalLoader;
+    output["saveByDefault"] = saveByDefault;
 
     return output;
   }
