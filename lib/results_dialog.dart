@@ -23,7 +23,7 @@ class ResultsDialog {
   void closeButtonClick() async {
     try {
       closeTab();
-    } catch (e, st) {
+    } on Exception catch (e, st) {
       _log.severe("closeButtonClick", e, st);
     }
   }
