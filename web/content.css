@@ -10,7 +10,13 @@
 }
 .resultsDialog .header {
     align-items: stretch !important;
+    background: white !important;
 }
+.resultsExpander .panel {
+    position: static !important;
+    height: auto !important;
+}
+
 .acx-overlay-container {
     z-index:99999999 !important;
 }

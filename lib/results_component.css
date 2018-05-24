@@ -16,7 +16,10 @@ material-button {
 .resultsTable td{
     max-height: 50px;
     overflow: hidden;
+    margin:0;
+    padding:0;
 }
+.toolbarButtons
 
 .linkResults {
     max-height:400px;
@@ -26,10 +29,6 @@ material-button {
 .linkResults material-button {
     width: 18pt;
 
-}
-
-.resultsExpander .header {
-    align-items: stretch !important;
 }
 
 a.resultFileName {

@@ -31,36 +31,36 @@
         <div  style="overflow: hidden; text-overflow: ellipsis;">
             <table class="resultsTable">
                 <tr *ngFor="let r of links; let i = index"  style="max-height: 50px;">
-                    <td style="width: 32pt;">
+                    <td style="width: 32pt !important;">
                         <div style="width: 32pt;">
                         <material-button  materialTooltip="Select only this item" [tooltipPositions]="tooltipPosition"  [disabled]="disableInterface" clear-size (trigger)="selectOnly(i)">
                             <material-icon icon="arrow_forward" size="x-small"></material-icon>
                         </material-button>
                         </div>
                     </td>
-                    <td style="width: 32pt;">
+                    <td style="width: 32pt !important;">
                         <div style="width: 32pt;">
                         <material-button  materialTooltip="Select this item and the items above it" [tooltipPositions]="tooltipPosition"  [disabled]="disableInterface" clear-size (trigger)="selectAbove(i)">
                             <material-icon icon="arrow_upward" size="x-small"></material-icon>
                         </material-button>
                         </div>
                     </td>
-                    <td style="width: 32pt;">
+                    <td style="width: 32pt !important;">
                         <div style="width: 32pt;">
                         <material-button  materialTooltip="Select this item and the items beneath it" [tooltipPositions]="tooltipPosition"  [disabled]="disableInterface" clear-size (trigger)="selectBeneath(i)">
                             <material-icon icon="arrow_downward" size="x-small"></material-icon>
                         </material-button>
                         </div>
                     </td>
-                    <td style="width: 32pt;">
+                    <td style="width: 32pt !important;">
                         <div style="width: 32pt;">
                         <material-checkbox [(ngModel)]="r.select" [disabled]="disableInterface"></material-checkbox>
                         </div>
                     </td>
-                    <td style="width:50px;">
+                    <td style="width:50px !important;">
                         <img src="{{r.thumbnail}}"/>
                     </td>
-                    <td style="white-space: nowrap; ">
+                    <td style="white-space: nowrap !important;">
                         <a href="{{r.url}}" (click)="openTab($event,r.url)" class="resultFileName">{{r.filename}}</a>
                     </td>
                 </tr>
@@ -71,7 +71,7 @@
 
 <material-progress [activeProgress]="progressPercent" *ngIf="showProgress"></material-progress>
 
-<table style="float: right;width:auto;" >
+<table style="float: right;width:auto;" class="toolbarButtons" >
     <tr>
         <td *ngIf="showProgress">
             {{progressCurrent}}/{{progressMax}}
