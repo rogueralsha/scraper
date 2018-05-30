@@ -6,6 +6,7 @@ typedef bool ValidateLinkInfo(LinkInfo li, Element ele);
 class SimpleUrlScraperCriteria {
   final LinkType linkType;
   final String linkSelector;
+  final String fallbackSelector;
   final String thumbnailSubSelector;
   final ValidateLinkInfo validateLinkInfo;
   final int limit;
@@ -16,5 +17,6 @@ class SimpleUrlScraperCriteria {
       this.validateLinkInfo,
       this.limit = -1,
       this.evaluateLinks = false,
-      this.linkRegExp});
+      this.linkRegExp,
+      this.fallbackSelector});
 }

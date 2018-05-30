@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:html';
 import 'a_source.dart';
 import 'package:logging/logging.dart';
 import 'src/simple_url_scraper.dart';
+import 'package:scraper/globals.dart';
 
 class GfycatSource extends ASource {
   static final Logger _log = new Logger("GfycatSource");
@@ -16,7 +18,7 @@ class GfycatSource extends ASource {
       r"https?://(www\.)?gfycat\.com/(%40[^/]+)/[^/]+/detail/([^/]+)$",
       caseSensitive: false);
   static final RegExp _directRegExp = new RegExp(
-      r"https?://giant\.gfycat\.com/([^/\.]+)\.(webm|mp4)$",
+      r"https?://giant\.gfycat\.com/([^/.]+)\.(webm|mp4)$",
       caseSensitive: false);
 
   GfycatSource() {
@@ -41,19 +43,31 @@ class GfycatSource extends ASource {
 
     this.urlScrapers.add(new SimpleUrlScraper(this, _regExp,
         [new SimpleUrlScraperCriteria(LinkType.video, "source#webmSource")],
-        saveByDefault: false, urlRegexGroup: 2));
+        saveByDefault: false, urlRegexGroup: 2, useForEvaluation: true));
   }
 
   @override
-  LinkInfo evaluateLinkImpl(String link, String sourceUrl) {
+  Future<LinkInfo> evaluateLinkImpl(String link, String sourceUrl) async {
+    _log.finest('evaluateLinkImpl($link, $sourceUrl)');
     if (_regExp.hasMatch(link)) {
-      Match m = _regExp.firstMatch(link);
-      final String newUrl = generateDirectLink(m[2]);
-      final LinkInfo output = new LinkInfoImpl(newUrl, sourceUrl,
-          thumbnail: determineThumbnail(newUrl),
-          type: LinkType.video,
-          filename: "${m[2]}.webm");
-      return output;
+      _log.finest("Link matches gfycat post regexp");
+      final Match m = _regExp.firstMatch(link);
+      final String name = m[2];
+      _log.finest("Gfycat name: ${m[2]}");
+      final int capitalCount = name.replaceAll(notCapitalRegexp,"").length;
+      // gfycat direct links are case sensitive. All gfycat links are made of 3 words, so we check for 3 capital letters.
+      // If not, then we just let it open as a page so it can redirect us to the file properly.
+      if(capitalCount==3) {
+        _log.finest("3 capital letters found, transalating to direct link");
+        final String newUrl = generateDirectLink(name);
+        final LinkInfo output = new LinkInfoImpl(newUrl, sourceUrl,
+            thumbnail: determineThumbnail(newUrl),
+            type: LinkType.video,
+            filename: "$name.webm");
+        return output;
+      } else {
+        _log.finest("$capitalCount capital letters found, not transalating to direct link");
+      }
     }
 
     return super.evaluateLinkImpl(link, sourceUrl);

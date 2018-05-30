@@ -3,8 +3,9 @@
         type="text/css"
         href="https://fonts.googleapis.com/icon?family=Material+Icons">
 
-<material-expansionpanel class="resultsExpander" *ngIf="loaded" [name]="artistDisplay" [disabled]="disableInterface" [secondaryText]="pathDisplay" [showSaveCancel]="false">
-    <table style="width: 100%">
+<material-expansionpanel class="resultsExpander" *ngIf="loaded" [name]="artistDisplay" [disabled]="disableInterface"
+                         [secondaryText]="pathDisplay" [showSaveCancel]="false">
+    <table style="width: 100%" class="pathControls">
         <tr>
             <td>
                 <material-button (click)="showPopup=!showPopup" [disabled]="disableInterface" popupSource #source="popupSource">

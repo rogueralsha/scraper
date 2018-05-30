@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:async';
 import 'dart:collection';
 import 'dart:html';
@@ -19,7 +20,7 @@ import 'services/settings_service.dart';
 
 @Component(
   selector: 'results-viewer',
-  styleUrls: ['results_component.css'],
+  styleUrls: <String>['results_component.css'],
   templateUrl: 'results_component.html',
   directives: [NgFor, materialDirectives, NgIf],
   providers: [
@@ -53,7 +54,7 @@ class ResultsComponent implements OnInit {
 
   PageInfo results = new PageInfo(-1);
 
-  bool get showLoadAllButton => loaded&&results.incrementalLoader;
+  bool get showLoadAllButton => loaded && results.incrementalLoader;
 
   ResultsComponent(this._pageStream, this._settings);
 
@@ -102,6 +103,7 @@ class ResultsComponent implements OnInit {
     try {
       showProgress = true;
       disableInterface = true;
+      bool cancelClose = false;
       final List<LinkInfo> toDownload =
           new List<LinkInfo>.from(links.where((LinkInfo r) => r.select));
 
@@ -211,21 +213,24 @@ class ResultsComponent implements OnInit {
               case fileDownloadErrorEvent:
                 _log.info("File download error event received");
                 window.alert(
-                    "An error occured for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}");
-                throw new Exception(
-                    "An error occured for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}");
+                    "An error occurred for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}");
+                //throw new Exception(
+                //"An error occurred for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}");
+                concurrentDownloads--;
+                progressCurrent++;
+                cancelClose = true;
+                break;
               default:
                 throw new Exception("Unupported event: $event");
             }
 
             this.progressPercent =
                 ((progressCurrent / progressMax) * 100).round();
-            _log.finer(
-                "Progress is currently at $progressCurrent/$progressMax");
-
-            _log.finer(
-                "Concurrent downloads at $concurrentDownloads/$maxConcurrentDownloads");
-            _log.finer("Pending scrapes at $_pendingScrapes");
+            _log
+              ..finer("Progress is currently at $progressCurrent/$progressMax")
+              ..finer(
+                  "Concurrent downloads at $concurrentDownloads/$maxConcurrentDownloads")
+              ..finer("Pending scrapes at $_pendingScrapes");
             if (concurrentDownloads >= maxConcurrentDownloads) {
               continue;
             }
@@ -239,7 +244,7 @@ class ResultsComponent implements OnInit {
             }
           }
         }
-        if (close) {
+        if (close && !cancelClose) {
           closeTab();
         }
       } finally {
@@ -399,13 +404,15 @@ class ResultsComponent implements OnInit {
       final String fullPath = pathBuffer.toString();
 
       _log.fine("Downloading item: ${r.url} to $fullPath");
-      p.postMessage({
-        messageFieldCommand: downloadCommand,
-        messageFieldUrl: r.url,
-        messageFieldFilename: fullPath,
-        //TODO: Get redirect headers up and running
-        //messageFieldHeaders: []
-      });
+      final Map<String,dynamic> data = <String,dynamic>{
+      messageFieldCommand: downloadCommand,
+      messageFieldUrl: r.url,
+      messageFieldFilename: fullPath,
+    };
+      if(r.referrer?.isNotEmpty??true) {
+        data[messageFieldHeaders] = <String,String>{ HttpHeaders.REFERER: r.referrer};
+      }
+      p.postMessage(data);
     }
   }
 

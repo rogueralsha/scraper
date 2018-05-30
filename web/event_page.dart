@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'dart:html';
 import 'dart:js';
 import 'package:uuid/uuid.dart';
 import 'dart:async';
@@ -68,13 +70,19 @@ Future<Null> main() async {
             path = path.replaceAll("//", "/").replaceAll(":", "_");
             _log.info("Final path: $path");
 
+            final List<chrome.HeaderNameValuePair> headers = [];
+            if(message[messageFieldHeaders]!=null) {
+              final JsObject headerObj = message[messageFieldHeaders];
+              headers.add(new chrome.HeaderNameValuePair(name:HttpHeaders.REFERER,
+                  value:headerObj[HttpHeaders.REFERER]));
+            }
+
             final int id = await chrome.downloads.download(
                 new chrome.DownloadOptions(
                     url: message[messageFieldUrl],
                     filename: path,
                     conflictAction: chrome.FilenameConflictAction.UNIQUIFY,
-                    method: chrome.HttpMethod.GET,
-                    headers: message[messageFieldHeaders]));
+                    method: chrome.HttpMethod.GET));
             _log.info("Download created: $id");
 
             p.postMessage({

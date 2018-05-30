@@ -74,12 +74,19 @@ abstract class ASource {
   }
 
   @protected
-  LinkInfo evaluateLinkImpl(String link, String sourceUrl) {
+  Future<LinkInfo> evaluateLinkImpl(String link, String sourceUrl) async {
+    _log.finest('evaluateLinkImpl($link, $sourceUrl)');
     for (DirectLinkRegExp directRegExp in this.directLinkRegexps) {
       if (directRegExp.regExp.hasMatch(link)) {
         _log.finest("Direct link regexp match found in source $this");
+        String referrer;
+        if(directRegExp.checkForRedirect) {
+          referrer = link;
+          link = await checkForRedirect(link);
+        }
+
         final LinkInfo li = new LinkInfoImpl(link, sourceUrl,
-            type: directRegExp.linkType, thumbnail: determineThumbnail(link));
+            type: directRegExp.linkType, thumbnail: determineThumbnail(link), referrer: referrer);
         return reEvaluateLink(li, directRegExp.regExp);
       }
     }
@@ -97,10 +104,10 @@ abstract class ASource {
   @protected
   LinkInfo reEvaluateLink(LinkInfo li, RegExp regExp) => li;
 
-  void evaluateLink(String link, String sourceUrl, {bool select = true}) {
+  Future<void> evaluateLink(String link, String sourceUrl, {bool select = true}) async {
     _log.finest('evaluateLink($link, $sourceUrl, {$select})');
     for (ASource source in sourceInstances) {
-      final LinkInfo li = source.evaluateLinkImpl(link, sourceUrl);
+      final LinkInfo li = await source.evaluateLinkImpl(link, sourceUrl);
       if (li == null) continue;
       li.select = select;
       sendLinkInfo(li);
@@ -154,6 +161,27 @@ abstract class ASource {
   Future<Null> manualScrape(
       PageInfo pageInfo, String url, Document document) async {}
 
+
+  Future<String> checkForRedirect(String url) async {
+    _log.finest("checkForRedirect($url)");
+    final HttpRequest request = new HttpRequest()
+      ..open("HEAD", url)
+      ..send();
+    await for (Event e in request.onReadyStateChange) {
+      if (request.readyState == HttpRequest.DONE) {
+        _log.fine("Response status is ${request.status}");
+        if (request.status == 302) {
+          _log.finer(request.responseHeaders);
+          return request.responseHeaders["Location"];
+        } else {
+          _log.finer("Request responded from ${request.responseUrl}");
+          return request.responseUrl;
+        }
+      }
+    }
+    return url;
+  }
+
   Future<bool> urlExists(String url) async {
     final HttpRequest request = new HttpRequest()
       ..open("HEAD", url)
@@ -181,8 +209,8 @@ abstract class ASource {
   }
 
   LinkInfo createLinkFromElement(Element ele, String sourceUrl,
-      {String thumbnailSubSelector: "img",
-      LinkType defaultLinkType: LinkType.page}) {
+      {String thumbnailSubSelector= "img",
+      LinkType defaultLinkType= LinkType.page}) {
     String link;
     String thumbnail;
 
@@ -220,16 +248,31 @@ abstract class ASource {
     } else if (ele is VideoElement) {
       _log.finest("VideoElement found");
       type = LinkType.video;
-      link = ele.src;
-      if (link?.isEmpty ?? true) {
-        _log.finest("src attribute is empty, checking for source slements");
-        final ElementList<SourceElement> sources =
-            ele.querySelectorAll("source");
-        for (SourceElement source in sources) {
-          _log.finest("Source sub-element found, trying src");
+
+      final ElementList<SourceElement> sources =
+      ele.querySelectorAll("source");
+      int highestResolution = 0;
+      for (SourceElement source in sources) {
+        _log.finest("Source sub-element found, trying src");
+        if(source.attributes.containsKey("res")) {
+          try {
+            int res = int.parse(source.attributes["res"]);
+            if(res>highestResolution) {
+              _log.finest("Larger resolution $res than $highestResolution found, switching source");
+              link = source.src;
+              highestResolution = res;
+            }
+          } on Exception catch (e,st) {
+            _log.warning("Error while parsing res attreibute on source element",e,st);
+          }
+        } else {
           link = source.src;
           break;
         }
+      }
+
+      if (link?.isEmpty ?? true) {
+        link = ele.src;
       }
       if (link?.isEmpty ?? true) {
         _log.warning("Unable to find a source for the video element");

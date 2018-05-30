@@ -2,6 +2,7 @@
     z-index: auto !important;
     width: auto !important;
     height: auto !important;
+    max-height: 400px !important;
     margin-right:0 !important;
     margin-top:0 !important;
     margin-left:0 !important;
@@ -16,9 +17,27 @@
     position: static !important;
     height: auto !important;
 }
+.resultsDialog material-expansionpanel {
+    max-height: calc(50vh - 36pt);
+    overflow:hidden;
+}
+
+
+.resultsDialog material-expansionpanel .panel.open {
+    margin-top:0 !important;
+}
+
+.resultsDialog material-expansionpanel .content-wrapper {
+    margin:0;
+}
+
+.resultsDialog .linkResults {
+    max-height: calc(50vh - 149pt);
+}
 
 .acx-overlay-container {
     z-index:99999999 !important;
+    overflow:hidden;
 }
 /* Takes care of some reddit style interference */
 :not(.subscriber) .resultsDialog  div.content {

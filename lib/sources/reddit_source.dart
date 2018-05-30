@@ -21,11 +21,10 @@ class RedditSource extends ASource {
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.image, _imageRegexp));
 
-    this.urlScrapers.add(new UrlScraper(
-        _regExp, scrapeSubredditPageInfo, scrapeSubredditPageLinks));
-    this
-        .urlScrapers
-        .add(new UrlScraper(_imageRegexp, emptyPageScraper, selfLinkScraper));
+    this.urlScrapers
+      ..add(new UrlScraper(
+        _regExp, scrapeSubredditPageInfo, scrapeSubredditPageLinks))
+      ..add(new UrlScraper(_imageRegexp, emptyPageScraper, selfLinkScraper));
   }
 
   Future<Null> scrapeSubredditPageInfo(
@@ -45,18 +44,36 @@ class RedditSource extends ASource {
       if (_postRegexp.hasMatch(link)) {
         //continue;
       } else {
-        evaluateLink(link, url);
+        await evaluateLink(link, url);
+      }
+    }
+    final Element outboundLinkIconElement = document.querySelector(r"a > i.icon-outboundLink");
+    if(outboundLinkIconElement!=null) {
+      final AnchorElement anchorElement = outboundLinkIconElement.parent;
+      final String link = anchorElement.href;
+
+      if (_postRegexp.hasMatch(link)) {
+        //continue;
+      } else {
+        await evaluateLink(link, url);
+      }
+    } else {
+      final ImageElement imageElement = document.querySelector("img.media-element");
+      if(imageElement!=null) {
+        createAndSendLinkInfo(imageElement.src, url, type: LinkType.image);
       }
     }
 
     links = document.querySelectorAll(
-        "div.commentarea  div[data-type=comment] div.usertext-body a");
+        "div.commentarea  div[data-type=comment] div.usertext-body a,"
+            "div[data-test-id='post-content'] p a,"
+            "div > div > div> div > div> div > div > div > div > div > div > div> div > div> div > div > div > div  > div > div > div > div > div > p > a");
     for (AnchorElement linkElement in links) {
       final String link = linkElement.href;
       if (_postRegexp.hasMatch(link)) {
         //continue;
       } else {
-        evaluateLink(link, url, select: false);
+        await evaluateLink(link, url, select: false);
       }
     }
 

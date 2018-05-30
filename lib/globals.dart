@@ -40,6 +40,10 @@ const String unsubscribeCommand = "unsubscribe";
 final RegExp siteRegexp =
     new RegExp(r"https?://([^/]+)/.*", caseSensitive: false);
 
+final RegExp notCapitalRegexp = new RegExp(r"[^A-Z]");
+
+const String capitalLetters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
 final Logger _log = new Logger("globals");
 
 void closeTab({int tabId}) {

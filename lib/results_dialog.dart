@@ -10,7 +10,7 @@ import 'globals.dart';
 
 @Component(
   selector: 'results-dialog',
-  styleUrls: ['results_dialog.css'],
+  styleUrls: <String>['results_dialog.css'],
   templateUrl: 'results_dialog.html',
   directives: [NgFor, materialDirectives, NgIf, ResultsComponent],
   providers: [const ClassProvider(ScraperService), materialProviders],

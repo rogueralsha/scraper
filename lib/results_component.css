@@ -1,10 +1,17 @@
 :host {
     /* This is equivalent of the 'body' selector of a page. */
-    all: unset;
     align-items: stretch !important;
     color: black;
     background: white;
 }
+.resultsDialog div.content {
+    max-height: calc(50vh - 64pt - 16pt);
+}
+
+.pathControls {
+    height:32pt;
+}
+
 img {
     height:50px;
     width:50px;
@@ -19,12 +26,12 @@ material-button {
     margin:0;
     padding:0;
 }
-.toolbarButtons
+.toolbarButtons {}
 
-.linkResults {
-    max-height:400px;
+div.linkResults {
+
     overflow-y: auto;
-    overflow-x:hidden;
+    overflow-x: hidden;
 }
 .linkResults material-button {
     width: 18pt;

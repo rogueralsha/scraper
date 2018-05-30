@@ -225,7 +225,7 @@ class TumblrSource extends ASource {
               String link = _redirectRegExp.firstMatch(linkEle.href)[1];
               link = Uri.decodeComponent(link);
               _log.info("Link decoded", link);
-              evaluateLink(link, url);
+              await evaluateLink(link, url);
             }
           }
 
