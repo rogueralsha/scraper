@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:html';
-import 'a_source.dart';
+
 import 'package:logging/logging.dart';
+
+import 'a_source.dart';
 import 'src/simple_url_scraper.dart';
 import 'src/url_scraper.dart';
 
@@ -13,8 +15,15 @@ class TwitterSource extends ASource {
       r"https?://twitter\.com/([^/]+)/status/.+",
       caseSensitive: false);
 
-  TwitterSource() {
-    this.urlScrapers.add(new SimpleUrlScraper(this, _postRegexp, [
+
+  static final RegExp _imageRegexp = new RegExp(
+      r"https?://pbs\.twimg\.com/media/.+",
+      caseSensitive: false);
+
+  TwitterSource(SettingsService settings) : super(settings) {
+    this.directLinkRegexps.add(
+        new DirectLinkRegExp(LinkType.image, _imageRegexp));
+    this.urlScrapers..add(new SimpleUrlScraper(this, _postRegexp, [
           new SimpleUrlScraperCriteria(LinkType.image,
               ".permalink-tweet-container .js-adaptive-photo img",
               validateLinkInfo: (LinkInfo li, Element e) {
@@ -23,9 +32,7 @@ class TwitterSource extends ASource {
           }),
           new SimpleUrlScraperCriteria(
               LinkType.video, ".permalink-tweet-container .AdaptiveMedia video")
-        ]));
-
-    this.urlScrapers.add(new UrlScraper(
+    ]))..add(new UrlScraper(
         _regExp, this.artistFromRegExpPageScraper, scrapeUserPageLinks));
   }
 

@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:html';
-import 'a_source.dart';
+
 import 'package:logging/logging.dart';
+
+import 'a_source.dart';
 import 'src/simple_url_scraper.dart';
 
 class EromeSource extends ASource {
@@ -16,7 +18,7 @@ class EromeSource extends ASource {
       caseSensitive: false);
 
 
-  EromeSource() {
+  EromeSource(SettingsService settings) : super(settings) {
     this.urlScrapers
         ..add(new SimpleUrlScraper(this, _userRegExp, [new SimpleUrlScraperCriteria(LinkType.page, "div#albums a")], customPageInfoScraper: scrapePageInfo))
         ..add(new SimpleUrlScraper(

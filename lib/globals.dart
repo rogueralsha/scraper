@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:html';
+import 'dart:js';
 
 import 'package:chrome/chrome_ext.dart' as chrome;
 import 'package:logging/logging.dart';
@@ -22,12 +23,15 @@ const String messageFieldDownloadId = "downloadId";
 const String messageFieldError = "error";
 const String messageFieldEvent = "event";
 const String messageFieldFilename = "filename";
+const String messageFieldPrompt = "prompt";
+const String messageFieldPath = "path";
 
 const String messageFieldHeaders = "headers";
 const String messageFieldTabId = "tabId";
 
 const String messageFieldUrl = "url";
 const String openTabCommand = "openTab";
+const String nextTabCommand = "nextTab";
 const String pageInfoEvent = "pageInfo";
 const String scrapeDoneEvent = "scrapeDone";
 const String scrapePageCommand = "scrapePage";
@@ -82,3 +86,6 @@ bool inIframe() {
 
 Future<Null> pause({int seconds = 0}) =>
     new Future<Null>.delayed(new Duration(seconds: seconds));
+
+String jsVarDump(JsObject input) =>
+    context['JSON'].callMethod('stringify', <dynamic>[input]);

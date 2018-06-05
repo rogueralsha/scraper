@@ -1,8 +1,10 @@
-import 'a_source.dart';
-import 'package:logging/logging.dart';
-import 'src/simple_url_scraper.dart';
-import 'package:scraper/globals.dart';
 import 'dart:html';
+
+import 'package:logging/logging.dart';
+import 'package:scraper/globals.dart';
+
+import 'a_source.dart';
+import 'src/simple_url_scraper.dart';
 
 class WordpressSource extends ASource {
   static final Logger _log = new Logger("WordpressSource");
@@ -11,7 +13,7 @@ class WordpressSource extends ASource {
       r"^(https?://([^/]+)/wp-content/uploads/\d{4}/\d{2}/(.+))-\d+x\d+(\.[^/]+)$",
       caseSensitive: false);
 
-  WordpressSource() {
+  WordpressSource(SettingsService settings) : super(settings) {
     this
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.file, _contentRegExp));

@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:html';
-import 'a_source.dart';
+
 import 'package:logging/logging.dart';
+
+import 'a_source.dart';
 import 'src/url_scraper.dart';
 
 class RedditSource extends ASource {
@@ -16,7 +18,7 @@ class RedditSource extends ASource {
       r"https?://i\.(redd\.it|redditmedia\.com)/.*",
       caseSensitive: false);
 
-  RedditSource() {
+  RedditSource(SettingsService settings) : super(settings) {
     this
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.image, _imageRegexp));
@@ -58,9 +60,11 @@ class RedditSource extends ASource {
         await evaluateLink(link, url);
       }
     } else {
-      final ImageElement imageElement = document.querySelector("img.media-element");
+      final ImageElement imageElement = document.querySelector(
+          "img.media-element, div.media-element a img");
       if(imageElement!=null) {
-        createAndSendLinkInfo(imageElement.src, url, type: LinkType.image);
+        final AnchorElement anchorElement = imageElement.parent;
+        createAndSendLinkInfo(anchorElement.href, url, type: LinkType.image);
       }
     }
 

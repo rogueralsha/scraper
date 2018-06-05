@@ -1,5 +1,6 @@
-import 'a_source.dart';
 import 'package:logging/logging.dart';
+
+import 'a_source.dart';
 import 'src/simple_url_scraper.dart';
 
 class BloggerSource extends ASource {
@@ -16,7 +17,7 @@ class BloggerSource extends ASource {
       r"https?://\d+\.([^.]+)\.blogspot\.com/-.+",
       caseSensitive: false);
 
-  BloggerSource() {
+  BloggerSource(SettingsService settings) : super(settings) {
     this
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.file, _contentRegExp));

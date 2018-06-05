@@ -1,5 +1,6 @@
 import 'dart:html';
 
+import 'package:angular/angular.dart';
 import 'package:logging/logging.dart';
 
 import 'a_source.dart';
@@ -26,38 +27,86 @@ import 'wordpress_source.dart';
 
 export 'a_source.dart';
 
-final List<ASource> sourceInstances = <ASource>[
-  new DeviantArtSource(),
-  new RedditSource(),
-  new ArtStationSource(),
-  new ComicArtCommunitySource(),
-  new ComicArtFansSource(),
-  new ShimmieSource(),
-  new HentaiFoundrySource(),
-  new InstagramSource(),
-  new ImgurSource(),
-  new GfycatSource(),
-  new BloggerSource(),
-  new TumblrSource(),
-  new TwitterSource(),
-  new FacebookSource(),
-  new EtcSource(),
-  new TinyTinyRSSSource(),
-  new EromeSource(),
-  new PatreonSource(),
-  new WordpressSource(),
-  new WebmShareSource()
+const List<dynamic> sourceProviders = const <dynamic>[
+  const ClassProvider(DeviantArtSource),
+  const ClassProvider(RedditSource),
+  const ClassProvider(ArtStationSource),
+  const ClassProvider(ComicArtCommunitySource),
+  const ClassProvider(ComicArtFansSource),
+  const ClassProvider(ShimmieSource),
+  const ClassProvider(HentaiFoundrySource),
+  const ClassProvider(InstagramSource),
+  const ClassProvider(ImgurSource),
+  const ClassProvider(GfycatSource),
+  const ClassProvider(BloggerSource),
+  const ClassProvider(TumblrSource),
+  const ClassProvider(TwitterSource),
+  const ClassProvider(FacebookSource),
+  const ClassProvider(EtcSource),
+  const ClassProvider(TinyTinyRSSSource),
+  const ClassProvider(EromeSource),
+  const ClassProvider(PatreonSource),
+  const ClassProvider(WordpressSource),
+  const ClassProvider(WebmShareSource)
 ];
 
-final Logger _log = new Logger("sources.dart");
+class Sources {
+  static final List<ASource> sourceInstances = <ASource>[];
 
-ASource getScraperForSite(String url, Document document) {
-  for (ASource source in sourceInstances) {
-    _log.finest("Checking if $source can scrape source");
-    if (source.canScrapePage(url, document: document)) {
-      _log.finest("It can!");
-      return source;
-    }
+  Sources(DeviantArtSource deviantArtSource,
+      RedditSource redditSource,
+      ArtStationSource artstationSource,
+      ComicArtCommunitySource comicArtCommunity,
+      ComicArtFansSource comicartFanSource,
+      ShimmieSource shimmieSource,
+      HentaiFoundrySource hentaiFoundrySource,
+      InstagramSource instagramSource,
+      ImgurSource imgurSource,
+      GfycatSource gfycatSource,
+      BloggerSource bloggerSource,
+      TumblrSource tumblrSource,
+      TwitterSource twitterSource,
+      FacebookSource facebookSource,
+      EtcSource etcSource,
+      TinyTinyRSSSource ttRssSource,
+      EromeSource eromeSource,
+      PatreonSource patreonSource,
+      WordpressSource wordpressSource,
+      WebmShareSource webmShareSource) {
+    sourceInstances.addAll([
+      deviantArtSource,
+      redditSource,
+      artstationSource,
+      comicArtCommunity,
+      comicartFanSource,
+      shimmieSource,
+      hentaiFoundrySource,
+      instagramSource,
+      imgurSource,
+      gfycatSource,
+      bloggerSource,
+      tumblrSource,
+      twitterSource,
+      facebookSource,
+      etcSource,
+      ttRssSource,
+      eromeSource,
+      patreonSource,
+      wordpressSource,
+      webmShareSource
+    ]);
   }
-  return null;
+
+  final Logger _log = new Logger("Scraper");
+
+  ASource getScraperForSite(String url, Document document) {
+    for (ASource source in sourceInstances) {
+      _log.finest("Checking if $source can scrape source");
+      if (source.canScrapePage(url, document: document)) {
+        _log.finest("It can!");
+        return source;
+      }
+    }
+    return null;
+  }
 }

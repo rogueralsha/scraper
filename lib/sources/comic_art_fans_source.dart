@@ -1,6 +1,8 @@
 import 'dart:html';
-import 'a_source.dart';
+
 import 'package:logging/logging.dart';
+
+import 'a_source.dart';
 import 'src/simple_url_scraper.dart';
 
 class ComicArtFansSource extends ASource {
@@ -13,7 +15,7 @@ class ComicArtFansSource extends ASource {
       r"^https?://.+\.comicartfans\.com/GalleryPiece.asp\?Piece=([^&]+).+",
       caseSensitive: false);
 
-  ComicArtFansSource() {
+  ComicArtFansSource(SettingsService settings) : super(settings) {
     this.urlScrapers.add(new SimpleUrlScraper(this, _pieceRegexp,
         [new SimpleUrlScraperCriteria(LinkType.image, "div#sharewrap img")]));
     this.urlScrapers.add(new SimpleUrlScraper(this, _artistRegexp, [

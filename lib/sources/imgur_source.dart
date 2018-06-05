@@ -25,7 +25,7 @@ class ImgurSource extends ASource {
       r"https?://([mi]\.)?imgur\.com/([^/]+)\.(jpg|png)(\?.+)?$",
       caseSensitive: false);
 
-  ImgurSource() {
+  ImgurSource(SettingsService settings) : super(settings) {
     this
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.image, _directRegexp));

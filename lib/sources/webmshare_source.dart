@@ -1,5 +1,3 @@
-import 'dart:html';
-
 import 'package:logging/logging.dart';
 
 import 'a_source.dart';
@@ -12,7 +10,7 @@ class WebmShareSource extends ASource {
       r"https?://webmshare\.com/(play/)?([^/]+)$",
       caseSensitive: false);
 
-  WebmShareSource() {
+  WebmShareSource(SettingsService settings) : super(settings) {
     this.urlScrapers.add(new SimpleUrlScraper(
         this,
         _regExp,

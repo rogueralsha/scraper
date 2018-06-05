@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:html';
-import 'a_source.dart';
+
 import 'package:logging/logging.dart';
+
+import 'a_source.dart';
 import 'src/simple_url_scraper.dart';
 
 class InstagramSource extends ASource {
@@ -18,7 +20,7 @@ class InstagramSource extends ASource {
   static final RegExp _contentRegExp =
       new RegExp(r"https?://[^.]+\.cdninstagram\.com/.+", caseSensitive: false);
 
-  InstagramSource() {
+  InstagramSource(SettingsService settings) : super(settings) {
     this
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.file, _contentRegExp));

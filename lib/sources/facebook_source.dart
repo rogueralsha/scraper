@@ -1,5 +1,6 @@
-import 'a_source.dart';
 import 'package:logging/logging.dart';
+
+import 'a_source.dart';
 
 class FacebookSource extends ASource {
   static final Logger _log = new Logger("FacebookSource");
@@ -9,7 +10,7 @@ class FacebookSource extends ASource {
   //static final RegExp _albumRegExp = new RegExp(r"https?://[^.]+\.facebook\.com/.*album_id=(\d+)", caseSensitive: false);
   //static final RegExp _photoRegExp = new RegExp(r"https?://[^.]+\.facebook\.com/.*/photos/.*", caseSensitive: false);
 
-  FacebookSource() {
+  FacebookSource(SettingsService settings) : super(settings) {
     this
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.file, _contentServerRegExp));

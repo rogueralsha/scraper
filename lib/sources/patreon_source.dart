@@ -22,7 +22,7 @@ class PatreonSource extends ASource {
       r"^https?://www\.patreon\.com/file\?[^/]+$",
       caseSensitive: false);
 
-  PatreonSource() {
+  PatreonSource(SettingsService settings) : super(settings) {
     this
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.file, _fileRegExp));

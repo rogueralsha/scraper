@@ -25,7 +25,7 @@ class DeviantArtSource extends ASource {
       r"https?://(img|pre)\d+\.deviantart\.net/.*",
       caseSensitive: false);
 
-  DeviantArtSource() {
+  DeviantArtSource(SettingsService settings) : super(settings) {
     this
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.file, _imageHostRegExp));

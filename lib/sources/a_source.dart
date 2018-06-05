@@ -1,18 +1,22 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:html';
 
-import 'package:meta/meta.dart';
 import 'package:logging/logging.dart';
+import 'package:meta/meta.dart';
 import 'package:scraper/globals.dart';
 import 'package:scraper/results/page_info.dart';
+import 'package:scraper/services/settings_service.dart';
 
 import 'sources.dart';
+import 'src/direct_link_regexp.dart';
 import 'src/link_info_impl.dart';
 import 'src/url_scraper.dart';
-import 'src/direct_link_regexp.dart';
 
 export 'package:scraper/results/page_info.dart';
+export 'package:scraper/services/settings_service.dart';
 export 'package:scraper/sources/src/link_info_impl.dart';
+
 export 'src/direct_link_regexp.dart';
 
 abstract class ASource {
@@ -29,7 +33,9 @@ abstract class ASource {
 
   final List<String> _seenLinks = <String>[];
 
-  ASource();
+  final SettingsService _settings;
+
+  ASource(this._settings);
 
   Stream<dynamic> get onScrapeUpdateEvent => _scrapeUpdateStream.stream;
 
@@ -37,18 +43,41 @@ abstract class ASource {
 
   int get sentLinkCount => _seenLinks.length;
 
+  /// Extracts the artist name from the URL of the site based on the first group
+  /// found by the provided RegExp. If the first group returns "www.", the next
+  /// group will automatically be tried, but if it is not available then the
+  /// domain name will be used.
   Future<Null> artistFromRegExpPageScraper(
       PageInfo pageInfo, Match m, String url, Document doc,
       {int group = 1}) async {
-    _log.info("artistFromRegExpPageScraper");
+    _log.finest(
+        "artistFromRegExpPageScraper($pageInfo, $m, $url, $doc, $group}");
     pageInfo.artist = m.group(group);
+    int currentGroup = group;
+    while (pageInfo.artist.toLowerCase() == "www.") {
+      _log.fine(
+          "Specified group $currentGroup returned www., checking next group");
+      currentGroup++;
+      if (m.groupCount >= currentGroup) {
+        pageInfo.artist = m.group(currentGroup);
+      } else {
+        break;
+      }
+    }
+    if (pageInfo.artist.toLowerCase() == "www." ||
+        (pageInfo.artist?.isEmpty ?? true)) {
+      _log.fine("Specified group $currentGroup returned ${pageInfo.artist ??
+          "NULL"}, using URL");
+      pageInfo.artist = siteRegexp.firstMatch(url).group(1);
+    }
   }
 
   bool canScrapePage(String url,
       {Document document, bool forEvaluation = false}) {
     _log.finest("canScrapePage");
     for (UrlScraper us in urlScrapers) {
-      if (us.isMatch(url)) return true;
+      if (us.isMatch(url))
+        return true;
     }
     return false;
   }
@@ -58,7 +87,10 @@ abstract class ASource {
     if (!this._seenLinks.contains(link)) {
       this._seenLinks.add(link);
       final LinkInfo li = new LinkInfoImpl(link, sourceUrl,
-          type: type, filename: filename, thumbnail: thumbnail);
+          type: type,
+          filename: filename,
+          thumbnail: thumbnail,
+          referrer: sourceUrl);
       _sendLinkInfoInternal(li);
     }
   }
@@ -83,6 +115,8 @@ abstract class ASource {
         if(directRegExp.checkForRedirect) {
           referrer = link;
           link = await checkForRedirect(link);
+        } else {
+          referrer = sourceUrl;
         }
 
         final LinkInfo li = new LinkInfoImpl(link, sourceUrl,
@@ -106,9 +140,11 @@ abstract class ASource {
 
   Future<void> evaluateLink(String link, String sourceUrl, {bool select = true}) async {
     _log.finest('evaluateLink($link, $sourceUrl, {$select})');
-    for (ASource source in sourceInstances) {
+    for (ASource source in Sources.sourceInstances) {
+      _log.finest("Evaluating against ${source.runtimeType}");
       final LinkInfo li = await source.evaluateLinkImpl(link, sourceUrl);
-      if (li == null) continue;
+      if (li == null)
+        continue;
       li.select = select;
       sendLinkInfo(li);
     }
@@ -116,7 +152,7 @@ abstract class ASource {
 
   Future<Null> selfLinkScraper(String url, Document d) async {
     _log.finest("selfLinkScraper");
-    final LinkInfo li = new LinkInfoImpl(url, url);
+    final LinkInfo li = new LinkInfoImpl(url, url, type: LinkType.page);
     sendLinkInfo(li);
   }
 
@@ -129,33 +165,57 @@ abstract class ASource {
   }
 
   void sendPageInfo(PageInfo pi) {
-    _log.finer("Sending PageInfo event");
-    _log.finer(pi.toJson());
+    _log.finest("sendPageInfo(${pi.toJson()})");
     _scrapeUpdateStream.add(pi);
   }
 
   void sendScrapeDone() {
-    _log.finer("Sending scrape done signal");
+    _log.finest("sendScrapeDone");
     _scrapeUpdateStream.add(scrapeDoneEvent);
   }
 
   Future<Null> startScrapingPage(String url, Document document) async {
     _log.finest("startScrapingPage");
     _seenLinks.clear();
-    final PageInfo pageInfo = new PageInfo(await getCurrentTabId());
+    final PageInfo pageInfo = new PageInfo(
+        this.runtimeType.toString(), await getCurrentTabId());
+
+
     for (UrlScraper us in urlScrapers) {
       _log.finest("Testing url scraper: ${us.urlRegExp}");
       if (us.isMatch(url)) {
         await us.scrapePageInfo(pageInfo, url, document);
         _log.info("Artist: ${pageInfo.artist}");
+
+        if (pageInfo.artist?.isNotEmpty ?? false) {
+          _log.finest("Artist is not empty (${pageInfo
+              .artist}), fetching source/artist settings");
+          final SourceArtistSetting sourceArtistSetting =
+          await _settings.getSourceArtistSettings(
+              this.runtimeType.toString(), pageInfo.artist);
+          applySourceArtistSettings(sourceArtistSetting, pageInfo);
+        } else {
+          _log.finest(
+              "Artist is empty, skipping loading source/artist settings");
+        }
+
+
         sendPageInfo(pageInfo);
         await us.startLinkInfoScraping(url, document);
         break;
       }
     }
+
+
     await manualScrape(pageInfo, url, document);
 
     sendScrapeDone();
+  }
+
+  void applySourceArtistSettings(SourceArtistSetting settings, PageInfo pi) {
+    _log.finest(
+        "applySourceArtistSettings(${jsonEncode(settings.toJson())}, $pi)");
+    pi.promptForDownload = settings.promptForDownload;
   }
 
   Future<Null> manualScrape(
@@ -256,7 +316,7 @@ abstract class ASource {
         _log.finest("Source sub-element found, trying src");
         if(source.attributes.containsKey("res")) {
           try {
-            int res = int.parse(source.attributes["res"]);
+            final int res = int.parse(source.attributes["res"]);
             if(res>highestResolution) {
               _log.finest("Larger resolution $res than $highestResolution found, switching source");
               link = source.src;

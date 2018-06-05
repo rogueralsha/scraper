@@ -13,7 +13,7 @@ import 'globals.dart';
   styleUrls: <String>['results_dialog.css'],
   templateUrl: 'results_dialog.html',
   directives: [NgFor, materialDirectives, NgIf, ResultsComponent],
-  providers: [const ClassProvider(ScraperService), materialProviders],
+  providers: [materialProviders],
 )
 class ResultsDialog {
   static final Logger _log = new Logger("ResultsDialog");

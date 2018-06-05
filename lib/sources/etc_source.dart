@@ -1,5 +1,6 @@
-import 'a_source.dart';
 import 'package:logging/logging.dart';
+
+import 'a_source.dart';
 
 class EtcSource extends ASource {
   static final Logger _log = new Logger("EtcSource");
@@ -17,7 +18,8 @@ class EtcSource extends ASource {
       new RegExp(r"https?://my\.mixtape\.moe/.*", caseSensitive: false);
   static final RegExp _temelRegExp =
   new RegExp(r"https?://[^/]+\.temel\.me/.*", caseSensitive: false);
-  EtcSource() {
+
+  EtcSource(SettingsService settings) : super(settings) {
     this.directLinkRegexps
       ..add(new DirectLinkRegExp(LinkType.file, _squareSpaceStaticServerRegExp))
       ..add(new DirectLinkRegExp(LinkType.file, _catboxRegExp))

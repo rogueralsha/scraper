@@ -2,17 +2,14 @@ import 'dart:async';
 import 'dart:html';
 
 import 'package:logging/logging.dart';
+import 'package:scraper/globals.dart';
 
 import 'a_source.dart';
-import 'package:scraper/globals.dart';
-import 'src/link_info_impl.dart';
-import 'src/simple_url_scraper.dart';
-import 'src/url_scraper.dart';
 
 class TinyTinyRSSSource extends ASource {
   static final Logger _log = new Logger("TinyTinyRSSSource");
 
-  TinyTinyRSSSource();
+  TinyTinyRSSSource(SettingsService settings) : super(settings);
 
   @override
   bool canScrapePage(String url,

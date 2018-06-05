@@ -1,8 +1,7 @@
-import 'dart:io';
 import 'dart:async';
 import 'dart:collection';
 import 'dart:html';
-import 'dart:js';
+import 'dart:io';
 
 import 'package:angular/angular.dart';
 import 'package:angular_components/angular_components.dart';
@@ -37,6 +36,7 @@ class ResultsComponent implements OnInit {
   static final Logger _log = new Logger("ResultsComponent");
   bool showProgress = false;
   bool savePath = false;
+  bool promptForDownload = false;
   bool showPopup = false;
   bool disableInterface = false;
   String artistPath = "";
@@ -52,7 +52,7 @@ class ResultsComponent implements OnInit {
   final SettingsService _settings;
   final PageStreamService _pageStream;
 
-  PageInfo results = new PageInfo(-1);
+  PageInfo results = new PageInfo("none", -1);
 
   bool get showLoadAllButton => loaded && results.incrementalLoader;
 
@@ -98,8 +98,9 @@ class ResultsComponent implements OnInit {
 
   int _pendingScrapes = 0;
 
-  void downloadButtonClick(bool close) async {
-    _log.finest("downloadButtonClick($close) start");
+  void downloadButtonClick(dynamic event, bool close) async {
+    _log.finest("downloadButtonClick($event, $close) start");
+
     try {
       showProgress = true;
       disableInterface = true;
@@ -119,14 +120,23 @@ class ResultsComponent implements OnInit {
         if (savePath) {
           await _settings.setMapping(results.artist, artistPath);
         }
-      } else {
+      } else if (!promptForDownload) {
         if (!window.confirm("No path specified, continue?")) {
           return;
         }
       }
 
-      final int maxConcurrentDownloads =
-          await _settings.getMaxConcurrentDownloads();
+      if (savePath) {
+        final SourceArtistSetting sourceArtistSetting = await _settings
+            .getSourceArtistSettings(results.source, results.artist)
+          ..promptForDownload = promptForDownload;
+        await _settings.setSourceArtistSettings(
+            results.source, results.artist, sourceArtistSetting);
+      }
+
+      int maxConcurrentDownloads = await _settings.getMaxConcurrentDownloads();
+      if (promptForDownload) maxConcurrentDownloads = 1;
+
       _log.info("Max concurrent downloads is set to $maxConcurrentDownloads");
       int concurrentDownloads = 0;
 
@@ -145,13 +155,16 @@ class ResultsComponent implements OnInit {
         int insertPosition = 0;
 
         _sendMessageForScrapeResult(p, r, pathPrefix);
+        if (close)
+          chrome.runtime.sendMessage({messageFieldCommand: nextTabCommand});
+
         await for (chrome.OnMessageEvent e in p.onMessage) {
           this.progressPercent =
               ((progressCurrent / progressMax) * 100).round();
 
           _log
             ..info("Message received during download process")
-            ..finer(context['JSON'].callMethod('stringify', [e.message]));
+            ..finer(jsVarDump(e.message));
 
           if (e.message.hasProperty(messageFieldEvent)) {
             final String event = e.message[messageFieldEvent];
@@ -245,6 +258,7 @@ class ResultsComponent implements OnInit {
           }
         }
         if (close && !cancelClose) {
+          _log.finest("Close tab specified, closing tab");
           closeTab();
         }
       } finally {
@@ -267,6 +281,7 @@ class ResultsComponent implements OnInit {
         _log.info("PageInfo received, updating component data");
         this.results = pi;
         this.savePath = results.saveByDefault;
+        this.promptForDownload = results.promptForDownload;
         this.artistPath = await _settings.getMapping(results.artist);
         this.availablePathPrefixes = await _settings.getAvailablePrefixes();
       });
@@ -297,7 +312,7 @@ class ResultsComponent implements OnInit {
     try {
       showProgress = true;
       disableInterface = true;
-      Queue<LinkInfo> toOpen =
+      final Queue<LinkInfo> toOpen =
           new Queue<LinkInfo>.of(links.where((LinkInfo r) => r.select));
 
       if (toOpen.isEmpty) {
@@ -335,7 +350,7 @@ class ResultsComponent implements OnInit {
           }
         } else {
           while (toOpen.isNotEmpty) {
-            LinkInfo r = toOpen.removeFirst();
+            final LinkInfo r = toOpen.removeFirst();
             p.postMessage(
                 {messageFieldCommand: openTabCommand, messageFieldUrl: r.url});
           }
@@ -359,7 +374,7 @@ class ResultsComponent implements OnInit {
 
   Future<Null> refreshButtonClick() async {
     try {
-      results = new PageInfo(-1);
+      results = new PageInfo("none", -1);
       links.clear();
       savePath = false;
       artistPath = "";
@@ -372,19 +387,19 @@ class ResultsComponent implements OnInit {
 
   void selectAbove(int i) {
     for (int j = 0; j < links.length; j++) {
-      links[j].select = (j <= i);
+      links[j].select = j <= i;
     }
   }
 
   void selectBeneath(int i) {
     for (int j = 0; j < links.length; j++) {
-      links[j].select = (j >= i);
+      links[j].select = j >= i;
     }
   }
 
   void selectOnly(int i) {
     for (int j = 0; j < links.length; j++) {
-      links[j].select = (i == j);
+      links[j].select = i == j;
     }
   }
 
@@ -404,13 +419,22 @@ class ResultsComponent implements OnInit {
       final String fullPath = pathBuffer.toString();
 
       _log.fine("Downloading item: ${r.url} to $fullPath");
-      final Map<String,dynamic> data = <String,dynamic>{
-      messageFieldCommand: downloadCommand,
-      messageFieldUrl: r.url,
-      messageFieldFilename: fullPath,
-    };
-      if(r.referrer?.isNotEmpty??true) {
-        data[messageFieldHeaders] = <String,String>{ HttpHeaders.REFERER: r.referrer};
+      final Map<String, dynamic> data = <String, dynamic>{
+        messageFieldCommand: downloadCommand,
+        messageFieldUrl: r.url,
+        messageFieldPrompt: promptForDownload
+      };
+      //if (promptForDownload) {
+      //data[messageFieldFilename] = r.filename;
+      //} else {
+      data[messageFieldFilename] = fullPath;
+      //}
+
+      if (r.referrer?.isNotEmpty ?? false) {
+        _log.finest("Referrer is not empty, sending as header ${r.referrer}");
+        data[messageFieldHeaders] = <String, String>{
+          HttpHeaders.REFERER: r.referrer
+        };
       }
       p.postMessage(data);
     }

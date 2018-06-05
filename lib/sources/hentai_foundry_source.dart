@@ -1,6 +1,8 @@
 import 'dart:html';
-import 'a_source.dart';
+
 import 'package:logging/logging.dart';
+
+import 'a_source.dart';
 import 'src/simple_url_scraper.dart';
 
 class HentaiFoundrySource extends ASource {
@@ -12,7 +14,7 @@ class HentaiFoundrySource extends ASource {
       r"^https?://www\.hentai-foundry\.com/pictures/user/([^/]+)(/page/\d+)?$",
       caseSensitive: false);
 
-  HentaiFoundrySource() {
+  HentaiFoundrySource(SettingsService settings) : super(settings) {
     this.urlScrapers.add(new SimpleUrlScraper(this, _hfGalleryRegExp, [
           new SimpleUrlScraperCriteria(LinkType.page, "a.thumbLink"),
           new SimpleUrlScraperCriteria(LinkType.page, "li.next a", limit: 1,

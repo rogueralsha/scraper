@@ -10,7 +10,7 @@ import 'src/link_info_impl.dart';
 class ShimmieSource extends ASource {
   static final Logger _log = new Logger("ShimmieSource");
 
-  ShimmieSource();
+  ShimmieSource(SettingsService settings) : super(settings);
 
   @override
   bool canScrapePage(String url,

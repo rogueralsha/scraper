@@ -1,14 +1,18 @@
+import 'dart:async';
 import 'dart:html';
 import 'dart:js';
-import 'dart:async';
-import 'package:logging/logging.dart';
-import '../results/page_info.dart';
+
+import 'package:angular/angular.dart';
 import 'package:chrome/chrome_ext.dart' as chrome;
+import 'package:logging/logging.dart';
 import 'package:scraper/globals.dart';
 import 'package:uuid/uuid.dart';
 
+import '../results/page_info.dart';
+
 class PageStreamEvent {}
 
+@Injectable()
 class PageStreamService {
   static final _log = new Logger("ScraperService");
 
@@ -22,7 +26,7 @@ class PageStreamService {
 
   PageStreamService()
       : p = chrome.runtime.connect(
-            null, new chrome.RuntimeConnectParams(name: new Uuid().v4())) {
+      null, new chrome.RuntimeConnectParams(name: new Uuid().v4())) {
     p.onMessage.listen(messageEvented);
     setUpStreams();
   }
@@ -63,7 +67,7 @@ class PageStreamService {
         switch (event) {
           case pageInfoEvent:
             final PageInfo pi =
-                new PageInfo.fromJsObject(obj[messageFieldData]);
+            new PageInfo.fromJsObject(obj[messageFieldData]);
             _pageInfoStream.add(pi);
             break;
           case linkInfoEvent:
@@ -71,7 +75,7 @@ class PageStreamService {
             _linkInfoStream.add(li);
             break;
           case scrapeDoneEvent:
-            // Doesn't do anything here
+          // Doesn't do anything here
             break;
           default:
             throw new Exception("Unknown event: $event");

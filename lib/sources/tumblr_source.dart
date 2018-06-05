@@ -3,10 +3,10 @@ import 'dart:html';
 
 import 'package:logging/logging.dart';
 import 'package:scraper/globals.dart';
+import 'package:scraper/services/page_stream_service.dart';
 
 import 'a_source.dart';
 import 'src/link_info_impl.dart';
-import 'package:scraper/services/page_stream_service.dart';
 
 class TumblrSource extends ASource {
   static final Logger _log = new Logger("TumblrSource");
@@ -52,7 +52,7 @@ class TumblrSource extends ASource {
 
   static final PageStreamService streamService = new PageStreamService();
 
-  TumblrSource() {
+  TumblrSource(SettingsService settings) : super(settings) {
     this
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.file, _tumblrMediaRegExp));

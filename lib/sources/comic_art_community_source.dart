@@ -1,6 +1,8 @@
 import 'dart:html';
-import 'a_source.dart';
+
 import 'package:logging/logging.dart';
+
+import 'a_source.dart';
 import 'src/simple_url_scraper.dart';
 
 class ComicArtCommunitySource extends ASource {
@@ -12,7 +14,7 @@ class ComicArtCommunitySource extends ASource {
       r"^https?://.*\.?comicartcommunity\.com/gallery/details.php\?image_id=(\d+).*",
       caseSensitive: false);
 
-  ComicArtCommunitySource() {
+  ComicArtCommunitySource(SettingsService settings) : super(settings) {
     this.urlScrapers.add(new SimpleUrlScraper(this, _imageRegexp,
         [new SimpleUrlScraperCriteria(LinkType.image, "div.wide center img", limit: 1)]));
     this.urlScrapers.add(new SimpleUrlScraper(this, _galleryRegexp, [
