@@ -52,22 +52,26 @@ abstract class ASource {
       {int group = 1}) async {
     _log.finest(
         "artistFromRegExpPageScraper($pageInfo, $m, $url, $doc, $group}");
-    pageInfo.artist = m.group(group);
-    int currentGroup = group;
-    while (pageInfo.artist.toLowerCase() == "www.") {
-      _log.fine(
-          "Specified group $currentGroup returned www., checking next group");
-      currentGroup++;
-      if (m.groupCount >= currentGroup) {
-        pageInfo.artist = m.group(currentGroup);
-      } else {
-        break;
+    if (m.groupCount >= group) {
+      pageInfo.artist = m.group(group);
+      int currentGroup = group;
+      while (pageInfo.artist.toLowerCase() == "www.") {
+        _log.fine(
+            "Specified group $currentGroup returned www., checking next group");
+        currentGroup++;
+        if (m.groupCount >= currentGroup) {
+          pageInfo.artist = m.group(currentGroup);
+        } else {
+          break;
+        }
       }
-    }
-    if (pageInfo.artist.toLowerCase() == "www." ||
-        (pageInfo.artist?.isEmpty ?? true)) {
-      _log.fine("Specified group $currentGroup returned ${pageInfo.artist ??
-          "NULL"}, using URL");
+      if (pageInfo.artist.toLowerCase() == "www." ||
+          (pageInfo.artist?.isEmpty ?? true)) {
+        _log.fine("Specified group $currentGroup returned ${pageInfo.artist ??
+            "NULL"}, using URL");
+        pageInfo.artist = siteRegexp.firstMatch(url).group(1);
+      }
+    } else {
       pageInfo.artist = siteRegexp.firstMatch(url).group(1);
     }
   }
@@ -76,8 +80,7 @@ abstract class ASource {
       {Document document, bool forEvaluation = false}) {
     _log.finest("canScrapePage");
     for (UrlScraper us in urlScrapers) {
-      if (us.isMatch(url))
-        return true;
+      if (us.isMatch(url)) return true;
     }
     return false;
   }
@@ -112,7 +115,7 @@ abstract class ASource {
       if (directRegExp.regExp.hasMatch(link)) {
         _log.finest("Direct link regexp match found in source $this");
         String referrer;
-        if(directRegExp.checkForRedirect) {
+        if (directRegExp.checkForRedirect) {
           referrer = link;
           link = await checkForRedirect(link);
         } else {
@@ -120,7 +123,9 @@ abstract class ASource {
         }
 
         final LinkInfo li = new LinkInfoImpl(link, sourceUrl,
-            type: directRegExp.linkType, thumbnail: determineThumbnail(link), referrer: referrer);
+            type: directRegExp.linkType,
+            thumbnail: determineThumbnail(link),
+            referrer: referrer);
         return reEvaluateLink(li, directRegExp.regExp);
       }
     }
@@ -138,13 +143,13 @@ abstract class ASource {
   @protected
   LinkInfo reEvaluateLink(LinkInfo li, RegExp regExp) => li;
 
-  Future<void> evaluateLink(String link, String sourceUrl, {bool select = true}) async {
+  Future<void> evaluateLink(String link, String sourceUrl,
+      {bool select = true}) async {
     _log.finest('evaluateLink($link, $sourceUrl, {$select})');
     for (ASource source in Sources.sourceInstances) {
       _log.finest("Evaluating against ${source.runtimeType}");
       final LinkInfo li = await source.evaluateLinkImpl(link, sourceUrl);
-      if (li == null)
-        continue;
+      if (li == null) continue;
       li.select = select;
       sendLinkInfo(li);
     }
@@ -156,8 +161,28 @@ abstract class ASource {
     sendLinkInfo(li);
   }
 
+  String _cleanUpUrl(String url) {
+    if(url==null)
+      return null;
+
+    String output = url;
+    if (output.contains("www.rule34.paheal.net")) {
+      output = output.replaceAll("www.rule34.paheal.net", "rule34.paheal.net");
+    }
+    if(output.contains("5.79.66.75")) {
+      output = output.replaceAll("5.79.66.75", "rule34.paheal.net");
+    }
+    return output;
+  }
+
   void sendLinkInfo(LinkInfo li) {
     if (li == null) return;
+
+    // Clean up problem URLs
+    li
+      ..url = _cleanUpUrl(li.url)
+      ..thumbnail = _cleanUpUrl(li.thumbnail);
+
     if (!this._seenLinks.contains(li.url)) {
       this._seenLinks.add(li.url);
       _sendLinkInfoInternal(li);
@@ -177,9 +202,8 @@ abstract class ASource {
   Future<Null> startScrapingPage(String url, Document document) async {
     _log.finest("startScrapingPage");
     _seenLinks.clear();
-    final PageInfo pageInfo = new PageInfo(
-        this.runtimeType.toString(), await getCurrentTabId());
-
+    final PageInfo pageInfo =
+        new PageInfo(this.runtimeType.toString(), await getCurrentTabId());
 
     for (UrlScraper us in urlScrapers) {
       _log.finest("Testing url scraper: ${us.urlRegExp}");
@@ -191,21 +215,19 @@ abstract class ASource {
           _log.finest("Artist is not empty (${pageInfo
               .artist}), fetching source/artist settings");
           final SourceArtistSetting sourceArtistSetting =
-          await _settings.getSourceArtistSettings(
-              this.runtimeType.toString(), pageInfo.artist);
+              await _settings.getSourceArtistSettings(
+                  this.runtimeType.toString(), pageInfo.artist);
           applySourceArtistSettings(sourceArtistSetting, pageInfo);
         } else {
           _log.finest(
               "Artist is empty, skipping loading source/artist settings");
         }
 
-
         sendPageInfo(pageInfo);
         await us.startLinkInfoScraping(url, document);
         break;
       }
     }
-
 
     await manualScrape(pageInfo, url, document);
 
@@ -220,7 +242,6 @@ abstract class ASource {
 
   Future<Null> manualScrape(
       PageInfo pageInfo, String url, Document document) async {}
-
 
   Future<String> checkForRedirect(String url) async {
     _log.finest("checkForRedirect($url)");
@@ -269,8 +290,8 @@ abstract class ASource {
   }
 
   LinkInfo createLinkFromElement(Element ele, String sourceUrl,
-      {String thumbnailSubSelector= "img",
-      LinkType defaultLinkType= LinkType.page}) {
+      {String thumbnailSubSelector = "img",
+      LinkType defaultLinkType = LinkType.page}) {
     String link;
     String thumbnail;
 
@@ -309,21 +330,22 @@ abstract class ASource {
       _log.finest("VideoElement found");
       type = LinkType.video;
 
-      final ElementList<SourceElement> sources =
-      ele.querySelectorAll("source");
+      final ElementList<SourceElement> sources = ele.querySelectorAll("source");
       int highestResolution = 0;
       for (SourceElement source in sources) {
         _log.finest("Source sub-element found, trying src");
-        if(source.attributes.containsKey("res")) {
+        if (source.attributes.containsKey("res")) {
           try {
             final int res = int.parse(source.attributes["res"]);
-            if(res>highestResolution) {
-              _log.finest("Larger resolution $res than $highestResolution found, switching source");
+            if (res > highestResolution) {
+              _log.finest(
+                  "Larger resolution $res than $highestResolution found, switching source");
               link = source.src;
               highestResolution = res;
             }
-          } on Exception catch (e,st) {
-            _log.warning("Error while parsing res attreibute on source element",e,st);
+          } on Exception catch (e, st) {
+            _log.warning(
+                "Error while parsing res attreibute on source element", e, st);
           }
         } else {
           link = source.src;

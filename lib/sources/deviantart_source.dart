@@ -14,9 +14,19 @@ class DeviantArtSource extends ASource {
   static final RegExp _galleryRegExp = new RegExp(
       r"https?://([^.]+)\.deviantart\.com/gallery/.*",
       caseSensitive: false);
+
+  static final RegExp _newGalleryRegExp = new RegExp(
+      r"https?://www\.deviantart\.com/([^/]+)/gallery/.*",
+      caseSensitive: false);
+
   static final RegExp _artRegExp = new RegExp(
       r"https?://([^.]+)\.deviantart\.com/art/.*",
       caseSensitive: false);
+
+  static final RegExp _newArtRegExp = new RegExp(
+      r"https?://www\.deviantart\.com/([^/]+)/art/.*",
+      caseSensitive: false);
+
   static final RegExp _sandboxRegExp =
       new RegExp(r"https?://sandbox\.deviantart\.com.*", caseSensitive: false);
   static const String _galleryItemSelector = "a.torpedo-thumb-link";
@@ -29,27 +39,34 @@ class DeviantArtSource extends ASource {
     this
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.file, _imageHostRegExp));
-    this
-        .urlScrapers
-        .add(new UrlScraper(_artRegExp, scrapeArtPageInfo, scrapeArtPageLinks));
-    this.urlScrapers.add(
-        new UrlScraper(_sandboxRegExp, emptyPageScraper, scrapeSandBoxLinks));
-
-    this.urlScrapers.add(new SimpleUrlScraper(
-        this,
-        _galleryRegExp,
-        <SimpleUrlScraperCriteria>[
-          new SimpleUrlScraperCriteria(LinkType.page, _galleryItemSelector)
-        ],
-        customPageInfoScraper: scrapeGalleryPageInfo,
-        watchForUpdates: true));
+    this.urlScrapers
+      ..add(new UrlScraper(_artRegExp, artistFromRegExpPageScraper, scrapeArtPageLinks))
+      ..add(new UrlScraper(_newArtRegExp, artistFromRegExpPageScraper, scrapeArtPageLinks))
+      ..add(
+          new UrlScraper(_sandboxRegExp, emptyPageScraper, scrapeSandBoxLinks))
+      ..add(new SimpleUrlScraper(
+          this,
+          _galleryRegExp,
+          <SimpleUrlScraperCriteria>[
+            new SimpleUrlScraperCriteria(LinkType.page, _galleryItemSelector)
+          ],
+          customPageInfoScraper: artistFromRegExpPageScraper,
+          watchForUpdates: true))
+      ..add(new SimpleUrlScraper(
+          this,
+          _newGalleryRegExp,
+          <SimpleUrlScraperCriteria>[
+            new SimpleUrlScraperCriteria(LinkType.page, _galleryItemSelector)
+          ],
+          customPageInfoScraper: artistFromRegExpPageScraper,
+          watchForUpdates: true));
   }
 
   Future<Null> scrapeArtPageInfo(
       PageInfo pageInfo, Match m, String url, Document doc) async {
     _log.info("scrapeArtPageInfo");
-    final Match matches = _artRegExp.firstMatch(url);
-    pageInfo.artist = matches[1];
+//    final Match matches = _artRegExp.firstMatch(url);
+//    pageInfo.artist = matches[1];
   }
 
   Future<Null> scrapeArtPageLinks(String url, Document doc) async {

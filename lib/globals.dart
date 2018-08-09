@@ -15,6 +15,7 @@ const String fileDownloadErrorEvent = "fileDownloadError";
 const String fileDownloadStartEvent = "fileDownloadStarted";
 const String getTabIdCommand = "getTabId";
 const String linkInfoEvent = "linkInfo";
+const String pageHealthEvent = "pageHealth";
 
 const String loadWholePageCommand = "loadWholePage";
 const String messageFieldCommand = "command";
@@ -25,6 +26,7 @@ const String messageFieldEvent = "event";
 const String messageFieldFilename = "filename";
 const String messageFieldPrompt = "prompt";
 const String messageFieldPath = "path";
+const String messageFieldPageHealth = "pageHealth";
 
 const String messageFieldHeaders = "headers";
 const String messageFieldTabId = "tabId";
@@ -40,6 +42,10 @@ const String subscribeCommand = "subscribe";
 
 const String tabLoadedMessageEvent = "tabLoaded";
 const String unsubscribeCommand = "unsubscribe";
+
+const String pageHealthOk = "OK";
+const String pageHealthError = "Error";
+const String pageHealthResolvableError = "ResolvableError";
 
 final RegExp siteRegexp =
     new RegExp(r"https?://([^/]+)/.*", caseSensitive: false);

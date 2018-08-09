@@ -63,7 +63,7 @@
                         </div>
                     </td>
                     <td style="width:50px !important;">
-                        <img src="{{r.thumbnail}}"/>
+                        <img *ngIf="r.showThumbnail" src="{{r.thumbnail}}"/>
                     </td>
                     <td style="white-space: nowrap !important;">
                         <a href="{{r.url}}" (click)="openTab($event,r.url)" class="resultFileName">{{r.filename}}</a>
@@ -82,7 +82,7 @@
             {{progressCurrent}}/{{progressMax}}
         </td>
         <td >
-            <material-button materialTooltip="Refresh" [tooltipPositions]="tooltipPosition" [disabled]="disableInterface" clear-size (trigger)="refreshButtonClick()">
+            <material-button materialTooltip="Refresh (Insert)" [tooltipPositions]="tooltipPosition" [disabled]="disableInterface" clear-size (trigger)="refreshButtonClick()">
                 <material-icon icon="refresh" size="x-small"></material-icon>
             </material-button>
         </td>
@@ -92,12 +92,12 @@
             </material-button>
         </td>
         <td *ngIf="loaded">
-            <material-button materialTooltip="Open links in new tabs" [tooltipPositions]="tooltipPosition" [disabled]="disableInterface" clear-size (trigger)="openAllButtonClick(false)">
+            <material-button materialTooltip="Open links in new tabs (Home)" [tooltipPositions]="tooltipPosition" [disabled]="disableInterface" clear-size (trigger)="openAllButtonClick(false)">
                 <material-icon icon="open_in_new" size="x-small"></material-icon>
             </material-button>
         </td>
         <td  *ngIf="loaded">
-            <material-button materialTooltip="Open links in new tabs, waiting for each tab to load" [disabled]="disableInterface" [tooltipPositions]="tooltipPosition" clear-size (trigger)="openAllButtonClick(true)" style="width:48pt;">
+            <material-button materialTooltip="Open links in new tabs, waiting for each tab to load (End)" [disabled]="disableInterface" [tooltipPositions]="tooltipPosition" clear-size (trigger)="openAllButtonClick(true)" style="width:48pt;">
                 <table>
                     <tr>
                         <td>
@@ -115,13 +115,13 @@
             </material-button>
         </td>
         <td *ngIf="loaded">
-            <material-button materialTooltip="Download all" [tooltipPositions]="tooltipPosition"
+            <material-button materialTooltip="Download all (Page Up)" [tooltipPositions]="tooltipPosition"
                              [disabled]="disableInterface" clear-size (trigger)="downloadButtonClick($event, false)">
                 <material-icon icon="file_download" size="x-small"></material-icon>
             </material-button>
         </td>
         <td *ngIf="loaded">
-            <material-button materialTooltip="Download all, then close this tab" [tooltipPositions]="tooltipPosition"
+            <material-button materialTooltip="Download all, then close this tab (Page Down)" [tooltipPositions]="tooltipPosition"
                              [disabled]="disableInterface" clear-size (trigger)="downloadButtonClick($event,true)"
                              style="width:48pt;">
                 <table>
@@ -140,7 +140,7 @@
             </material-button>
         </td>
         <td>
-            <material-button materialTooltip="Close this tab" [tooltipPositions]="tooltipPosition" [disabled]="disableInterface" clear-size (trigger)="closeButtonClick()">
+            <material-button materialTooltip="Close this tab (Delete)" [tooltipPositions]="tooltipPosition" [disabled]="disableInterface" clear-size (trigger)="closeButtonClick()">
                 <material-icon icon="close" size="x-small"></material-icon>
             </material-button>
         </td>

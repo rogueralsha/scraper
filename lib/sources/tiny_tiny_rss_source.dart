@@ -24,8 +24,9 @@ class TinyTinyRSSSource extends ASource {
 
   @override
   Future<Null> manualScrape(PageInfo pi, String url, Document document) async {
-    pi.artist = siteRegexp.firstMatch(url)[1];
-    pi.saveByDefault = false;
+    pi
+      ..artist = siteRegexp.firstMatch(url)[1]
+      ..saveByDefault = false;
 
     final Element rootEle = document.querySelector("div#headlines-frame");
 

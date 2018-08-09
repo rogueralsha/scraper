@@ -56,4 +56,14 @@ class LinkInfo extends Serializable {
 
     return output;
   }
+
+  bool get showThumbnail {
+    if(thumbnail==null||thumbnail==url) {
+      if(this.type==LinkType.image) {
+        return true;
+      }
+      return false;
+    }
+    return false;
+  }
 }

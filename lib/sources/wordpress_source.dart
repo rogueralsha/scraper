@@ -32,7 +32,9 @@ class WordpressSource extends ASource {
                 ..type = LinkType.image;
             }
             return true;
-          })
+          }),
+    new SimpleUrlScraperCriteria(LinkType.image, ".ngg-gallery-thumbnail-box a"),
+    new SimpleUrlScraperCriteria(LinkType.page, "a.next")
         ],
         saveByDefault: false));
   }

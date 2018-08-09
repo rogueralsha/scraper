@@ -15,7 +15,7 @@ class InstagramSource extends ASource {
       r"https?://www\.instagram\.com/([^/]+)/",
       caseSensitive: false);
 
-  static final RegExp _metaUserRegexp = new RegExp(r"\(@([^)]+)\)");
+  static final RegExp _metaUserRegexp = new RegExp(r"@([^ )]+)");
 
   static final RegExp _contentRegExp =
       new RegExp(r"https?://[^.]+\.cdninstagram\.com/.+", caseSensitive: false);
@@ -48,17 +48,24 @@ class InstagramSource extends ASource {
 
   Future<Null> scrapePostPageInfo(
       PageInfo pi, Match m, String s, Document doc) async {
-    MetaElement ele = document.querySelector("meta[name=\"description\"]");
-    String description = ele.content;
-    pi.artist = _metaUserRegexp.firstMatch(description)[1];
-    ;
+      final AnchorElement a = document.querySelector("span#react-root section main div div article header div div div a");
+      pi.artist = a?.title;
+//    final MetaElement ele = document.querySelector("meta[name=\"description\"]");
+//    final String description = ele.content;
+//    final Match m = _metaUserRegexp.firstMatch(description);
+//    if(m==null)
+//      throw new Exception("No match found for username in description meta tag.");
+    //pi.artist = m[1];
   }
 
   Future<Null> scrapeUserPageInfo(
       PageInfo pi, Match m, String s, Document doc) async {
-    MetaElement ele = document.querySelector("meta[property=\"og:title\"]");
-    String description = ele.content;
-    pi.artist = _metaUserRegexp.firstMatch(description)[1];
+    final MetaElement ele = document.querySelector("meta[property=\"og:title\"]");
+    final String description = ele.content;
+    final Match m = _metaUserRegexp.firstMatch(description);
+    if(m==null)
+      throw new Exception("No match found for username in og:title meta tag.");
+    pi.artist = m[1];
   }
 
 //  handleLoadMoreButton: function() {

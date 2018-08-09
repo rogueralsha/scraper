@@ -31,9 +31,9 @@ class PatreonSource extends ASource {
       ..add(new SimpleUrlScraper(this, _postRegExp, <SimpleUrlScraperCriteria>[
         new SimpleUrlScraperCriteria(
             LinkType.image, "div[data-tag='post-card'] img"),
-        new SimpleUrlScraperCriteria(LinkType.page, "a",
+        new SimpleUrlScraperCriteria(LinkType.page, "div[data-tag='post-card'] a",
             linkRegExp: _fileRegExp, validateLinkInfo: validatePostLinkInfo),
-        new SimpleUrlScraperCriteria(LinkType.page, "a", evaluateLinks: true)
+        new SimpleUrlScraperCriteria(LinkType.page, "div[data-tag='post-card'] a", evaluateLinks: true)
       ], customPageInfoScraper: (PageInfo pi, Match m, String s, Document doc) {
         final ElementList<AnchorElement> eles =
             document.querySelectorAll("div.mb-md a");

@@ -1,6 +1,6 @@
 import 'package:logging/logging.dart';
-
 import 'a_source.dart';
+import 'src/simple_url_scraper.dart';
 
 class EtcSource extends ASource {
   static final Logger _log = new Logger("EtcSource");
@@ -19,6 +19,10 @@ class EtcSource extends ASource {
   static final RegExp _temelRegExp =
   new RegExp(r"https?://[^/]+\.temel\.me/.*", caseSensitive: false);
 
+  static final RegExp _httpStatRegExp =
+  new RegExp(r"https?://httpstat\.us/.*", caseSensitive: false);
+
+
   EtcSource(SettingsService settings) : super(settings) {
     this.directLinkRegexps
       ..add(new DirectLinkRegExp(LinkType.file, _squareSpaceStaticServerRegExp))
@@ -27,5 +31,7 @@ class EtcSource extends ASource {
       ..add(new DirectLinkRegExp(LinkType.file, _mixtapeRegExp,  checkForRedirect: true))
       ..add(new DirectLinkRegExp(LinkType.file, _temelRegExp))
       ..add(new DirectLinkRegExp(LinkType.file, _uploadsRuRegExp));
+    this.urlScrapers
+    .add(new SimpleUrlScraper(this, _httpStatRegExp, [new SimpleUrlScraperCriteria(LinkType.page, "dl dt a")]));
   }
 }

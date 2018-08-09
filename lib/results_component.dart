@@ -29,7 +29,7 @@ import 'services/settings_service.dart';
     materialProviders
   ],
 )
-class ResultsComponent implements OnInit {
+class ResultsComponent implements OnInit, OnDestroy {
   static final RegExp _urlMatcherRegex =
       new RegExp(r"^https?://(.+)$", caseSensitive: false);
 
@@ -273,7 +273,14 @@ class ResultsComponent implements OnInit {
     }
   }
 
+  StreamSubscription<KeyEvent> keyboardSubscription;
+
   @override
+  Future<Null> ngOnDestroy() async {
+    await keyboardSubscription?.cancel();
+  }
+
+    @override
   Future<Null> ngOnInit() async {
     _log.finest("AppComponent.ngOnInit start");
     try {
@@ -289,6 +296,8 @@ class ResultsComponent implements OnInit {
         _log.info("LinkInfo received, updating component data");
         this.addResult(li);
       });
+      keyboardSubscription = window.onKeyUp.listen(onKeyboardEvent);
+
       if (!document.hidden) {
         await _pageStream.requestScrapeStart();
       } else {
@@ -305,6 +314,31 @@ class ResultsComponent implements OnInit {
       _log.severe("AppComponent.ngOnInit error", e, st);
     } finally {
       _log.finest("AppComponent.ngOnInit end");
+    }
+  }
+
+  void onKeyboardEvent(KeyEvent e) {
+    if(disableInterface||!e.ctrlKey)
+      return;
+    switch(e.keyCode) {
+      case KeyCode.DELETE:
+        closeButtonClick();
+        break;
+      case KeyCode.PAGE_DOWN:
+        downloadButtonClick(null,true);
+        break;
+      case KeyCode.PAGE_UP:
+        downloadButtonClick(null,false);
+        break;
+      case KeyCode.HOME:
+        openAllButtonClick(false);
+        break;
+      case KeyCode.END:
+        openAllButtonClick(true);
+        break;
+      case KeyCode.INSERT:
+        refreshButtonClick();
+        break;
     }
   }
 

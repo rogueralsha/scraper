@@ -85,10 +85,10 @@ class SettingsService {
 
     if (results?.isNotEmpty ?? false) {
       final int value = results[results.keys.first];
-      return value ?? 5;
+      return value ?? 1;
     }
 
-    return 5;
+    return 1;
   }
 
   Future<Null> removeMapping(String name) async {

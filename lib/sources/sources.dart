@@ -26,6 +26,7 @@ import 'webmshare_source.dart';
 import 'wordpress_source.dart';
 
 export 'a_source.dart';
+import 'pinupfiles_source.dart';
 
 const List<dynamic> sourceProviders = const <dynamic>[
   const ClassProvider(DeviantArtSource),
@@ -47,7 +48,8 @@ const List<dynamic> sourceProviders = const <dynamic>[
   const ClassProvider(EromeSource),
   const ClassProvider(PatreonSource),
   const ClassProvider(WordpressSource),
-  const ClassProvider(WebmShareSource)
+  const ClassProvider(WebmShareSource),
+  const ClassProvider(PinupfilesSource)
 ];
 
 class Sources {
@@ -72,6 +74,7 @@ class Sources {
       EromeSource eromeSource,
       PatreonSource patreonSource,
       WordpressSource wordpressSource,
+      PinupfilesSource pinupfilesSource,
       WebmShareSource webmShareSource) {
     sourceInstances.addAll([
       deviantArtSource,
@@ -93,7 +96,8 @@ class Sources {
       eromeSource,
       patreonSource,
       wordpressSource,
-      webmShareSource
+      webmShareSource,
+      pinupfilesSource
     ]);
   }
 
