@@ -16,7 +16,9 @@ import 'gfycat_source.dart';
 import 'hentai_foundry_source.dart';
 import 'imgur_source.dart';
 import 'instagram_source.dart';
+import 'minitokyo_source.dart';
 import 'patreon_source.dart';
+import 'pinupfiles_source.dart';
 import 'reddit_source.dart';
 import 'shimmie_source.dart';
 import 'tiny_tiny_rss_source.dart';
@@ -26,7 +28,6 @@ import 'webmshare_source.dart';
 import 'wordpress_source.dart';
 
 export 'a_source.dart';
-import 'pinupfiles_source.dart';
 
 const List<dynamic> sourceProviders = const <dynamic>[
   const ClassProvider(DeviantArtSource),
@@ -49,13 +50,17 @@ const List<dynamic> sourceProviders = const <dynamic>[
   const ClassProvider(PatreonSource),
   const ClassProvider(WordpressSource),
   const ClassProvider(WebmShareSource),
-  const ClassProvider(PinupfilesSource)
+  const ClassProvider(PinupfilesSource),
+  const ClassProvider(MinitokyoSource)
 ];
 
 class Sources {
   static final List<ASource> sourceInstances = <ASource>[];
 
-  Sources(DeviantArtSource deviantArtSource,
+  final Logger _log = new Logger("Scraper");
+
+  Sources(
+      DeviantArtSource deviantArtSource,
       RedditSource redditSource,
       ArtStationSource artstationSource,
       ComicArtCommunitySource comicArtCommunity,
@@ -75,7 +80,8 @@ class Sources {
       PatreonSource patreonSource,
       WordpressSource wordpressSource,
       PinupfilesSource pinupfilesSource,
-      WebmShareSource webmShareSource) {
+      WebmShareSource webmShareSource,
+      MinitokyoSource minitokyoSource) {
     sourceInstances.addAll([
       deviantArtSource,
       redditSource,
@@ -97,11 +103,10 @@ class Sources {
       patreonSource,
       wordpressSource,
       webmShareSource,
-      pinupfilesSource
+      pinupfilesSource,
+      minitokyoSource
     ]);
   }
-
-  final Logger _log = new Logger("Scraper");
 
   ASource getScraperForSite(String url, Document document) {
     for (ASource source in sourceInstances) {
