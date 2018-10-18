@@ -16,6 +16,8 @@ dependencies:
   uuid: any
   meta: any
   path: any
+  html: any
+  html_unescape: any
 
 dev_dependencies:
   angular_test: ^2.0.0-alpha+9

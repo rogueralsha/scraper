@@ -143,16 +143,19 @@ abstract class ASource {
   @protected
   LinkInfo reEvaluateLink(LinkInfo li, RegExp regExp) => li;
 
-  Future<void> evaluateLink(String link, String sourceUrl,
+  Future<int> evaluateLink(String link, String sourceUrl,
       {bool select = true}) async {
     _log.finest('evaluateLink($link, $sourceUrl, {$select})');
+    int linksSent = 0;
     for (ASource source in Sources.sourceInstances) {
       _log.finest("Evaluating against ${source.runtimeType}");
       final LinkInfo li = await source.evaluateLinkImpl(link, sourceUrl);
       if (li == null) continue;
       li.select = select;
       sendLinkInfo(li);
+      linksSent++;
     }
+    return linksSent;
   }
 
   Future<Null> selfLinkScraper(String url, Document d) async {

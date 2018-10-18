@@ -22,6 +22,8 @@ class SettingsService {
 
   static const String _availablePrefixesSetting = "availablePrefixes";
 
+  static const String _downloadPathPrefixSetting = "downloadPathPrefix";
+
   static const String _loggingLevelSetting = "";
 
   SettingsService();
@@ -32,6 +34,14 @@ class SettingsService {
     final Map results = await chrome.storage.local
         .get("${_settingsStore}_$_availablePrefixesSetting");
     if (results.isEmpty) return [];
+
+    return results[results.keys.first];
+  }
+
+  Future<String> getDownloadPathPrefix() async {
+    final Map results = await chrome.storage.local
+        .get("${_settingsStore}_$_downloadPathPrefixSetting");
+    if (results.isEmpty) return "";
 
     return results[results.keys.first];
   }
@@ -60,7 +70,8 @@ class SettingsService {
       throw new ArgumentError.notNull("name");
     name = name.trim().toLowerCase();
     final Map results = await chrome.storage.local.get(_artistPath(name));
-    if (results.isEmpty) return "";
+    if (results.isEmpty)
+      return "";
 
     return results[results.keys.first][_pathField];
   }
@@ -119,6 +130,13 @@ class SettingsService {
     _log.info("Setting logging level to ${level.name}");
     await chrome.storage.local.set(<String, dynamic>{
       "${_settingsStore}_$_loggingLevelSetting": level.value
+    });
+  }
+
+  Future<Null> setDownloadPathPrefix(String  path) async {
+    _log.info("Setting download prefic to $path");
+    await chrome.storage.local.set(<String, dynamic>{
+      "${_settingsStore}_$_downloadPathPrefixSetting": path
     });
   }
 

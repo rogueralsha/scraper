@@ -33,8 +33,10 @@ class WordpressSource extends ASource {
             }
             return true;
           }),
-    new SimpleUrlScraperCriteria(LinkType.image, ".ngg-gallery-thumbnail-box a"),
-    new SimpleUrlScraperCriteria(LinkType.page, "a.next")
+          new SimpleUrlScraperCriteria(
+              LinkType.image, ".ngg-gallery-thumbnail-box a"),
+          new SimpleUrlScraperCriteria(LinkType.image, "p.attachment img"),
+          new SimpleUrlScraperCriteria(LinkType.page, "a.next")
         ],
         saveByDefault: false));
   }

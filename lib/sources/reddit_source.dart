@@ -1,8 +1,12 @@
 import 'dart:async';
 import 'dart:html';
-
+import 'package:http/http.dart' as http;
+import 'package:http/browser_client.dart';
 import 'package:logging/logging.dart';
-
+import 'dart:convert';
+import 'package:html_unescape/html_unescape.dart';
+import 'package:html/parser.dart';
+import 'package:html/dom.dart' as html;
 import 'a_source.dart';
 import 'src/url_scraper.dart';
 
@@ -39,55 +43,79 @@ class RedditSource extends ASource {
 
   Future<Null> scrapeSubredditPageLinks(String url, Document doc) async {
     _log.finest("scrapeSubredditPageLinks");
-    ElementList<AnchorElement> links = document.querySelectorAll("a.title");
-    for (AnchorElement linkElement in links) {
-      final String link = linkElement.href;
 
-      if (_postRegexp.hasMatch(link)) {
-        //continue;
-      } else {
-        await evaluateLink(link, url);
-      }
+    final String jsonUrl = "$url.json";
+
+    _log.finest("Fetching JSON URL: $jsonUrl");
+
+    final BrowserClient client = new BrowserClient();
+    http.Response response;
+    try {
+      response = await client.get(jsonUrl);
+    } finally {
+      client.close();
     }
-    final Element outboundLinkIconElement = document.querySelector(r"a > i.icon-outboundLink");
-    if(outboundLinkIconElement!=null) {
-      final AnchorElement anchorElement = outboundLinkIconElement.parent;
-      final String link = anchorElement.href;
-
-      if (_postRegexp.hasMatch(link)) {
-        //continue;
+    if(response.statusCode==200) {
+      final dynamic jsonData = json.decode(response.body);
+      if(jsonData is List) {
+        for(Map data in jsonData) {
+          await processListingEntry(data, url);
+        }
+      } else if (jsonData is Map) {
+        await processListingEntry(jsonData, url);
       } else {
-        await evaluateLink(link, url);
+        throw new Exception("Unrecognized JSON data type: ${response.body}");
       }
+
+
+
     } else {
-      final ImageElement imageElement = document.querySelector(
-          "img.media-element, div.media-element a img");
-      if(imageElement!=null) {
-        final AnchorElement anchorElement = imageElement.parent;
-        createAndSendLinkInfo(anchorElement.href, url, type: LinkType.image);
-      }
-    }
-
-    links = document.querySelectorAll(
-        "div.commentarea  div[data-type=comment] div.usertext-body a,"
-            "div[data-test-id='post-content'] p a,"
-            "div > div > div> div > div> div > div > div > div > div > div > div> div > div> div > div > div > div  > div > div > div > div > div > p > a");
-    for (AnchorElement linkElement in links) {
-      final String link = linkElement.href;
-      if (_postRegexp.hasMatch(link)) {
-        //continue;
-      } else {
-        await evaluateLink(link, url, select: false);
-      }
-    }
-
-    final ElementList<VideoElement> videoLinks =
-        document.querySelectorAll("div.reddit-video-player-root video");
-    for (VideoElement videoElement in videoLinks) {
-      sendLinkInfo(createLinkFromElement(videoElement, url));
+      _log.warning("Could not fetch json data: ${response.body}");
     }
   }
 
-//  imageRegexp: new RegExp(r"https?://i\.redd\.it/.*", 'i'),
+  Future<void> processListingEntry(Map<String,dynamic> listingData, String url) async {
+    final List<dynamic> children = listingData["data"]["children"];
+    for(Map<String,dynamic> child in children) {
+      final Map<String,dynamic> childData = child["data"];
+      final String kind = child["kind"];
+      switch(kind) {
+        case "t3": //Regular post
+          final String thumbnail = childData["thumbnail"];
+          final String link = childData["url"];
+          LinkType type = LinkType.page;
 
+          if(childData.containsKey("media")&&childData["media"]!=null) {
+            final Map<String,dynamic> mediaData = childData["media"];
+            if(mediaData.containsKey("reddit_video")) {
+              this.createAndSendLinkInfo(mediaData["reddit_video"]["fallback_url"], url, thumbnail: thumbnail, type: LinkType.video);
+              continue;
+            }
+          }
+
+          if(childData.containsKey("url")&&(childData["url"]??"").isNotEmpty) {
+            await this.evaluateLink(link, url);
+          }
+
+          break;
+        case "t1": //Comment
+          final HtmlUnescape unescape = new HtmlUnescape();
+
+          final String bodyHtml = unescape.convert(childData["body_html"]);
+          final html.DocumentFragment bodyDoc = parseFragment(bodyHtml);
+
+          for(html.Element aElement in bodyDoc.querySelectorAll("a")) {
+            await this.evaluateLink(aElement.attributes["href"], url, select: false);
+          }
+
+          break;
+        default:
+          _log.warning("Unknown listing kind: $kind");
+          break;
+      }
+
+
+
+    }
+  }
 }

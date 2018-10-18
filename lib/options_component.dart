@@ -23,6 +23,7 @@ class OptionsComponent implements OnInit {
   List<String> prefixPaths = <String>[];
   Map<String, String> mappings = <String, String>{};
   String newPrefixPath = "";
+  String downloadPathPrefix = "";
 
   StringSelectionOptions<Level> loggingOptions =
       new StringSelectionOptions<Level>(Level.LEVELS);
@@ -38,7 +39,6 @@ class OptionsComponent implements OnInit {
 
   set selectionValue(Level level) {
     _loggingLevel = level;
-    _settings.setLoggingLevel(level);
   }
 
   void addPrefixPath() {
@@ -63,6 +63,7 @@ class OptionsComponent implements OnInit {
     _log.finest("OptionsComponent.ngOnInit start");
     try {
       _loggingLevel = await _settings.getLoggingLevel();
+      downloadPathPrefix = await _settings.getDownloadPathPrefix();
     } on Exception catch (e, st) {
       _log.severe("OptionsComponent.ngOnInit error", e, st);
     } finally {
@@ -70,6 +71,10 @@ class OptionsComponent implements OnInit {
     }
   }
 
+  Future<Null> saveSettings() async {
+    await _settings.setLoggingLevel(_loggingLevel);
+    await _settings.setDownloadPathPrefix(this.downloadPathPrefix);
+  }
   Future<Null> saveMappings() async {
     await _settings.saveMappings(this.mappings, false);
   }
@@ -94,7 +99,7 @@ class OptionsComponent implements OnInit {
     final FileUploadInputElement fileUpload = new FileUploadInputElement()
       ..click();
 
-    Event t = await fileUpload.onChange.first;
+    final Event t = await fileUpload.onChange.first;
     if (fileUpload.files.isEmpty) return;
 
     final FileReader reader = new FileReader()..readAsText(fileUpload.files[0]);

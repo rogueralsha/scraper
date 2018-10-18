@@ -5,43 +5,49 @@ import 'package:logging/logging.dart';
 import 'a_source.dart';
 import 'src/simple_url_scraper.dart';
 
-class MinitokyoFoundrySource extends ASource {
-  static final Logger logImpl = new Logger("HentaiFoundrySource");
-  static final RegExp _hfRegExp = new RegExp(
-      r"https?://www\.hentai-foundry\.com/pictures/user/([^/]+)/.*",
+class MinitokyoSource extends ASource {
+  static final Logger logImpl = new Logger("MinitokyoSource");
+
+  static final RegExp _galleryRegexp = new RegExp(
+      r"https?://[^.]+\.minitokyo\.net/gallery\?.+",
       caseSensitive: false);
-  static final RegExp _hfGalleryRegExp = new RegExp(
-      r"^https?://www\.hentai-foundry\.com/pictures/user/([^/]+)(/page/\d+)?$",
+  static final RegExp _downloadRegexp = new RegExp(
+      r"https?://gallery\.minitokyo\.net/download/\d+",
+      caseSensitive: false);
+  static final RegExp _viewRegexp = new RegExp(
+      r"https?://gallery\.minitokyo\.net/view/(\d+)",
       caseSensitive: false);
 
-  HentaiFoundrySource(SettingsService settings) : super(settings) {
-    this.urlScrapers.add(new SimpleUrlScraper(this, _hfGalleryRegExp, [
-      new SimpleUrlScraperCriteria(LinkType.page, "a.thumbLink"),
-      new SimpleUrlScraperCriteria(LinkType.page, "li.next a", limit: 1,
-          validateLinkInfo: (LinkInfo li, Element e) {
-            if (e is AnchorElement) {
-              if (e.href != li.sourceUrl) return true;
-            }
-            return false;
-          })
-    ]));
+  MinitokyoSource(SettingsService settings) : super(settings) {
+    this
+      ..urlScrapers.add(new SimpleUrlScraper(this, _downloadRegexp,
+          [new SimpleUrlScraperCriteria(LinkType.image, "div#image img")]))
+      ..urlScrapers.add(new UrlScraper(_viewRegexp, this.emptyPageScraper,
+              (String s, Document d) {
+            createAndSendLinkInfo(_translateViewToDownloadUrl(s), s,
+                type: LinkType.page);
+          }))
+      ..urlScrapers.add(new SimpleUrlScraper(this, _galleryRegexp, [
+        new SimpleUrlScraperCriteria(LinkType.page, "ul.scans li a",
+            validateLinkInfo: (LinkInfo li, Element ele) {
+              final ImageElement imageElement = ele.querySelector("img");
+              if (imageElement == null) return false;
 
-    this.urlScrapers.add(new SimpleUrlScraper(
-      this,
-      _hfRegExp,
-      [
-        new SimpleUrlScraperCriteria(
-            LinkType.image, "div.container div.boxbody img",
-            validateLinkInfo: (LinkInfo li, Element e) {
-              if (e is ImageElement) {
-                if (e.src.contains("vote_happy.png")) return false;
-                return true;
-              }
-              return false;
-            }, limit: 1),
-        new SimpleUrlScraperCriteria(
-            LinkType.flash, "div.container div.boxbody embed")
-      ],
-    ));
+              li.url = _translateViewToDownloadUrl(li.url);
+              return true;
+            }),
+        new SimpleUrlScraperCriteria(LinkType.page, "p.pagination a",
+            validateLinkInfo: (LinkInfo li, Element ele) =>
+            ele.text == "Next »")
+      ]));
+  }
+
+  String _translateViewToDownloadUrl(String url) {
+    if (_viewRegexp.hasMatch(url)) {
+      logImpl.info("Redirecting view link to download link");
+      final Match m = _viewRegexp.firstMatch(url);
+      return "http://gallery.minitokyo.net/download/${m[1]}";
+    }
+    return url;
   }
 }

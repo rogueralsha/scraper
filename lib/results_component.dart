@@ -114,6 +114,7 @@ class ResultsComponent implements OnInit, OnDestroy {
       }
 
       String pathPrefix = "";
+
       if ((artistPath?.trim() ?? "").isNotEmpty) {
         pathPrefix = artistPath.trim();
         _log.info("Path is not null, using $pathPrefix");
@@ -143,6 +144,18 @@ class ResultsComponent implements OnInit, OnDestroy {
       this.progressMax = toDownload.length;
       this.progressCurrent = 0;
       _pendingScrapes = 0;
+
+      final String downloadPathPrefix = await _settings.getDownloadPathPrefix();
+      if((downloadPathPrefix?.trim() ?? "").isNotEmpty) {
+        if(pathPrefix.isEmpty) {
+          pathPrefix = downloadPathPrefix;
+        } else {
+          pathPrefix = "$downloadPathPrefix/$pathPrefix";
+        }
+      }
+
+      _log.info("Final download path: $pathPrefix");
+
 
       final chrome.Port p = chrome.runtime.connect(
           null, new chrome.RuntimeConnectParams(name: new Uuid().v4()));
@@ -324,20 +337,11 @@ class ResultsComponent implements OnInit, OnDestroy {
       case KeyCode.DELETE:
         closeButtonClick();
         break;
-      case KeyCode.PAGE_DOWN:
-        downloadButtonClick(null,true);
+      case KeyCode.DOWN:
+        downloadButtonClick(null,!e.altKey);
         break;
-      case KeyCode.PAGE_UP:
-        downloadButtonClick(null,false);
-        break;
-      case KeyCode.HOME:
-        openAllButtonClick(false);
-        break;
-      case KeyCode.END:
-        openAllButtonClick(true);
-        break;
-      case KeyCode.INSERT:
-        refreshButtonClick();
+      case KeyCode.UP:
+        openAllButtonClick(e.altKey);
         break;
     }
   }

@@ -10,7 +10,7 @@ import 'src/url_scraper.dart';
 class TwitterSource extends ASource {
   static final Logger logImpl = new Logger("TwitterSource");
   static final RegExp _regExp =
-      new RegExp(r"https?://twitter\.com/([^/]+)/?", caseSensitive: false);
+      new RegExp(r"https?://twitter\.com/([^/]+)/\?", caseSensitive: false);
   static final RegExp _postRegexp = new RegExp(
       r"https?://twitter\.com/([^/]+)/status/.+",
       caseSensitive: false);

@@ -23,6 +23,8 @@ Logging Level:
     </tr>
 </table>
 
+<material-input [(ngModel)]="downloadPathPrefix" label="Download Path Prefix"></material-input>
+<material-button (click)="saveSettings()" label="Save"></material-button>
 
 <material-expansionpanel name="Prefix paths" (save)="savePaths()" (cancel)="loadPaths()" (open)="loadPaths()">
     <material-list>
