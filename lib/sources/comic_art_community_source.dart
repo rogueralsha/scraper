@@ -15,8 +15,10 @@ class ComicArtCommunitySource extends ASource {
       caseSensitive: false);
 
   ComicArtCommunitySource(SettingsService settings) : super(settings) {
-    this.urlScrapers.add(new SimpleUrlScraper(this, _imageRegexp,
-        [new SimpleUrlScraperCriteria(LinkType.image, "div.wide center img", limit: 1)]));
+    this.urlScrapers.add(new SimpleUrlScraper(this, _imageRegexp, [
+          new SimpleUrlScraperCriteria(LinkType.image, "div.wide center img",
+              limit: 1)
+        ]));
     this.urlScrapers.add(new SimpleUrlScraper(this, _galleryRegexp, [
           new SimpleUrlScraperCriteria(LinkType.page, "tr td span a"),
           new SimpleUrlScraperCriteria(

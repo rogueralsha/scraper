@@ -64,14 +64,10 @@ class SettingsService {
   }
 
   Future<String> getMapping(String name) async {
-    if (name
-        ?.trim()
-        ?.isEmpty ?? false)
-      throw new ArgumentError.notNull("name");
+    if (name?.trim()?.isEmpty ?? false) throw new ArgumentError.notNull("name");
     name = name.trim().toLowerCase();
     final Map results = await chrome.storage.local.get(_artistPath(name));
-    if (results.isEmpty)
-      return "";
+    if (results.isEmpty) return "";
 
     return results[results.keys.first][_pathField];
   }
@@ -83,7 +79,7 @@ class SettingsService {
     for (String key in pairs.keys) {
       if (key.startsWith(_mappingStore)) {
         output[key.substring(_mappingStore.length + 1)] =
-        pairs[key][_pathField];
+            pairs[key][_pathField];
       }
     }
     _log..info("Found ${output.length} mappings")..info(output);
@@ -119,8 +115,7 @@ class SettingsService {
     }
 
     for (String artist in mappings.keys) {
-      if (artist?.isEmpty ?? true)
-        continue;
+      if (artist?.isEmpty ?? true) continue;
       await setMapping(artist, mappings[artist]);
     }
     _log.info("Saved new paths for artists");
@@ -133,7 +128,7 @@ class SettingsService {
     });
   }
 
-  Future<Null> setDownloadPathPrefix(String  path) async {
+  Future<Null> setDownloadPathPrefix(String path) async {
     _log.info("Setting download prefic to $path");
     await chrome.storage.local.set(<String, dynamic>{
       "${_settingsStore}_$_downloadPathPrefixSetting": path
@@ -141,10 +136,7 @@ class SettingsService {
   }
 
   Future<Null> setMapping(String name, String path) async {
-    if (name
-        ?.trim()
-        ?.isEmpty ?? false)
-      throw new ArgumentError.notNull("name");
+    if (name?.trim()?.isEmpty ?? false) throw new ArgumentError.notNull("name");
     final String cleaName = name.toLowerCase();
     final String cleanPath = this.cleanPath(path);
     final Map<String, dynamic> artistData = <String, dynamic>{
@@ -155,20 +147,19 @@ class SettingsService {
     _log.info("Mapping saved for $cleaName: $cleanPath");
   }
 
-  Future<Null> setSourceArtistSettings(String source, String artist,
-      SourceArtistSetting settings) async {
+  Future<Null> setSourceArtistSettings(
+      String source, String artist, SourceArtistSetting settings) async {
     _log.finest("setSourceArtistSettings($source, $artist, $settings)");
     await chrome.storage.local.set(<String, dynamic>{
       "${_sourceArtistSettingStore}_${source}_$artist": settings.toJson()
     });
   }
 
-  Future<SourceArtistSetting> getSourceArtistSettings(String source,
-      String artist) async {
+  Future<SourceArtistSetting> getSourceArtistSettings(
+      String source, String artist) async {
     _log.finest("getSourceArtistSettings($source, $artist)");
     final String key = "${_sourceArtistSettingStore}_${source}_$artist";
-    final Map<dynamic, dynamic> results = await chrome.storage.local
-        .get(key);
+    final Map<dynamic, dynamic> results = await chrome.storage.local.get(key);
 
     _log.finer(results);
     if (results?.isNotEmpty ?? false) {
@@ -185,7 +176,6 @@ class SettingsService {
     });
   }
 
-
   Future<Null> setPrefixPath(List<String> paths) async {
     for (int i = 0; i < paths.length; i++) {
       paths[i] = cleanPath(paths[i]);
@@ -197,6 +187,4 @@ class SettingsService {
   }
 
   String _artistPath(String name) => "${_mappingStore}_$name";
-
-
 }

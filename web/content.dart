@@ -12,8 +12,9 @@ final Logger _log = new Logger("content.dart");
 Future<Null> main() async {
   int tabId = await getCurrentTabId();
   // Page health check
-  if (document.body.text.contains("429 Too Many Requests")||
-      document.body.text.contains("If you’re not redirected soon, please use this link.")) {
+  if (document.body.text.contains("429 Too Many Requests") ||
+      document.body.text
+          .contains("If you’re not redirected soon, please use this link.")) {
     await pause(seconds: 5);
     await chrome.runtime.sendMessage({
       messageFieldEvent: pageHealthEvent,

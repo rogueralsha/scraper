@@ -16,18 +16,20 @@ class ImageFapSource extends ASource {
       caseSensitive: false);
 
   ImageFapSource(SettingsService settings) : super(settings) {
-    this.urlScrapers..add(new SimpleUrlScraper(this, _galleryRegExp, [
-      new SimpleUrlScraperCriteria(LinkType.page, "form table a"),
-      new SimpleUrlScraperCriteria(LinkType.page, "a.link3", limit: 1,
-          validateLinkInfo: (LinkInfo li, Element e) {
-            if (e is AnchorElement) {
-              if (e.text == ":: next ::") return true;
-            }
-            return false;
-          })
-    ]))..add(new SimpleUrlScraper(this, _photoRegExp, [
-      new SimpleUrlScraperCriteria(LinkType.image, "div.image-wrapper img",
-          limit: 1)
-    ]));
+    this.urlScrapers
+      ..add(new SimpleUrlScraper(this, _galleryRegExp, [
+        new SimpleUrlScraperCriteria(LinkType.page, "form table a"),
+        new SimpleUrlScraperCriteria(LinkType.page, "a.link3", limit: 1,
+            validateLinkInfo: (LinkInfo li, Element e) {
+          if (e is AnchorElement) {
+            if (e.text == ":: next ::") return true;
+          }
+          return false;
+        })
+      ]))
+      ..add(new SimpleUrlScraper(this, _photoRegExp, [
+        new SimpleUrlScraperCriteria(LinkType.image, "div.image-wrapper img",
+            limit: 1)
+      ]));
   }
 }

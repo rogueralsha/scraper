@@ -5,5 +5,5 @@ class DirectLinkRegExp {
   final RegExp regExp;
   final bool checkForRedirect;
 
-  DirectLinkRegExp(this.linkType, this.regExp, {this.checkForRedirect=false});
+  DirectLinkRegExp(this.linkType, this.regExp, {this.checkForRedirect = false});
 }

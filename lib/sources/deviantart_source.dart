@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:html';
 
 import 'package:logging/logging.dart';
-
+import 'package:scraper/globals.dart';
 import 'a_source.dart';
 import 'src/link_info_impl.dart';
 import 'src/simple_url_scraper.dart';
@@ -40,8 +40,10 @@ class DeviantArtSource extends ASource {
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.file, _imageHostRegExp));
     this.urlScrapers
-      ..add(new UrlScraper(_artRegExp, artistFromRegExpPageScraper, scrapeArtPageLinks))
-      ..add(new UrlScraper(_newArtRegExp, artistFromRegExpPageScraper, scrapeArtPageLinks))
+      ..add(new UrlScraper(
+          _artRegExp, artistFromRegExpPageScraper, scrapeArtPageLinks))
+      ..add(new UrlScraper(
+          _newArtRegExp, artistFromRegExpPageScraper, scrapeArtPageLinks))
       ..add(
           new UrlScraper(_sandboxRegExp, emptyPageScraper, scrapeSandBoxLinks))
       ..add(new SimpleUrlScraper(
@@ -71,11 +73,11 @@ class DeviantArtSource extends ASource {
 
   Future<Null> scrapeArtPageLinks(String url, Document doc) async {
     _log.info("scrapeArtPageLinks");
+    final ImageElement imgEle = document.querySelector(".dev-content-full");
     final AnchorElement downloadEle =
         document.querySelector(".dev-page-download");
     if (downloadEle == null) {
       // This means the download button wasn't found
-      final ImageElement imgEle = document.querySelector(".dev-content-full");
       if (imgEle == null) {
         final IFrameElement iFrameEle =
             document.querySelector("iframe.flashtime");
@@ -99,9 +101,17 @@ class DeviantArtSource extends ASource {
         sendLinkInfo(new LinkInfoImpl(imgEle.src, url, type: LinkType.image));
       }
     } else {
-      _log.info("Found URL: ${downloadEle.href}");
-      sendLinkInfo(
-          new LinkInfoImpl(downloadEle.href, url, type: LinkType.image));
+      final String redirect = await checkForRedirect(downloadEle.href);
+
+      _log.info("Found URL: $redirect");
+      String filename;
+      if(redirect.contains("/file?")&&imgEle!=null) {
+        // DeviantArt switched up their download links.
+        // Rather than allow them all to download as "file", this will use the name if the main image file.
+        filename = getFileNameFromUrl(imgEle.src);
+      }
+      
+      sendLinkInfo(new LinkInfoImpl(redirect, url, type: LinkType.image, filename: filename));
     }
   }
 

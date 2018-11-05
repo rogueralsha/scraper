@@ -80,9 +80,8 @@ class SimpleUrlScraper extends UrlScraper {
       ElementList<Element> eles =
           element.querySelectorAll(criteria.linkSelector);
       _log.finest("${eles.length} elements found");
-      if(eles.isEmpty&&(criteria.fallbackSelector?.isNotEmpty??false)) {
-        eles =
-        element.querySelectorAll(criteria.fallbackSelector);
+      if (eles.isEmpty && (criteria.fallbackSelector?.isNotEmpty ?? false)) {
+        eles = element.querySelectorAll(criteria.fallbackSelector);
       }
 
       for (Element ele in eles) {
@@ -107,7 +106,6 @@ class SimpleUrlScraper extends UrlScraper {
           if (!criteria.validateLinkInfo(li, ele)) {
             _log.finest("Did not pass validation");
             continue;
-
           }
           _log.finest("Passed validation");
         }

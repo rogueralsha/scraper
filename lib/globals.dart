@@ -95,3 +95,6 @@ Future<Null> pause({int seconds = 0}) =>
 
 String jsVarDump(JsObject input) =>
     context['JSON'].callMethod('stringify', <dynamic>[input]);
+
+String getFileNameFromUrl(String link) => Uri
+    .decodeComponent(link.substring(link.lastIndexOf('/') + 1).split("?")[0]);

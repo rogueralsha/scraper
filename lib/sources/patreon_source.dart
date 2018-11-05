@@ -31,12 +31,15 @@ class PatreonSource extends ASource {
       ..add(new SimpleUrlScraper(this, _postRegExp, <SimpleUrlScraperCriteria>[
         new SimpleUrlScraperCriteria(
             LinkType.image, "div[data-tag='post-card'] img"),
-        new SimpleUrlScraperCriteria(LinkType.page, "div[data-tag='post-card'] a",
+        new SimpleUrlScraperCriteria(
+            LinkType.page, "div[data-tag='post-card'] a",
             linkRegExp: _fileRegExp, validateLinkInfo: validatePostLinkInfo),
-        new SimpleUrlScraperCriteria(LinkType.page, "div[data-tag='post-card'] a", evaluateLinks: true)
+        new SimpleUrlScraperCriteria(
+            LinkType.page, "div[data-tag='post-card'] a",
+            evaluateLinks: true)
       ], customPageInfoScraper: (PageInfo pi, Match m, String s, Document doc) {
         final ElementList<AnchorElement> eles =
-            document.querySelectorAll("div.sc-gqjmRU a");
+            document.querySelectorAll("div.sc-fjdhpX a");
         for (AnchorElement ele in eles) {
           if (_userRegExp.hasMatch(ele.href)) {
             pi.artist = _userRegExp.firstMatch(ele.href)[1];

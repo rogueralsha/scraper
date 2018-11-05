@@ -146,8 +146,8 @@ class ResultsComponent implements OnInit, OnDestroy {
       _pendingScrapes = 0;
 
       final String downloadPathPrefix = await _settings.getDownloadPathPrefix();
-      if((downloadPathPrefix?.trim() ?? "").isNotEmpty) {
-        if(pathPrefix.isEmpty) {
+      if ((downloadPathPrefix?.trim() ?? "").isNotEmpty) {
+        if (pathPrefix.isEmpty) {
           pathPrefix = downloadPathPrefix;
         } else {
           pathPrefix = "$downloadPathPrefix/$pathPrefix";
@@ -155,7 +155,6 @@ class ResultsComponent implements OnInit, OnDestroy {
       }
 
       _log.info("Final download path: $pathPrefix");
-
 
       final chrome.Port p = chrome.runtime.connect(
           null, new chrome.RuntimeConnectParams(name: new Uuid().v4()));
@@ -293,7 +292,7 @@ class ResultsComponent implements OnInit, OnDestroy {
     await keyboardSubscription?.cancel();
   }
 
-    @override
+  @override
   Future<Null> ngOnInit() async {
     _log.finest("AppComponent.ngOnInit start");
     try {
@@ -331,14 +330,13 @@ class ResultsComponent implements OnInit, OnDestroy {
   }
 
   void onKeyboardEvent(KeyEvent e) {
-    if(disableInterface||!e.ctrlKey)
-      return;
-    switch(e.keyCode) {
+    if (disableInterface || !e.ctrlKey) return;
+    switch (e.keyCode) {
       case KeyCode.DELETE:
         closeButtonClick();
         break;
       case KeyCode.DOWN:
-        downloadButtonClick(null,!e.altKey);
+        downloadButtonClick(null, !e.altKey);
         break;
       case KeyCode.UP:
         openAllButtonClick(e.altKey);

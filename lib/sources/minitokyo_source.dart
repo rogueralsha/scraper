@@ -23,22 +23,22 @@ class MinitokyoSource extends ASource {
       ..urlScrapers.add(new SimpleUrlScraper(this, _downloadRegexp,
           [new SimpleUrlScraperCriteria(LinkType.image, "div#image img")]))
       ..urlScrapers.add(new UrlScraper(_viewRegexp, this.emptyPageScraper,
-              (String s, Document d) {
-            createAndSendLinkInfo(_translateViewToDownloadUrl(s), s,
-                type: LinkType.page);
-          }))
+          (String s, Document d) {
+        createAndSendLinkInfo(_translateViewToDownloadUrl(s), s,
+            type: LinkType.page);
+      }))
       ..urlScrapers.add(new SimpleUrlScraper(this, _galleryRegexp, [
         new SimpleUrlScraperCriteria(LinkType.page, "ul.scans li a",
             validateLinkInfo: (LinkInfo li, Element ele) {
-              final ImageElement imageElement = ele.querySelector("img");
-              if (imageElement == null) return false;
+          final ImageElement imageElement = ele.querySelector("img");
+          if (imageElement == null) return false;
 
-              li.url = _translateViewToDownloadUrl(li.url);
-              return true;
-            }),
+          li.url = _translateViewToDownloadUrl(li.url);
+          return true;
+        }),
         new SimpleUrlScraperCriteria(LinkType.page, "p.pagination a",
             validateLinkInfo: (LinkInfo li, Element ele) =>
-            ele.text == "Next »")
+                ele.text == "Next »")
       ]));
   }
 

@@ -41,9 +41,16 @@ class GfycatSource extends ASource {
         ],
         saveByDefault: false));
 
-    this.urlScrapers.add(new SimpleUrlScraper(this, _regExp,
-        [new SimpleUrlScraperCriteria(LinkType.video, "source[type=\"video/webm\"]")],
-        saveByDefault: false, urlRegexGroup: 2, useForEvaluation: true));
+    this.urlScrapers.add(new SimpleUrlScraper(
+        this,
+        _regExp,
+        [
+          new SimpleUrlScraperCriteria(
+              LinkType.video, "source[type=\"video/webm\"]")
+        ],
+        saveByDefault: false,
+        urlRegexGroup: 2,
+        useForEvaluation: true));
   }
 
 //  @override

@@ -74,11 +74,9 @@ class TumblrSource extends ASource {
       final MetaElement metaAppName =
           document.querySelector('meta[property="al:android:app_name"]');
 
-
-
       possibleTumblrSite = (metaAppName?.content?.toLowerCase() == "tumblr") ||
           document.querySelector("meta[name='tumblr-theme']") != null ||
-          document.querySelector("meta[property='og:site_name']") != null ;
+          document.querySelector("meta[property='og:site_name']") != null;
     }
 
     if (possibleTumblrSite) {
@@ -159,7 +157,7 @@ class TumblrSource extends ASource {
   }
 
   @override
-  Future<Null> manualScrape(
+  Future<bool> manualScrape(
       PageInfo pageInfo, String url, Document document) async {
     _log.finest("manualScrape");
 
@@ -198,7 +196,7 @@ class TumblrSource extends ASource {
         _log.info("Tumblr mobile post page");
         // Mobile page - Same code should work, but we can easily detect if it's a reblog so we can skip it
         if (document.querySelector("a.tumblr_blog") != null) {
-          return;
+          return true;
         }
       }
 
@@ -259,6 +257,7 @@ class TumblrSource extends ASource {
           break;
         }
       }
+      return !photosetIframeFound;
     }
   }
 }

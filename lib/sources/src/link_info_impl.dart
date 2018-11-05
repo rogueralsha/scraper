@@ -3,8 +3,9 @@ import 'dart:html';
 import 'package:logging/logging.dart';
 import 'package:scraper/results/link_info.dart';
 
-import '../imgur_source.dart';
+import 'package:scraper/globals.dart';
 
+import '../imgur_source.dart';
 export 'package:scraper/results/link_info.dart';
 
 class LinkInfoImpl extends LinkInfo {
@@ -39,7 +40,7 @@ class LinkInfoImpl extends LinkInfo {
     this.url = _resolvePartialUrl(Uri.decodeComponent(url));
 
     if (filename == null) {
-      this.filename = _getFileName(url);
+      this.filename = getFileNameFromUrl(url);
       if (this.filename.isEmpty) {
         this.filename = url;
       }
@@ -53,8 +54,7 @@ class LinkInfoImpl extends LinkInfo {
     }
   }
 
-  String _getFileName(String link) => Uri
-      .decodeComponent(link.substring(link.lastIndexOf('/') + 1).split("?")[0]);
+
 
   String _resolvePartialUrl(String url) {
     final AnchorElement ele = new AnchorElement()..href = url;

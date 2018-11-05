@@ -75,6 +75,7 @@ class OptionsComponent implements OnInit {
     await _settings.setLoggingLevel(_loggingLevel);
     await _settings.setDownloadPathPrefix(this.downloadPathPrefix);
   }
+
   Future<Null> saveMappings() async {
     await _settings.saveMappings(this.mappings, false);
   }

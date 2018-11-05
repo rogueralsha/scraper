@@ -21,15 +21,16 @@ class LinkInfo extends Serializable {
   bool select;
   bool autoDownload;
 
-  LinkInfo({this.url,
-    this.sourceUrl,
-    this.type,
-    this.date,
-    this.filename,
-    this.thumbnail,
-    this.select,
-    this.autoDownload,
-    this.referrer});
+  LinkInfo(
+      {this.url,
+      this.sourceUrl,
+      this.type,
+      this.date,
+      this.filename,
+      this.thumbnail,
+      this.select,
+      this.autoDownload,
+      this.referrer});
 
   LinkInfo.fromJson(JsObject data) {
     _log..finest("fromJson")..finest(jsVarDump(data));
@@ -58,8 +59,8 @@ class LinkInfo extends Serializable {
   }
 
   bool get showThumbnail {
-    if(thumbnail==null||thumbnail==url) {
-      if(this.type==LinkType.image) {
+    if (thumbnail == null || thumbnail == url) {
+      if (this.type == LinkType.image) {
         return true;
       }
       return false;

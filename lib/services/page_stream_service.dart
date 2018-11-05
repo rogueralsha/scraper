@@ -26,7 +26,7 @@ class PageStreamService {
 
   PageStreamService()
       : p = chrome.runtime.connect(
-      null, new chrome.RuntimeConnectParams(name: new Uuid().v4())) {
+            null, new chrome.RuntimeConnectParams(name: new Uuid().v4())) {
     p.onMessage.listen(messageEvented);
     setUpStreams();
   }
@@ -67,7 +67,7 @@ class PageStreamService {
         switch (event) {
           case pageInfoEvent:
             final PageInfo pi =
-            new PageInfo.fromJsObject(obj[messageFieldData]);
+                new PageInfo.fromJsObject(obj[messageFieldData]);
             _pageInfoStream.add(pi);
             break;
           case linkInfoEvent:
@@ -75,7 +75,7 @@ class PageStreamService {
             _linkInfoStream.add(li);
             break;
           case scrapeDoneEvent:
-          // Doesn't do anything here
+            // Doesn't do anything here
             break;
           default:
             throw new Exception("Unknown event: $event");

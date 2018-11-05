@@ -31,7 +31,6 @@ import 'package:scraper/results_dialog.dart';
     const ClassProvider(SettingsService),
     sourceProviders,
     const ClassProvider(Sources),
-
   ],
 )
 class ScraperComponent implements OnInit {
@@ -45,12 +44,10 @@ class ScraperComponent implements OnInit {
 
   final SettingsService _settings;
 
-
   bool showDialog = false;
 
   ScraperComponent(this._sources, this._settings) {
-    Logger.root.onRecord
-        .listen(
+    Logger.root.onRecord.listen(
         new LogPrintHandler(messageFormat: "%t\t$_pageId\t%n\t[%p]:\t%m"));
     _log.info("Logging set to ${Logger.root.level.name}");
   }
@@ -61,8 +58,8 @@ class ScraperComponent implements OnInit {
 
     final int tabId = await getCurrentTabId();
 
-    final ASource source = _sources.getScraperForSite(
-        window.location.href, document);
+    final ASource source =
+        _sources.getScraperForSite(window.location.href, document);
 
     if (source != null) {
       chrome.runtime.onMessage.listen((chrome.OnMessageEvent e) async {
@@ -81,8 +78,7 @@ class ScraperComponent implements OnInit {
               break;
             case loadWholePageCommand:
               _log.finest("Start loadWholePage for source");
-              if (source != null)
-                await source.loadWholePage();
+              if (source != null) await source.loadWholePage();
               return;
             default:
               return;
@@ -90,8 +86,7 @@ class ScraperComponent implements OnInit {
 
           final String targetUrl = request[messageFieldUrl];
           if (targetUrl != window.location.href) {
-            _log.warning(
-                "Scrape request is not for this url (${window.location
+            _log.warning("Scrape request is not for this url (${window.location
                     .href}), it is for $targetUrl");
             return;
           }
@@ -121,11 +116,10 @@ class ScraperComponent implements OnInit {
               });
             } else if (e == scrapeDoneEvent) {
               _log.fine("Scrape done stream event received");
-              await chrome.runtime.sendMessage(
-                  {
-                    messageFieldEvent: scrapeDoneEvent,
-                    messageFieldTabId: tabId
-                  });
+              await chrome.runtime.sendMessage({
+                messageFieldEvent: scrapeDoneEvent,
+                messageFieldTabId: tabId
+              });
             }
           });
 
@@ -145,5 +139,4 @@ class ScraperComponent implements OnInit {
       _log.warning("This page is not supported by scraper");
     }
   }
-
 }

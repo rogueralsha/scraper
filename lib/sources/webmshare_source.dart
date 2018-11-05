@@ -17,18 +17,17 @@ class WebmShareSource extends ASource {
         [
           new SimpleUrlScraperCriteria(
               LinkType.page, "video#player source[type='video/webm']")
-        ], urlRegexGroup: 2,
+        ],
+        urlRegexGroup: 2,
         useForEvaluation: true));
   }
 
   @override
   String determineThumbnail(String url) {
     final Match m = _regExp.firstMatch(url);
-    if(m!=null) {
+    if (m != null) {
       return "https://s1.webmshare.com/t/${m[2]}.jpg";
     }
     return null;
   }
-
-
 }

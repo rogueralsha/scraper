@@ -354,23 +354,24 @@ Future<Map> _openTab(String url, int windowId) async {
 //    if (updatedEvent.tabId == tab.id &&
 //        updatedEvent.changeInfo["status"] == "complete") {
 //    _log.info("New tab open complete: ${updatedEvent.tabId}");
-    for(int i = 0; i<5; i++) {
+    for (int i = 0; i < 5; i++) {
       chrome.OnMessageEvent e = await chrome.runtime.onMessage
           .where((chrome.OnMessageEvent e) =>
-      e.message[messageFieldEvent] == pageHealthEvent &&
-          e.message[messageFieldTabId] == tab.id)
+              e.message[messageFieldEvent] == pageHealthEvent &&
+              e.message[messageFieldTabId] == tab.id)
           .first;
 
       JsObject message = e.message;
       _log.finest("Page health event received: ${jsVarDump(message)}");
-      switch(message[messageFieldPageHealth]) {
+      switch (message[messageFieldPageHealth]) {
         case pageHealthOk:
           i = 1000;
           break;
         case pageHealthError:
           throw new Exception("Error returned by tab while loading page!");
         case pageHealthResolvableError:
-          await chrome.tabs.reload(tab.id, new chrome.TabsReloadParams(bypassCache: true));
+          await chrome.tabs
+              .reload(tab.id, new chrome.TabsReloadParams(bypassCache: true));
           continue;
       }
     }

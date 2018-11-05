@@ -41,7 +41,7 @@ class ScraperService {
         p.postMessage(
             {messageFieldUrl: url, messageFieldCommand: scrapePageCommand});
         await for (chrome.OnMessageEvent e in p.onMessage) {
-          JsObject message = e.message;
+          final JsObject message = e.message;
           if (message[messageFieldEvent] == scrapeDoneEvent) {
             _log.info("Reults message received");
             _log.info(e.message);

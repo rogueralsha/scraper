@@ -17,21 +17,21 @@ class EtcSource extends ASource {
   static final RegExp _mixtapeRegExp =
       new RegExp(r"https?://my\.mixtape\.moe/.*", caseSensitive: false);
   static final RegExp _temelRegExp =
-  new RegExp(r"https?://[^/]+\.temel\.me/.*", caseSensitive: false);
+      new RegExp(r"https?://[^/]+\.temel\.me/.*", caseSensitive: false);
 
   static final RegExp _httpStatRegExp =
-  new RegExp(r"https?://httpstat\.us/.*", caseSensitive: false);
-
+      new RegExp(r"https?://httpstat\.us/.*", caseSensitive: false);
 
   EtcSource(SettingsService settings) : super(settings) {
     this.directLinkRegexps
       ..add(new DirectLinkRegExp(LinkType.file, _squareSpaceStaticServerRegExp))
       ..add(new DirectLinkRegExp(LinkType.file, _catboxRegExp))
       ..add(new DirectLinkRegExp(LinkType.file, _uploaddirRegExp))
-      ..add(new DirectLinkRegExp(LinkType.file, _mixtapeRegExp,  checkForRedirect: true))
+      ..add(new DirectLinkRegExp(LinkType.file, _mixtapeRegExp,
+          checkForRedirect: true))
       ..add(new DirectLinkRegExp(LinkType.file, _temelRegExp))
       ..add(new DirectLinkRegExp(LinkType.file, _uploadsRuRegExp));
-    this.urlScrapers
-    .add(new SimpleUrlScraper(this, _httpStatRegExp, [new SimpleUrlScraperCriteria(LinkType.page, "dl dt a")]));
+    this.urlScrapers.add(new SimpleUrlScraper(this, _httpStatRegExp,
+        [new SimpleUrlScraperCriteria(LinkType.page, "dl dt a")]));
   }
 }

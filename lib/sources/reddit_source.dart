@@ -29,7 +29,7 @@ class RedditSource extends ASource {
 
     this.urlScrapers
       ..add(new UrlScraper(
-        _regExp, scrapeSubredditPageInfo, scrapeSubredditPageLinks))
+          _regExp, scrapeSubredditPageInfo, scrapeSubredditPageLinks))
       ..add(new UrlScraper(_imageRegexp, emptyPageScraper, selfLinkScraper));
   }
 
@@ -48,52 +48,44 @@ class RedditSource extends ASource {
 
     _log.finest("Fetching JSON URL: $jsonUrl");
 
-    final BrowserClient client = new BrowserClient();
-    http.Response response;
     try {
-      response = await client.get(jsonUrl);
-    } finally {
-      client.close();
-    }
-    if(response.statusCode==200) {
-      final dynamic jsonData = json.decode(response.body);
-      if(jsonData is List) {
-        for(Map data in jsonData) {
+      final dynamic jsonData = await fetchJsonData(jsonUrl);
+      if (jsonData is List) {
+        for (Map data in jsonData) {
           await processListingEntry(data, url);
         }
       } else if (jsonData is Map) {
         await processListingEntry(jsonData, url);
-      } else {
-        throw new Exception("Unrecognized JSON data type: ${response.body}");
       }
-
-
-
-    } else {
-      _log.warning("Could not fetch json data: ${response.body}");
+    } catch(e,st) {
+      _log.warning("Error while fetching reddit json",e.message, st);
     }
   }
 
-  Future<void> processListingEntry(Map<String,dynamic> listingData, String url) async {
+  Future<void> processListingEntry(
+      Map<String, dynamic> listingData, String url) async {
     final List<dynamic> children = listingData["data"]["children"];
-    for(Map<String,dynamic> child in children) {
-      final Map<String,dynamic> childData = child["data"];
+    for (Map<String, dynamic> child in children) {
+      final Map<String, dynamic> childData = child["data"];
       final String kind = child["kind"];
-      switch(kind) {
+      switch (kind) {
         case "t3": //Regular post
           final String thumbnail = childData["thumbnail"];
           final String link = childData["url"];
           LinkType type = LinkType.page;
 
-          if(childData.containsKey("media")&&childData["media"]!=null) {
-            final Map<String,dynamic> mediaData = childData["media"];
-            if(mediaData.containsKey("reddit_video")) {
-              this.createAndSendLinkInfo(mediaData["reddit_video"]["fallback_url"], url, thumbnail: thumbnail, type: LinkType.video);
+          if (childData.containsKey("media") && childData["media"] != null) {
+            final Map<String, dynamic> mediaData = childData["media"];
+            if (mediaData.containsKey("reddit_video")) {
+              this.createAndSendLinkInfo(
+                  mediaData["reddit_video"]["fallback_url"], url,
+                  thumbnail: thumbnail, type: LinkType.video);
               continue;
             }
           }
 
-          if(childData.containsKey("url")&&(childData["url"]??"").isNotEmpty) {
+          if (childData.containsKey("url") &&
+              (childData["url"] ?? "").isNotEmpty) {
             await this.evaluateLink(link, url);
           }
 
@@ -104,18 +96,19 @@ class RedditSource extends ASource {
           final String bodyHtml = unescape.convert(childData["body_html"]);
           final html.DocumentFragment bodyDoc = parseFragment(bodyHtml);
 
-          for(html.Element aElement in bodyDoc.querySelectorAll("a")) {
-            await this.evaluateLink(aElement.attributes["href"], url, select: false);
+          for (html.Element aElement in bodyDoc.querySelectorAll("a")) {
+            await this
+                .evaluateLink(aElement.attributes["href"], url, select: false);
           }
 
+          if (childData["replies"] is Map) {
+            await processListingEntry(childData["replies"], url);
+          }
           break;
         default:
           _log.warning("Unknown listing kind: $kind");
           break;
       }
-
-
-
     }
   }
 }

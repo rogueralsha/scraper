@@ -18,6 +18,9 @@ export 'package:scraper/services/settings_service.dart';
 export 'package:scraper/sources/src/link_info_impl.dart';
 
 export 'src/direct_link_regexp.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/browser_client.dart';
+
 
 abstract class ASource {
   static final Logger _log = new Logger("ASource");
@@ -165,14 +168,13 @@ abstract class ASource {
   }
 
   String _cleanUpUrl(String url) {
-    if(url==null)
-      return null;
+    if (url == null) return null;
 
     String output = url;
     if (output.contains("www.rule34.paheal.net")) {
       output = output.replaceAll("www.rule34.paheal.net", "rule34.paheal.net");
     }
-    if(output.contains("5.79.66.75")) {
+    if (output.contains("5.79.66.75")) {
       output = output.replaceAll("5.79.66.75", "rule34.paheal.net");
     }
     return output;
@@ -232,9 +234,9 @@ abstract class ASource {
       }
     }
 
-    await manualScrape(pageInfo, url, document);
-
-    sendScrapeDone();
+    if (await manualScrape(pageInfo, url, document)) {
+      sendScrapeDone();
+    }
   }
 
   void applySourceArtistSettings(SourceArtistSetting settings, PageInfo pi) {
@@ -243,8 +245,10 @@ abstract class ASource {
     pi.promptForDownload = settings.promptForDownload;
   }
 
-  Future<Null> manualScrape(
-      PageInfo pageInfo, String url, Document document) async {}
+  /// Returns a boolean indicating whether scrape done should be be sent after this function completes
+  Future<bool> manualScrape(
+          PageInfo pageInfo, String url, Document document) async =>
+      true;
 
   Future<String> checkForRedirect(String url) async {
     _log.finest("checkForRedirect($url)");
@@ -392,4 +396,19 @@ abstract class ASource {
   }
 
   Future<Null> loadWholePage() async {}
+
+  Future<dynamic> fetchJsonData(String url) async {
+    final BrowserClient client = new BrowserClient();
+    http.Response response;
+    try {
+      response = await client.get(url);
+    } finally {
+      client.close();
+    }
+    if (response.statusCode == 200) {
+        return json.decode(response.body);
+    } else {
+      throw new Exception("Could not fetch json data: ${response.body}");
+    }
+  }
 }

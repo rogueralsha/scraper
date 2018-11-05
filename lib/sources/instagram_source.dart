@@ -9,7 +9,7 @@ import 'src/simple_url_scraper.dart';
 class InstagramSource extends ASource {
   static final Logger logImpl = new Logger("InstagramSource");
 
-  static final RegExp _regExp =
+  static final RegExp _postRegExp =
       new RegExp(r"https?://www\.instagram\.com/p/.*", caseSensitive: false);
   static final RegExp _userRegExp = new RegExp(
       r"https?://www\.instagram\.com/([^/]+)/",
@@ -25,15 +25,8 @@ class InstagramSource extends ASource {
         .directLinkRegexps
         .add(new DirectLinkRegExp(LinkType.file, _contentRegExp));
 
-    this.urlScrapers.add(new SimpleUrlScraper(
-        this,
-        _regExp,
-        [
-          new SimpleUrlScraperCriteria(
-              LinkType.image, "section main div article div div div div img"),
-          new SimpleUrlScraperCriteria(LinkType.video, "video")
-        ],
-        customPageInfoScraper: scrapePostPageInfo));
+    this.urlScrapers.add(new UrlScraper(
+        _postRegExp, scrapePostPageInfo, scrapePostLinks));
 
     this.urlScrapers.add(new SimpleUrlScraper(
         this,
@@ -48,8 +41,9 @@ class InstagramSource extends ASource {
 
   Future<Null> scrapePostPageInfo(
       PageInfo pi, Match m, String s, Document doc) async {
-      final AnchorElement a = document.querySelector("span#react-root section main div div article header div div div a");
-      pi.artist = a?.title;
+    final AnchorElement a = document.querySelector(
+        "span#react-root section main div div article header div div div a");
+    pi.artist = a?.title;
 //    final MetaElement ele = document.querySelector("meta[name=\"description\"]");
 //    final String description = ele.content;
 //    final Match m = _metaUserRegexp.firstMatch(description);
@@ -58,12 +52,41 @@ class InstagramSource extends ASource {
     //pi.artist = m[1];
   }
 
+  Future<Null> scrapePostLinks(String url, Document doc) async {
+    final Map<String,dynamic> jsonData = await fetchJsonData("$url?__a=1");
+    final Map<String,dynamic> shortcodeMedia =jsonData["graphql"]["shortcode_media"];
+    if(shortcodeMedia.containsKey("edge_sidecar_to_children")) {
+      final List<Map<String,dynamic>> edges = shortcodeMedia["edge_sidecar_to_children"]["edges"];
+      for (Map<String,dynamic> edge in edges) {
+        final String displayUrl = edge["node"]["display_url"];
+        createAndSendLinkInfo(displayUrl, url, type: LinkType.image);
+
+        final bool isVideo = edge["is_video"];
+        if(isVideo) {
+          final String videoUrl = edge["video_url"];
+          createAndSendLinkInfo(videoUrl, url, type: LinkType.video, thumbnail: displayUrl);
+        }
+      }
+    } else {
+      final String displayUrl = shortcodeMedia["display_url"];
+      createAndSendLinkInfo(displayUrl, url, type: LinkType.image);
+
+      final bool isVideo = shortcodeMedia["is_video"];
+      if(isVideo) {
+        final String videoUrl = shortcodeMedia["video_url"];
+        createAndSendLinkInfo(videoUrl, url, type: LinkType.video, thumbnail: displayUrl);
+      }
+
+    }
+  }
+
   Future<Null> scrapeUserPageInfo(
       PageInfo pi, Match m, String s, Document doc) async {
-    final MetaElement ele = document.querySelector("meta[property=\"og:title\"]");
+    final MetaElement ele =
+        document.querySelector("meta[property=\"og:title\"]");
     final String description = ele.content;
     final Match m = _metaUserRegexp.firstMatch(description);
-    if(m==null)
+    if (m == null)
       throw new Exception("No match found for username in og:title meta tag.");
     pi.artist = m[1];
   }
