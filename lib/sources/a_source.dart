@@ -19,6 +19,7 @@ export 'package:scraper/sources/src/link_info_impl.dart';
 
 export 'src/direct_link_regexp.dart';
 import 'package:http/http.dart' as http;
+import 'package:html/dom.dart' as dom;
 import 'package:http/browser_client.dart';
 
 
@@ -90,6 +91,7 @@ abstract class ASource {
 
   void createAndSendLinkInfo(String link, String sourceUrl,
       {LinkType type = LinkType.image, String filename, String thumbnail}) {
+    _log.finest("$link, $sourceUrl,{$type, $filename, $thumbnail}");
     if (!this._seenLinks.contains(link)) {
       this._seenLinks.add(link);
       final LinkInfo li = new LinkInfoImpl(link, sourceUrl,
@@ -397,7 +399,9 @@ abstract class ASource {
 
   Future<Null> loadWholePage() async {}
 
-  Future<dynamic> fetchJsonData(String url) async {
+  Future<dynamic> fetchJsonData(String url) async => json.decode(await fetchString(url));
+
+  Future<String> fetchString(String url) async {
     final BrowserClient client = new BrowserClient();
     http.Response response;
     try {
@@ -406,9 +410,9 @@ abstract class ASource {
       client.close();
     }
     if (response.statusCode == 200) {
-        return json.decode(response.body);
+      return response.body;
     } else {
-      throw new Exception("Could not fetch json data: ${response.body}");
+      throw new Exception("Could not fetch data: ${response.body}");
     }
   }
 }

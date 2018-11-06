@@ -7,6 +7,10 @@ import 'package:scraper/services/page_stream_service.dart';
 
 import 'a_source.dart';
 import 'src/link_info_impl.dart';
+import 'dart:convert';
+import 'package:html/dom.dart' as dom;
+import 'package:html/parser.dart' show parse;
+
 
 class TumblrSource extends ASource {
   static final Logger _log = new Logger("TumblrSource");
@@ -14,9 +18,9 @@ class TumblrSource extends ASource {
   static final RegExp _regExp =
       new RegExp(r"https?://([^.]+)\.tumblr\.com/", caseSensitive: false);
   static final RegExp _postRegExp =
-      new RegExp(r"https?://[^/]+/post/.*", caseSensitive: false);
+      new RegExp(r"https?://[^/]+/post/(\d+)(/.+)?", caseSensitive: false);
   static final RegExp _mobilePostRegExp =
-      new RegExp(r"https?://[^/]+/post/.*/mobile", caseSensitive: false);
+      new RegExp(r"https?://[^/]+/post/(\d+)/mobile", caseSensitive: false);
   static final RegExp _archiveRegExp =
       new RegExp(r"https?://[^/]+/archive", caseSensitive: false);
   static final RegExp _redirectRegExp =
@@ -85,6 +89,25 @@ class TumblrSource extends ASource {
     return false;
   }
 
+  String adjustTumblrImageUrl(String link) {
+    if (link.contains("_100.")) {
+      link = link.replaceAll("_100", "_1280");
+    }
+    if (link.contains("_500.")) {
+      link = link.replaceAll("_500", "_1280");
+    }
+    if (link.contains("_540.")) {
+      link = link.replaceAll("_540", "_1280");
+    }
+    if (link.contains("_250.")) {
+      link = link.replaceAll("_250", "_1280");
+    }
+    if (link.contains("_400.")) {
+      link = link.replaceAll("_400", "_1280");
+    }
+    return link;
+  }
+
   Future<List<String>> getTumblrImages(String url, Element rootElement) async {
     final List<String> output = <String>[];
     final ElementList<ImageElement> elements =
@@ -105,21 +128,8 @@ class TumblrSource extends ASource {
           continue;
         }
 
-        if (link.contains("_100.")) {
-          link = link.replaceAll("_100", "_1280");
-        }
-        if (link.contains("_500.")) {
-          link = link.replaceAll("_500", "_1280");
-        }
-        if (link.contains("_540.")) {
-          link = link.replaceAll("_540", "_1280");
-        }
-        if (link.contains("_250.")) {
-          link = link.replaceAll("_250", "_1280");
-        }
-        if (link.contains("_400.")) {
-          link = link.replaceAll("_400", "_1280");
-        }
+        link = adjustTumblrImageUrl(link);
+
         _log.fine("Found URL: $link");
         final LinkInfo li = new LinkInfoImpl(link, url, type: LinkType.image);
         sendLinkInfo(li);
@@ -192,72 +202,83 @@ class TumblrSource extends ASource {
       }
     } else if (_postRegExp.hasMatch(url)) {
       _log.info("Tumblr post page");
-      if (_mobilePostRegExp.hasMatch(url)) {
-        _log.info("Tumblr mobile post page");
-        // Mobile page - Same code should work, but we can easily detect if it's a reblog so we can skip it
-        if (document.querySelector("a.tumblr_blog") != null) {
-          return true;
+
+      final String id = _postRegExp.firstMatch(url)[1];
+      final String apiUrl = "https://${siteRegexp.firstMatch(url).group(1)}/api/read/json?id=$id";
+      _log.finer("Fetching post json data from $apiUrl");
+      String jsonString = (await fetchString(apiUrl)).substring(21).trim();
+      jsonString = jsonString.substring(0,jsonString.lastIndexOf(";"));
+
+      final Map<String,dynamic> jsonData = jsonDecode(jsonString);
+      final Map<String,dynamic> postData = jsonData["posts"][0];
+
+      _log.finest("Posts data", postData);
+      // Extract photos
+      final String photoUrl = postData["photo-url-1280"];
+      if((photoUrl??"").isNotEmpty)
+        createAndSendLinkInfo(photoUrl, url, type:  LinkType.image);
+
+      if(postData.containsKey("photos")) {
+        final List photos = postData["photos"];
+        if (photos?.isEmpty ?? false) {
+          _log.warning("Photos element not found");
+        }
+        if (photos != null) {
+          for (Map photoData in photos) {
+            final String photoDataUrl = photoData["photo-url-1280"];
+            createAndSendLinkInfo(photoDataUrl, url, type: LinkType.image);
+          }
         }
       }
 
-      bool photosetIframeFound = false;
+      // Extract downloadable links
+      _log.finer("photo-caption",postData["photo-caption"]);
 
-      for (String selector in selectors) {
-        _log.finest("Checking page with selector $selector");
-        final ElementList<Element> articles =
-            document.querySelectorAll(selector);
-        if (articles.isEmpty) {
-          continue;
-        }
-        _log.info("Articles found with selector $selector: ${articles.length}");
-        for (Element mainArticle in articles) {
-          _log.finest("Checking article candidate $mainArticle");
-          await getTumblrImages(url, mainArticle);
 
-          final ElementList<AnchorElement> linkEles =
-              mainArticle.querySelectorAll("a");
-          _log.finest("Anchor elements found in article: ${linkEles.length}");
-          for (AnchorElement linkEle in linkEles) {
-            if (_redirectRegExp.hasMatch(linkEle.href)) {
-              _log.info("Decoding redirect URL", linkEle.href);
-              String link = _redirectRegExp.firstMatch(linkEle.href)[1];
-              link = Uri.decodeComponent(link);
-              _log.info("Link decoded", link);
-              await evaluateLink(link, url);
-            }
-          }
+      final List<dom.Element> anchorElements = <dom.Element>[];
+      final List<dom.Element> imageElements = <dom.Element>[];
 
-          final ElementList<IFrameElement> iframes =
-              mainArticle.querySelectorAll("iframe.photoset");
-          if (iframes.isNotEmpty) {
-            _log.info("Found photoset iframes");
+      if(postData.containsKey("photo-caption")) {
+        final dom.Document postDoc = parse(postData["photo-caption"]);
+        anchorElements.addAll(postDoc.querySelectorAll("a"));
+        imageElements.addAll(postDoc.querySelectorAll("img"));
+      }
+      if(postData.containsKey("regular-body")) {
+        final dom.Document postDoc = parse(postData["regular-body"]);
+        anchorElements.addAll(postDoc.querySelectorAll("a"));
+        imageElements.addAll(postDoc.querySelectorAll("img"));
+      }
+      if(postData.containsKey("answer")) {
+        final dom.Document postDoc = parse(postData["answer"]);
+        anchorElements.addAll(postDoc.querySelectorAll("a"));
+        imageElements.addAll(postDoc.querySelectorAll("img"));
+      }
 
-            final IFrameElement iframe = iframes.first;
-            _log.info("Getting media from iframe: ${iframe.src}");
-
-            await streamService.requestScrapeStart(url: iframe.src);
-            photosetIframeFound = true;
-          }
-
-          if (sentLinks) {
-            _log.finer(
-                "Links have been sent (${this.sentLinkCount}), breaking article check loop");
-            break;
-          }
-          if (photosetIframeFound) {
-            break;
-          }
-        }
-        if (sentLinks) {
-          _log.finer(
-              "Links have been sent (${this.sentLinkCount}), breaking selector check loop");
-          break;
-        }
-        if (photosetIframeFound) {
-          break;
+      for (dom.Element linkEle in anchorElements) {
+        if (_redirectRegExp.hasMatch(linkEle.attributes["href"])) {
+          _log.info("Decoding redirect URL", linkEle.attributes["href"]);
+          String link = _redirectRegExp.firstMatch(linkEle.attributes["href"])[1];
+          link = Uri.decodeComponent(link);
+          _log.info("Link decoded", link);
+          await evaluateLink(link, url);
+        } else {
+          _log.finer("Found link element: $linkEle");
+          await evaluateLink(linkEle.attributes["href"], url);
         }
       }
-      return !photosetIframeFound;
+
+      for(dom.Element imgEle in imageElements) {
+        if(_tumblrMediaRegExp.hasMatch(imgEle.attributes["src"])) {
+          String link = imgEle.attributes["src"];
+          link = adjustTumblrImageUrl(link);
+          createAndSendLinkInfo(link, url, type: LinkType.image);
+        } else {
+          createAndSendLinkInfo(imgEle.attributes["src"], url, type: LinkType.image);
+        }
+      }
+
+
     }
+    return true;
   }
 }
