@@ -204,7 +204,7 @@ class TumblrSource extends ASource {
       _log.info("Tumblr post page");
 
       final String id = _postRegExp.firstMatch(url)[1];
-      final String apiUrl = "https://${siteRegexp.firstMatch(url).group(1)}/api/read/json?id=$id";
+      final String apiUrl = "${window.location.protocol}//${siteRegexp.firstMatch(url).group(1)}/api/read/json?id=$id";
       _log.finer("Fetching post json data from $apiUrl");
       String jsonString = (await fetchString(apiUrl)).substring(21).trim();
       jsonString = jsonString.substring(0,jsonString.lastIndexOf(";"));
@@ -213,6 +213,11 @@ class TumblrSource extends ASource {
       final Map<String,dynamic> postData = jsonData["posts"][0];
 
       _log.finest("Posts data", postData);
+
+      if(postData["type"]=="link") {
+        await evaluateLink(postData["link-url"], url);
+      }
+
       // Extract photos
       final String photoUrl = postData["photo-url-1280"];
       if((photoUrl??"").isNotEmpty)

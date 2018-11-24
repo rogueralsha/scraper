@@ -15,9 +15,11 @@ class EtcSource extends ASource {
   static final RegExp _uploadsRuRegExp =
       new RegExp(r"https?://[a-z0-9]+\.uploads\.ru/.*", caseSensitive: false);
   static final RegExp _mixtapeRegExp =
-      new RegExp(r"https?://my\.mixtape\.moe/.*", caseSensitive: false);
+      new RegExp(r"https?://[^.]+\.mixtape\.moe/.*", caseSensitive: false);
   static final RegExp _temelRegExp =
-      new RegExp(r"https?://[^/]+\.temel\.me/.*", caseSensitive: false);
+      new RegExp(r"https?://[^.]+\.temel\.me/.*", caseSensitive: false);
+
+
 
   static final RegExp _httpStatRegExp =
       new RegExp(r"https?://httpstat\.us/.*", caseSensitive: false);

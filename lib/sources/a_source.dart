@@ -57,6 +57,9 @@ abstract class ASource {
     _log.finest(
         "artistFromRegExpPageScraper($pageInfo, $m, $url, $doc, $group}");
     if (m.groupCount >= group) {
+      if(m.group(group)==null) {
+        throw new Exception("Selected group was null.");
+      }
       pageInfo.artist = m.group(group);
       int currentGroup = group;
       while (pageInfo.artist.toLowerCase() == "www.") {

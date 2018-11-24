@@ -9,14 +9,21 @@ class GfycatSource extends ASource {
   static final Logger _log = new Logger("GfycatSource");
 
   static final RegExp _regExp = new RegExp(
-      r"https?://(www\.)?gfycat\.com/([^/\?]+)(\?[^/]+)?$",
+      r"https?://(www\.)?gfycat\.com/([^/?]+)(\?[^/]+)?$",
       caseSensitive: false);
   static final RegExp _albumRegexp = new RegExp(
-      r"https?://(www\.)?gfycat\.com/@([^/]+)/[^/]+$",
+      r"https?://(www\.)?gfycat\.com/@([^/]+)/collections/[^/]+/[^/]+$",
       caseSensitive: false);
+
+
   static final RegExp _albumDetailRegexp = new RegExp(
       r"https?://(www\.)?gfycat\.com/(%40[^/]+)/[^/]+/detail/([^/]+)$",
       caseSensitive: false);
+
+  static final RegExp _detailRegexp = new RegExp(
+      r"https?://(www\.)?gfycat\.com/gifs/detail/([^/]+)$",
+      caseSensitive: false);
+
   static final RegExp _directRegExp = new RegExp(
       r"https?://giant\.gfycat\.com/([^/.]+)\.(webm|mp4)$",
       caseSensitive: false);
@@ -30,16 +37,21 @@ class GfycatSource extends ASource {
         this,
         _albumRegexp,
         [
-          new SimpleUrlScraperCriteria(LinkType.page, "div.deckgrid  a",
+          new SimpleUrlScraperCriteria(LinkType.page, "div.album-container div.m-grid-item  a",
               validateLinkInfo: (LinkInfo li, Element e) {
-            if (_albumDetailRegexp.hasMatch(li.url)) {
-              final String name = _albumDetailRegexp.firstMatch(li.url)[3];
-              li.url = "https://gfycat.com/$name";
-            }
+                if (_albumDetailRegexp.hasMatch(li.url)) {
+                  final String name = _albumDetailRegexp.firstMatch(li.url)[3];
+                  li.url = "https://gfycat.com/$name";
+                }
+                if (_detailRegexp.hasMatch(li.url)) {
+                  final String name = _detailRegexp.firstMatch(li.url)[2];
+                  li.url = "https://gfycat.com/$name";
+                }
+
             return true;
           })
         ],
-        saveByDefault: false));
+        saveByDefault: false, urlRegexGroup: 2));
 
     this.urlScrapers.add(new SimpleUrlScraper(
         this,
@@ -83,15 +95,15 @@ class GfycatSource extends ASource {
   @override
   LinkInfo reEvaluateLink(LinkInfo li, RegExp regExp) {
     if (regExp == _directRegExp) {
-      if (li.url.toLowerCase().endsWith(".mp4")) {
+      if (li.url?.toLowerCase()?.endsWith(".mp4")??false) {
         li.url = "${li.url.substring(0,li.url.length-4)}.webm";
       }
     }
     return li;
   }
-
-  String generateDirectLink(String name) =>
-      "https://giant.gfycat.com/$name.webm";
+//
+//  String generateDirectLink(String name) =>
+//      "https://giant.gfycat.com/$name.webm";
 
   @override
   String determineThumbnail(String url) {

@@ -20,6 +20,8 @@ class InstagramSource extends ASource {
   static final RegExp _contentRegExp =
       new RegExp(r"https?://[^.]+\.cdninstagram\.com/.+", caseSensitive: false);
 
+  static final RegExp _profileDataRegExp = new RegExp(r"<script type=""text\/javascript"">window[.]_sharedData = {[\s\S]*};<\/script>", caseSensitive: false);
+
   InstagramSource(SettingsService settings) : super(settings) {
     this
         .directLinkRegexps
@@ -27,16 +29,19 @@ class InstagramSource extends ASource {
 
     this.urlScrapers.add(new UrlScraper(
         _postRegExp, scrapePostPageInfo, scrapePostLinks));
+    this.urlScrapers.add(new UrlScraper(
+        _userRegExp, scrapeUserPageInfo, scrapeUserPageLinks));
 
-    this.urlScrapers.add(new SimpleUrlScraper(
-        this,
-        _userRegExp,
-        [
-          new SimpleUrlScraperCriteria(
-              LinkType.image, "span section main article div div div div a")
-        ],
-        customPageInfoScraper: scrapeUserPageInfo,
-        watchForUpdates: true));
+
+//    this.urlScrapers.add(new SimpleUrlScraper(
+//        this,
+//        _userRegExp,
+//        [
+//          new SimpleUrlScraperCriteria(
+//              LinkType.image, "span section main article div div div div a")
+//        ],
+//        customPageInfoScraper: scrapeUserPageInfo,
+//        watchForUpdates: true));
   }
 
   Future<Null> scrapePostPageInfo(
@@ -89,6 +94,11 @@ class InstagramSource extends ASource {
     if (m == null)
       throw new Exception("No match found for username in og:title meta tag.");
     pi.artist = m[1];
+  }
+
+  Future<Null> scrapeUserPageLinks(String url, Document doc) async {
+
+
   }
 
 //  handleLoadMoreButton: function() {
