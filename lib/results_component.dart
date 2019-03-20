@@ -52,7 +52,7 @@ class ResultsComponent implements OnInit, OnDestroy {
   final SettingsService _settings;
   final PageStreamService _pageStream;
 
-  PageInfo results = new PageInfo("none", -1);
+  PageInfo results = new PageInfo("none", "", -1);
 
   bool get showLoadAllButton => loaded && results.incrementalLoader;
 
@@ -297,12 +297,16 @@ class ResultsComponent implements OnInit, OnDestroy {
     _log.finest("AppComponent.ngOnInit start");
     try {
       _pageStream.onPageInfo.listen((PageInfo pi) async {
-        _log.info("PageInfo received, updating component data");
-        this.results = pi;
-        this.savePath = results.saveByDefault;
-        this.promptForDownload = results.promptForDownload;
-        this.artistPath = await _settings.getMapping(results.artist);
-        this.availablePathPrefixes = await _settings.getAvailablePrefixes();
+        if(pi.sourceUrl==window.location.toString()) {
+          _log.info("PageInfo received, updating component data");
+          this.results = pi;
+          this.savePath = results.saveByDefault;
+          this.promptForDownload = results.promptForDownload;
+          this.artistPath = await _settings.getMapping(results.artist);
+          this.availablePathPrefixes = await _settings.getAvailablePrefixes();
+        } else {
+        _log.info("PageInfo received, appears to be from iframe: ${pi.sourceUrl}");
+        }
       });
       _pageStream.onLinkInfo.listen((LinkInfo li) {
         _log.info("LinkInfo received, updating component data");
@@ -410,7 +414,7 @@ class ResultsComponent implements OnInit, OnDestroy {
 
   Future<Null> refreshButtonClick() async {
     try {
-      results = new PageInfo("none", -1);
+      results = new PageInfo("none", "", -1);
       links.clear();
       savePath = false;
       artistPath = "";

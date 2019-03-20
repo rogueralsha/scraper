@@ -87,7 +87,8 @@ class SimpleUrlScraper extends UrlScraper {
       for (Element ele in eles) {
         final LinkInfo li = _source.createLinkFromElement(ele, url,
             thumbnailSubSelector: criteria.thumbnailSubSelector,
-            defaultLinkType: criteria.linkType);
+            defaultLinkType: criteria.linkType,
+        linkAttribute: criteria.linkAttribute);
 
         if (li == null) continue;
 

@@ -21,6 +21,10 @@ export 'src/direct_link_regexp.dart';
 import 'package:http/http.dart' as http;
 import 'package:html/dom.dart' as dom;
 import 'package:http/browser_client.dart';
+import 'package:html/parser.dart' show parse;
+import 'package:chrome/chrome_ext.dart' as chrome;
+
+import '../services/page_stream_service.dart';
 
 
 abstract class ASource {
@@ -46,6 +50,9 @@ abstract class ASource {
   bool get sentLinks => _seenLinks.isNotEmpty;
 
   int get sentLinkCount => _seenLinks.length;
+
+  static final PageStreamService streamService = new PageStreamService();
+
 
   /// Extracts the artist name from the URL of the site based on the first group
   /// found by the provided RegExp. If the first group returns "www.", the next
@@ -119,6 +126,8 @@ abstract class ASource {
   @protected
   Future<LinkInfo> evaluateLinkImpl(String link, String sourceUrl) async {
     _log.finest('evaluateLinkImpl($link, $sourceUrl)');
+
+
     for (DirectLinkRegExp directRegExp in this.directLinkRegexps) {
       if (directRegExp.regExp.hasMatch(link)) {
         _log.finest("Direct link regexp match found in source $this");
@@ -137,6 +146,7 @@ abstract class ASource {
         return reEvaluateLink(li, directRegExp.regExp);
       }
     }
+
     for (UrlScraper scraper in this.urlScrapers.where((UrlScraper us) =>
         us.useForEvaluation && us.urlRegExp.hasMatch(link))) {
       _log.finest("Compatible UrlScraper found in source $this");
@@ -154,11 +164,21 @@ abstract class ASource {
   Future<int> evaluateLink(String link, String sourceUrl,
       {bool select = true}) async {
     _log.finest('evaluateLink($link, $sourceUrl, {$select})');
+
+    if(link.contains("://t.co/")) {
+      _log.finer("Link is twitter redirect, getting destination");
+      final String result = await this.checkForRedirect(link);
+      _log.info("Link $link redirects to $result");
+      link = result;
+    }
+
+
     int linksSent = 0;
     for (ASource source in Sources.sourceInstances) {
       _log.finest("Evaluating against ${source.runtimeType}");
       final LinkInfo li = await source.evaluateLinkImpl(link, sourceUrl);
-      if (li == null) continue;
+      if (li == null)
+        continue;
       li.select = select;
       sendLinkInfo(li);
       linksSent++;
@@ -173,7 +193,8 @@ abstract class ASource {
   }
 
   String _cleanUpUrl(String url) {
-    if (url == null) return null;
+    if (url == null)
+      return null;
 
     String output = url;
     if (output.contains("www.rule34.paheal.net")) {
@@ -213,7 +234,7 @@ abstract class ASource {
     _log.finest("startScrapingPage");
     _seenLinks.clear();
     final PageInfo pageInfo =
-        new PageInfo(this.runtimeType.toString(), await getCurrentTabId());
+        new PageInfo(this.runtimeType.toString(), url, await getCurrentTabId());
 
     for (UrlScraper us in urlScrapers) {
       _log.finest("Testing url scraper: ${us.urlRegExp}");
@@ -255,6 +276,8 @@ abstract class ASource {
           PageInfo pageInfo, String url, Document document) async =>
       true;
 
+  static final RegExp _metaRedirectRegex = new RegExp("URL=([^\"\;]+)\"");
+
   Future<String> checkForRedirect(String url) async {
     _log.finest("checkForRedirect($url)");
     final HttpRequest request = new HttpRequest()
@@ -263,17 +286,67 @@ abstract class ASource {
     await for (Event e in request.onReadyStateChange) {
       if (request.readyState == HttpRequest.DONE) {
         _log.fine("Response status is ${request.status}");
-        if (request.status == 302) {
-          _log.finer(request.responseHeaders);
-          return request.responseHeaders["Location"];
-        } else {
-          _log.finer("Request responded from ${request.responseUrl}");
-          return request.responseUrl;
+        _log.fine(request.responseHeaders);
+        final String contentType = request.responseHeaders["content-type"];
+        switch(request.status) {
+          case 302:
+          case 307:
+            _log.finer(request.responseHeaders);
+            return request.responseHeaders["Location"];
+          case 200:
+            _log.fine("Request responded with $contentType");
+
+//    <head><meta name="referrer" content="always"><noscript><META http-equiv="refresh" content="0;URL=http://webmshare.com/vJYzD"></noscript><title>http://webmshare.com/vJYzD</title></head><body><a href="http://webmshare.com/vJYzD"></a><script>window.opener = null; document.getElementsByTagName("a")[0].click();</script></body>
+
+            if(contentType?.toLowerCase().contains("text")??false) {
+              _log.fine("Checking for redirect metadata");
+              final String content = await fetchString(url);
+              _log.finest(content);
+              if(_metaRedirectRegex.hasMatch(content)) {
+                final String result = _metaRedirectRegex.firstMatch(content).group(1);
+                _log.info("Found meta redirect: $result");
+                return result;
+              }
+            } else {
+              return url;
+            }
+            break;
+          default:
+            _log.finer("Request to $url responded from ${request.responseUrl} ${request.status}");
+            return url;
         }
       }
     }
     return url;
   }
+
+  static final RegExp contentDispositionFilenameRegex = new RegExp("attachment; filename*=UTF-8''(.+)", caseSensitive: false);
+
+  Future<String> getDispositionFilename(String url)  async {
+    _log.fine("Checking for disposition filename at $url");
+    final Map<String,String> headers = await getUrlHeaders(url);
+    if(!headers.containsKey("content-disposition	")||!contentDispositionFilenameRegex.hasMatch(headers["content-disposition	"]))
+      return null;
+
+    final String output = contentDispositionFilenameRegex.firstMatch(headers["content-disposition	"]).group(1);
+    _log.info("");
+    return output;
+  }
+
+  Future<Map<String,String>> getUrlHeaders(String url) async {
+    _log.finest("checkForRedirect($url)");
+    final HttpRequest request = new HttpRequest()
+      ..open("HEAD", url)
+      ..send();
+    await for (Event e in request.onReadyStateChange) {
+      if (request.readyState == HttpRequest.DONE) {
+        _log.fine("Response status is ${request.status}");
+        return request.responseHeaders;
+      }
+    }
+    throw new Exception("End of getUrlHeaders reached");
+  }
+
 
   Future<bool> urlExists(String url) async {
     final HttpRequest request = new HttpRequest()
@@ -303,94 +376,103 @@ abstract class ASource {
 
   LinkInfo createLinkFromElement(Element ele, String sourceUrl,
       {String thumbnailSubSelector = "img",
-      LinkType defaultLinkType = LinkType.page}) {
+      LinkType defaultLinkType = LinkType.page,
+      String linkAttribute}) {
     String link;
     String thumbnail;
 
     LinkType type = defaultLinkType;
 
-    if (ele is AnchorElement) {
-      _log.finest("AnchorElement found");
-      link = ele.href;
-      if (thumbnailSubSelector?.isNotEmpty ?? false) {
-        _log.finest("Querying with $thumbnailSubSelector");
-        final Element thumbEle = ele.querySelector(thumbnailSubSelector);
-        if (thumbEle != null) {
-          _log.info("Thumbnail element found");
-          if (thumbEle is AnchorElement) {
-            _log.finest("AnchorElement found for thumbnail");
-            thumbnail = thumbEle.href;
-          } else if (thumbEle is ImageElement) {
-            _log.finest("ImageElement found for thumbnail");
-            thumbnail = thumbEle.src;
-          } else {
-            _log.info("Unsupported element found for thumbnail, skipping");
-          }
-        } else {
-          _log.finest("Thumbnail element not found");
-        }
-      }
-    } else if (ele is ImageElement) {
-      _log.finest("ImageElement found");
-      link = ele.src;
-      type = LinkType.image;
-    } else if (ele is EmbedElement) {
-      _log.finest("EmbedElement found");
-      link = ele.src;
-      type = LinkType.embedded;
-    } else if (ele is VideoElement) {
-      _log.finest("VideoElement found");
-      type = LinkType.video;
+    if (linkAttribute?.isNotEmpty ?? false) {
+      link = ele.attributes[linkAttribute];
+    }
 
-      final ElementList<SourceElement> sources = ele.querySelectorAll("source");
-      int highestResolution = 0;
-      for (SourceElement source in sources) {
-        _log.finest("Source sub-element found, trying src");
-        if (source.attributes.containsKey("res")) {
-          try {
-            final int res = int.parse(source.attributes["res"]);
-            if (res > highestResolution) {
-              _log.finest(
-                  "Larger resolution $res than $highestResolution found, switching source");
-              link = source.src;
-              highestResolution = res;
+    if (link?.isEmpty ?? true) {
+      if (ele is AnchorElement) {
+        _log.finest("AnchorElement found");
+        link = ele.href;
+        if (thumbnailSubSelector?.isNotEmpty ?? false) {
+          _log.finest("Querying with $thumbnailSubSelector");
+          final Element thumbEle = ele.querySelector(thumbnailSubSelector);
+          if (thumbEle != null) {
+            _log.info("Thumbnail element found");
+            if (thumbEle is AnchorElement) {
+              _log.finest("AnchorElement found for thumbnail");
+              thumbnail = thumbEle.href;
+            } else if (thumbEle is ImageElement) {
+              _log.finest("ImageElement found for thumbnail");
+              thumbnail = thumbEle.src;
+            } else {
+              _log.info("Unsupported element found for thumbnail, skipping");
             }
-          } on Exception catch (e, st) {
-            _log.warning(
-                "Error while parsing res attreibute on source element", e, st);
+          } else {
+            _log.finest("Thumbnail element not found");
           }
-        } else {
-          link = source.src;
-          break;
         }
-      }
-
-      if (link?.isEmpty ?? true) {
+      } else if (ele is ImageElement) {
+        _log.finest("ImageElement found");
         link = ele.src;
-      }
-      if (link?.isEmpty ?? true) {
-        _log.warning("Unable to find a source for the video element");
+        type = LinkType.image;
+      } else if (ele is EmbedElement) {
+        _log.finest("EmbedElement found");
+        link = ele.src;
+        type = LinkType.embedded;
+      } else if (ele is VideoElement) {
+        _log.finest("VideoElement found");
+        type = LinkType.video;
+
+        final ElementList<SourceElement> sources = ele.querySelectorAll(
+            "source");
+        int highestResolution = 0;
+        for (SourceElement source in sources) {
+          _log.finest("Source sub-element found, trying src");
+          if (source.attributes.containsKey("res")) {
+            try {
+              final int res = int.parse(source.attributes["res"]);
+              if (res > highestResolution) {
+                _log.finest(
+                    "Larger resolution $res than $highestResolution found, switching source");
+                link = source.src;
+                highestResolution = res;
+              }
+            } on Exception catch (e, st) {
+              _log.warning(
+                  "Error while parsing res attreibute on source element", e,
+                  st);
+            }
+          } else {
+            link = source.src;
+            break;
+          }
+        }
+
+        if (link?.isEmpty ?? true) {
+          link = ele.src;
+        }
+        if (link?.isEmpty ?? true) {
+          _log.warning("Unable to find a source for the video element");
+          return null;
+        }
+        if (ele.poster?.isNotEmpty ?? false) {
+          _log.info("Poster attribute found, using as thumnail");
+          thumbnail = ele.poster;
+        }
+      } else if (ele is SourceElement) {
+        _log.finest("SourceElement found");
+        type = LinkType.video;
+        link = ele.src;
+        if (ele.parent is VideoElement) {
+          _log.finest("Parent element is video, checking for poster");
+          final VideoElement parentEle = ele.parent;
+          if (parentEle.poster?.isNotEmpty ?? false) {
+            _log.info("Poster attribute found, using as thumnail");
+            thumbnail = parentEle.poster;
+          }
+        }
+      } else {
+        _log.info("Unsupported element $ele found, skipping");
         return null;
       }
-      if (ele.poster?.isNotEmpty ?? false) {
-        _log.info("Poster attribute found, using as thumnail");
-        thumbnail = ele.poster;
-      }
-    } else if (ele is SourceElement) {
-      _log.finest("SourceElement found");
-      type = LinkType.video;
-      link = ele.src;
-      if (ele.parent is VideoElement) {
-        _log.finest("Parent element is video, checking for poster");
-        final VideoElement parentEle = ele.parent;
-        if (parentEle.poster?.isNotEmpty ?? false) {
-          _log.info("Poster attribute found, using as thumnail");
-          thumbnail = parentEle.poster;
-        }
-      }
-    } else {
-      _log.info("Unsupported element $ele found, skipping");
-      return null;
     }
     if (link?.isEmpty ?? true) {
       _log.info("Null link, skipping");

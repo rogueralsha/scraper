@@ -1,7 +1,6 @@
 .resultsDialog {
     position: fixed;
     bottom: 0;
-    right: 0;
     width: auto;
     z-index: 10000;
     background-color: white;
@@ -12,6 +11,13 @@
     overflow-x: hidden;
     overflow-y: hidden;
     border: solid 1px black;
+}
+
+.resultsDialog.left {
+    left: 0;
+}
+.resultsDialog.right {
+    right: 0;
 }
 
 #resultsDialog {

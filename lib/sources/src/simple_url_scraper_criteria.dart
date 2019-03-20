@@ -8,6 +8,7 @@ class SimpleUrlScraperCriteria {
   final String linkSelector;
   final String fallbackSelector;
   final String thumbnailSubSelector;
+  final String linkAttribute;
   final ValidateLinkInfo validateLinkInfo;
   final int limit;
   final bool evaluateLinks;
@@ -18,5 +19,6 @@ class SimpleUrlScraperCriteria {
       this.limit = -1,
       this.evaluateLinks = false,
       this.linkRegExp,
-      this.fallbackSelector});
+      this.fallbackSelector,
+      this.linkAttribute});
 }

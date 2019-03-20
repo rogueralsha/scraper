@@ -62,7 +62,11 @@ Future<Null> main() async {
             break;
           case downloadCommand:
             String path = message[messageFieldFilename];
-            if (path.startsWith("/")) path = path.substring(1);
+            if (path.startsWith("/"))
+              path = path.substring(1);
+            if(path.endsWith("."))
+              path = path.substring(0,path.length-1);
+
             path = path.replaceAll("//", "/").replaceAll(":", "_");
             _log.info("Final path: $path");
 

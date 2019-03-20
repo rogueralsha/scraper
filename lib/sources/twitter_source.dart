@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:html';
+import 'package:meta/meta.dart';
 import 'package:http/browser_client.dart';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
@@ -29,11 +30,12 @@ class TwitterSource extends ASource {
         new SimpleUrlScraperCriteria(
             LinkType.image, ".permalink-tweet-container .js-adaptive-photo img",
             validateLinkInfo: (LinkInfo li, Element e) {
-          li.url = "${li.url}:large";
+          li.url = "${li.url}:orig";
           return true;
         }),
         new SimpleUrlScraperCriteria(
-            LinkType.video, ".permalink-tweet-container .AdaptiveMedia video")
+            LinkType.video, ".permalink-tweet-container .AdaptiveMedia video"),
+        new SimpleUrlScraperCriteria(LinkType.page, "div.js-tweet-text-container a", evaluateLinks: true)
       ]))
       ..add(new UrlScraper(
           _regExp, this.artistFromRegExpPageScraper, scrapeUserPageLinks));
@@ -70,4 +72,5 @@ class TwitterSource extends ASource {
       this.createAndSendLinkInfo(link, url, type: LinkType.page, filename: id);
     }
   }
-}
+
+  }

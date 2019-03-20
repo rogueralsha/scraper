@@ -14,6 +14,7 @@ import 'etc_source.dart';
 import 'facebook_source.dart';
 import 'gfycat_source.dart';
 import 'hentai_foundry_source.dart';
+import 'image_fap_source.dart';
 import 'imgur_source.dart';
 import 'instagram_source.dart';
 import 'minitokyo_source.dart';
@@ -26,8 +27,13 @@ import 'tumblr_source.dart';
 import 'twitter_source.dart';
 import 'webmshare_source.dart';
 import 'wordpress_source.dart';
+import 'newgrounds_source.dart';
+import 'thothub_source.dart';
+import 'dartlery_source.dart';
+import 'sports_illustrated_source.dart';
 
 export 'a_source.dart';
+import 'vnalive_live_source.dart';
 
 const List<dynamic> sourceProviders = const <dynamic>[
   const ClassProvider(DeviantArtSource),
@@ -39,6 +45,7 @@ const List<dynamic> sourceProviders = const <dynamic>[
   const ClassProvider(HentaiFoundrySource),
   const ClassProvider(InstagramSource),
   const ClassProvider(ImgurSource),
+  const ClassProvider(ImageFapSource),
   const ClassProvider(GfycatSource),
   const ClassProvider(BloggerSource),
   const ClassProvider(TumblrSource),
@@ -51,7 +58,12 @@ const List<dynamic> sourceProviders = const <dynamic>[
   const ClassProvider(WordpressSource),
   const ClassProvider(WebmShareSource),
   const ClassProvider(PinupfilesSource),
-  const ClassProvider(MinitokyoSource)
+  const ClassProvider(NewgroundsSource),
+  const ClassProvider(VNALiveSource),
+  const ClassProvider(MinitokyoSource),
+  const ClassProvider(SportsIllustratedSource),
+  const ClassProvider(ThothubSource),
+  const ClassProvider(DartlerySource),
 ];
 
 class Sources {
@@ -68,6 +80,7 @@ class Sources {
       ShimmieSource shimmieSource,
       HentaiFoundrySource hentaiFoundrySource,
       InstagramSource instagramSource,
+      ImageFapSource imageFapSource,
       ImgurSource imgurSource,
       GfycatSource gfycatSource,
       BloggerSource bloggerSource,
@@ -81,30 +94,42 @@ class Sources {
       WordpressSource wordpressSource,
       PinupfilesSource pinupfilesSource,
       WebmShareSource webmShareSource,
-      MinitokyoSource minitokyoSource) {
+      NewgroundsSource newgroundsSource,
+      VNALiveSource vnaLiveSource,
+      MinitokyoSource minitokyoSource,
+      SportsIllustratedSource sportsIllustratedSource,
+      ThothubSource thothubSource,
+      DartlerySource dartlerySource) {
     sourceInstances.addAll([
+      etcSource,
       deviantArtSource,
       redditSource,
       artstationSource,
       comicArtCommunity,
       comicartFanSource,
-      shimmieSource,
       hentaiFoundrySource,
       instagramSource,
       imgurSource,
+      imageFapSource,
       gfycatSource,
-      bloggerSource,
       tumblrSource,
       twitterSource,
       facebookSource,
-      etcSource,
-      ttRssSource,
       eromeSource,
       patreonSource,
-      wordpressSource,
       webmShareSource,
       pinupfilesSource,
-      minitokyoSource
+      newgroundsSource,
+      minitokyoSource,
+      vnaLiveSource,
+      sportsIllustratedSource,
+      thothubSource,
+      // These are generic source, keep at the bottom
+      bloggerSource,
+      ttRssSource,
+      shimmieSource,
+      wordpressSource,
+      dartlerySource
     ]);
   }
 

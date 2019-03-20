@@ -17,6 +17,10 @@ class BloggerSource extends ASource {
       r"https?://\d+\.([^.]+)\.blogspot\.com/-.+",
       caseSensitive: false);
 
+  // Possible way to get bigger blogger images:
+  //https://4.bp.blogspot.com/-VWiiRMBtTc8/Wo4nienMx9I/AAAAAAAAllM/xWSeAYeT_W4-v_1bfiEkhNkGz-W7G_ZEQCLcBGAs/s0/1516297880918-2.jpg=s0?imgmax=0
+  //https://4.bp.blogspot.com/-VWiiRMBtTc8/Wo4nienMx9I/AAAAAAAAllM/xWSeAYeT_W4-v_1bfiEkhNkGz-W7G_ZEQCLcBGAs/s1600/1516297880918-2.jpg
+
   BloggerSource(SettingsService settings) : super(settings) {
     this
         .directLinkRegexps

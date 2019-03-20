@@ -27,6 +27,11 @@ class DeviantArtSource extends ASource {
       r"https?://www\.deviantart\.com/([^/]+)/art/.*",
       caseSensitive: false);
 
+
+  static final RegExp _newDownloadRegexp =
+  new RegExp(r"https?://www\.deviantart\.com/download/\d+/[^\-]+-[^\-]+-[^\-]+-[^\-]+-[^\-]+-[^\-]+?token=[^&]+", caseSensitive: false);
+
+
   static final RegExp _sandboxRegExp =
       new RegExp(r"https?://sandbox\.deviantart\.com.*", caseSensitive: false);
   static const String _galleryItemSelector = "a.torpedo-thumb-link";
@@ -34,6 +39,8 @@ class DeviantArtSource extends ASource {
   static final RegExp _imageHostRegExp = new RegExp(
       r"https?://(img|pre)\d+\.deviantart\.net/.*",
       caseSensitive: false);
+
+
 
   DeviantArtSource(SettingsService settings) : super(settings) {
     this
@@ -71,9 +78,32 @@ class DeviantArtSource extends ASource {
 //    pageInfo.artist = matches[1];
   }
 
+  static final RegExp _requstIdRegexp = new RegExp(r'"requestid":"([^"]+)"', caseSensitive: false);
+
+//  Future<Null> scrapeGalleryLinks(String url, Document doc) async {
+//    for(ScriptElement script in document.querySelectorAll("script")) {
+//      if(script.innerHtml.contains("__initial_body_data")) {
+//        _log.fine("Candidate script: ${script.innerHtml}");
+//        final String requestId = _requstIdRegexp.firstMatch(script.innerHtml).group(1);
+//        //https://www.deviantart.com/dapi/v1/gallery/0?iid=597m505d104cc94dfb3717ab70950fd35b15-js0tjd65-1.1&mp=2
+//
+//        https://www.deviantart.com/dapi/v1/gallery/0?iid=597m1e3da45a3eda30dd5c7bbdf9c2d987fd-js0trbr5-1.1&mp=1
+//
+//        String response = await fetchJsonData("//https://www.deviantart.com/dapi/v1/gallery/0?iid=597m505d104cc94dfb3717ab70950fd35b15-js0tjd65-1.1&mp=2");
+//
+//
+//        dapx > requestid
+//        return;
+//
+//
+//      }
+//    }
+//  }
+
   Future<Null> scrapeArtPageLinks(String url, Document doc) async {
     _log.info("scrapeArtPageLinks");
-    final ImageElement imgEle = document.querySelector(".dev-content-full");
+    final ImageElement imgEle = document.querySelector("div.dev-view-deviation img");
+    _log.fine("In-page image element: $imgEle");
     final AnchorElement downloadEle =
         document.querySelector(".dev-page-download");
     if (downloadEle == null) {
@@ -87,31 +117,41 @@ class DeviantArtSource extends ASource {
         } else {
           // Embedded flash file without a download button
           // TODO: Get flash files working on deviantart
-          throw new Exception("Implement this when you find an example");
-//          int tabId = await getCurrentTabId();
-//          PageInfo response = await _getPageContentsFromIframe(tabId, iFrameEle.src);
-//          if (response != null) {
-//            for (int i = 0, len = response.results.length; i < len; i++) {
-//              output.addResult(response.results[i]);
-//            }
-//          }
+          //throw new Exception("Implement this when you find an example");
+          await ASource.streamService.requestScrapeStart(url: iFrameEle.src);
         }
       } else {
         _log.info("Found URL: ${imgEle.src}");
         sendLinkInfo(new LinkInfoImpl(imgEle.src, url, type: LinkType.image));
       }
     } else {
+      _log.finest("Pre-redirect");
       final String redirect = await checkForRedirect(downloadEle.href);
+      _log.finest("Post-redirect");
+
+
 
       _log.info("Found URL: $redirect");
       String filename;
-      if(redirect.contains("/file?")&&imgEle!=null) {
+      if(_newDownloadRegexp.hasMatch(redirect)) {
+        _log.info("Download URl matches new deveiantart download format, attempting to ascertain correct file name");
+        filename = await getDispositionFilename(redirect);
         // DeviantArt switched up their download links.
         // Rather than allow them all to download as "file", this will use the name if the main image file.
-        filename = getFileNameFromUrl(imgEle.src);
+
+        if ((filename ?? "").isEmpty && imgEle != null) {
+          _log.info("getting file name from image element");
+          filename = getFileNameFromUrl(imgEle.src);
+          if ((filename ?? "").isNotEmpty) {
+            filename = filename.substring(0, filename.lastIndexOf("."));
+            if (filename.endsWith("-pre")) {
+              filename = filename.substring(0, filename.length - 4);
+            }
+          }
+        }
       }
-      
-      sendLinkInfo(new LinkInfoImpl(redirect, url, type: LinkType.image, filename: filename));
+
+      sendLinkInfo(new LinkInfoImpl(redirect, url, type: LinkType.image, thumbnail: imgEle?.src, filename: filename));
     }
   }
 
@@ -144,25 +184,5 @@ class DeviantArtSource extends ASource {
     }
   }
 
-//  Future<PageInfo> _getPageContentsFromIframe(int tabId, String iframeUrl) async {
-//
-//    PageInfo results = await  chrome.runtime
-//        .sendMessage({messageFieldCommand: scrapePageCommand,
-//      messageFieldTabId: tabId,
-//      messageFieldUrl: iframeUrl});
-//
-//    if (results == null) {
-//      _log.warning("No media found in iframe (null)");
-//      return null;
-//    }
-//
-//    if (results.error != null) {
-//      _log.severe(results.error);
-//    } else if (results.results.length == 0) {
-//      _log.info("No media found in iframe");
-//    } else {
-//      return results;
-//    }
-//    return null;
-//  }
+
 }

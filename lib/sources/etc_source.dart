@@ -16,8 +16,12 @@ class EtcSource extends ASource {
       new RegExp(r"https?://[a-z0-9]+\.uploads\.ru/.*", caseSensitive: false);
   static final RegExp _mixtapeRegExp =
       new RegExp(r"https?://[^.]+\.mixtape\.moe/.*", caseSensitive: false);
+
   static final RegExp _temelRegExp =
-      new RegExp(r"https?://[^.]+\.temel\.me/.*", caseSensitive: false);
+  new RegExp(r"https?://[^.]+\.temel\.me/.*", caseSensitive: false);
+
+  static final RegExp _imgBoxRegExp =
+  new RegExp(r"https?://[^.]+\.imgbox\.com/[0-9a-f]+/[0-9a-f]+/.*", caseSensitive: false);
 
 
 
@@ -32,6 +36,7 @@ class EtcSource extends ASource {
       ..add(new DirectLinkRegExp(LinkType.file, _mixtapeRegExp,
           checkForRedirect: true))
       ..add(new DirectLinkRegExp(LinkType.file, _temelRegExp))
+      ..add(new DirectLinkRegExp(LinkType.file, _imgBoxRegExp))
       ..add(new DirectLinkRegExp(LinkType.file, _uploadsRuRegExp));
     this.urlScrapers.add(new SimpleUrlScraper(this, _httpStatRegExp,
         [new SimpleUrlScraperCriteria(LinkType.page, "dl dt a")]));
