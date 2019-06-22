@@ -12,7 +12,7 @@ import 'src/url_scraper.dart';
 class TwitterSource extends ASource {
   static final Logger logImpl = new Logger("TwitterSource");
   static final RegExp _regExp =
-      new RegExp(r"https?://twitter\.com/([^/]+)/\?", caseSensitive: false);
+      new RegExp(r"https?://twitter\.com/([^/]+)/?\??", caseSensitive: false);
   static final RegExp _postRegexp = new RegExp(
       r"https?://twitter\.com/([^/]+)/status/.+",
       caseSensitive: false);
@@ -35,7 +35,8 @@ class TwitterSource extends ASource {
         }),
         new SimpleUrlScraperCriteria(
             LinkType.video, ".permalink-tweet-container .AdaptiveMedia video"),
-        new SimpleUrlScraperCriteria(LinkType.page, "div.js-tweet-text-container a", evaluateLinks: true)
+        new SimpleUrlScraperCriteria(LinkType.page, "div.js-tweet-text-container a",
+            linkAttribute: "data-expanded-url",evaluateLinks: true)
       ]))
       ..add(new UrlScraper(
           _regExp, this.artistFromRegExpPageScraper, scrapeUserPageLinks));
@@ -63,7 +64,7 @@ class TwitterSource extends ASource {
     final ElementList<DivElement> tweets =
         document.querySelectorAll("div.tweet");
     for (DivElement ele in tweets) {
-      final String id = ele.dataset["tweetId"];
+      final String id = ele.dataset["tweet-id"];
       if (id?.isEmpty ?? true) {
         continue;
       }

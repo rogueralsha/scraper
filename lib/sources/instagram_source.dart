@@ -66,9 +66,9 @@ class InstagramSource extends ASource {
         final String displayUrl = edge["node"]["display_url"];
         createAndSendLinkInfo(displayUrl, url, type: LinkType.image);
 
-        final bool isVideo = edge["is_video"];
+        final bool isVideo = edge["node"]["is_video"];
         if(isVideo) {
-          final String videoUrl = edge["video_url"];
+          final String videoUrl = edge["node"]["video_url"];
           createAndSendLinkInfo(videoUrl, url, type: LinkType.video, thumbnail: displayUrl);
         }
       }

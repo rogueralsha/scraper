@@ -67,7 +67,7 @@ abstract class ASource {
       if(m.group(group)==null) {
         throw new Exception("Selected group was null.");
       }
-      pageInfo.artist = m.group(group);
+      pageInfo.artist = Uri.decodeFull(m.group(group));
       int currentGroup = group;
       while (pageInfo.artist.toLowerCase() == "www.") {
         _log.fine(

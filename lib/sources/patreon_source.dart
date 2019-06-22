@@ -39,7 +39,7 @@ class PatreonSource extends ASource {
             evaluateLinks: true)
       ], customPageInfoScraper: (PageInfo pi, Match m, String s, Document doc) {
         final ElementList<AnchorElement> eles =
-            document.querySelectorAll("div.guiYbG a");
+            document.querySelectorAll("div#renderPageContentWrapper >div >div >div> div > div > div > div > a");
         for (AnchorElement ele in eles) {
           if (_userRegExp.hasMatch(ele.href)) {
             pi.artist = _userRegExp.firstMatch(ele.href)[1];
