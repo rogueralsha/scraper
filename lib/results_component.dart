@@ -456,7 +456,10 @@ class ResultsComponent implements OnInit, OnDestroy {
         pathBuffer..write(prefixPath)..write("/");
       }
       pathBuffer.write(r.filename);
-      final String fullPath = pathBuffer.toString();
+      String fullPath = pathBuffer.toString();
+      while(fullPath.contains("//")) {
+        fullPath = fullPath.replaceAll("//","/");
+      }
 
       _log.fine("Downloading item: ${r.url} to $fullPath");
       final Map<String, dynamic> data = <String, dynamic>{
