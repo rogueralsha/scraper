@@ -6,6 +6,7 @@ import 'services/scraper_service.dart';
 import 'results_component.dart';
 import 'services/page_stream_service.dart';
 import 'globals.dart';
+import 'web_extensions/web_extensions.dart';
 
 // AngularDart info: https://webdev.dartlang.org/angular
 // Components info: https://webdev.dartlang.org/components
@@ -26,7 +27,7 @@ class ResultsDialog implements OnInit {
 
   Map<String, bool> currentClasses = <String, bool>{"resultsDialog":true,"right":true};
 
-  final PageStreamService _pageStream;
+  //PageStreamService _pageStream;
 
 
   void setAlignment(bool leftAlign) {
@@ -37,9 +38,9 @@ class ResultsDialog implements OnInit {
   Future<Null> ngOnInit() async {
     _log.finest("AppComponent.ngOnInit start");
     try {
-      _pageStream.onPageInfo.listen((PageInfo pi) async {
-        setAlignment(pi.leftAlign);
-      });
+//      _pageStream.onPageInfo.listen((PageInfo pi) async {
+//        setAlignment(pi.leftAlign);
+//      });
     } on Exception catch (e, st) {
       _log.severe("ResultsDialog.ngOnInit error", e, st);
     } finally {

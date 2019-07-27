@@ -24,7 +24,8 @@ Logging Level:
 </table>
 
 <material-input [(ngModel)]="downloadPathPrefix" label="Download Path Prefix"></material-input>
-<material-button (click)="saveSettings()" label="Save"></material-button>
+<material-input [(ngModel)]="shimmiePath" label="Shimmie Path"></material-input>
+<material-button (click)="saveSettings()" label="Save">Save</material-button>
 
 <material-expansionpanel name="Prefix paths" (save)="savePaths()" (cancel)="loadPaths()" (open)="loadPaths()">
     <material-list>

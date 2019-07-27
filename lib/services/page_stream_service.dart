@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:html';
 import 'dart:js';
 
+import 'package:scraper/web_extensions/web_extensions.dart';
 import 'package:angular/angular.dart';
-import 'package:chrome/chrome_ext.dart' as chrome;
 import 'package:logging/logging.dart';
 import 'package:scraper/globals.dart';
 import 'package:uuid/uuid.dart';
@@ -22,11 +22,10 @@ class PageStreamService {
   Stream<LinkInfo> get onLinkInfo => _linkInfoStream.stream;
   StreamController<LinkInfo> _linkInfoStream = new StreamController<LinkInfo>();
 
-  final chrome.Port p;
+  final Port p;
 
   PageStreamService()
-      : p = chrome.runtime.connect(
-            null, new chrome.RuntimeConnectParams(name: new Uuid().v4())) {
+      : p = browser.runtime.connect(name: new Uuid().v4()) {
     p.onMessage.listen(messageEvented);
     setUpStreams();
   }
@@ -59,9 +58,8 @@ class PageStreamService {
     });
   }
 
-  void messageEvented(chrome.OnMessageEvent e) {
+  void messageEvented(JsObject obj) {
     try {
-      final JsObject obj = e.message;
       if (obj.hasProperty(messageFieldEvent)) {
         final String event = obj[messageFieldEvent];
         switch (event) {

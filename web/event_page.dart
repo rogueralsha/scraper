@@ -1,20 +1,19 @@
+import 'dart:html' as html;
 import 'dart:async';
-import 'dart:io';
 import 'dart:js';
 
-import 'package:chrome/chrome_ext.dart' as chrome;
+import 'package:scraper/web_extensions/web_extensions.dart';
 import 'package:logging/logging.dart';
-import 'package:logging_handlers/logging_handlers_shared.dart';
 import 'package:scraper/globals.dart';
 import 'package:scraper/services/settings_service.dart';
 import 'package:uuid/uuid.dart';
 
 Future<Null> main() async {
   Logger.root.level = await settings.getLoggingLevel();
-  Logger.root.onRecord.listen(new LogPrintHandler());
+  Logger.root.onRecord.listen(logToConsole);
   _log.info("Logging set to ${Logger.root.level.name}");
 
-  chrome.runtime.onConnect.listen((chrome.Port p) async {
+  browser.runtime.onConnect.listen((Port p) async {
     _log.info("Connection opening: ${p.name}");
     StreamSubscription<dynamic> messageSub;
     StreamSubscription<dynamic> disconnectSub;
@@ -25,9 +24,8 @@ Future<Null> main() async {
       p.disconnect();
     });
 
-    messageSub = p.onMessage.listen((chrome.OnMessageEvent e) async {
+    messageSub = p.onMessage.listen((JsObject message) async {
       _log.info("Mesage received");
-      final JsObject message = e.message;
       _log
         ..finer(jsVarDump(message))
         ..fine("Sender ${p.sender}")
@@ -60,6 +58,9 @@ Future<Null> main() async {
           case closeTabCommand:
             await closeTab(p.sender.tab.windowId, message[messageFieldTabId]);
             break;
+          case uploadCommand:
+            await uploadItem(p, message);
+            break;
           case downloadCommand:
             String path = message[messageFieldFilename];
             if (path.startsWith("/"))
@@ -70,40 +71,30 @@ Future<Null> main() async {
             path = path.replaceAll("//", "/").replaceAll(":", "_");
             _log.info("Final path: $path");
 
-            final List<chrome.HeaderNameValuePair> headers = [];
-            final JsArray<dynamic> jsHeaders = new JsArray<dynamic>();
+
+            Map headers;
             if (message[messageFieldHeaders] != null) {
               final JsObject headerObj = message[messageFieldHeaders];
               _log..finer("messageFieldHeaders:")..finer(jsVarDump(headerObj));
-              final chrome.HeaderNameValuePair header =
-                  new chrome.HeaderNameValuePair(
-                      name: HttpHeaders.REFERER,
-                      value: headerObj[HttpHeaders.REFERER]);
-              if (headerObj[HttpHeaders.REFERER]?.toString()?.isEmpty ?? true) {
+
+              headers = {"Referer": headerObj["Referer"]};
+
+              if (headerObj["Referer"]?.toString()?.isEmpty ?? true) {
                 _log.warning("Header was passed with null referrer");
-              } else {
-                headers.add(header);
-                jsHeaders.add(header.jsProxy);
               }
             }
-            final chrome.DownloadOptions options = new chrome.DownloadOptions(
+
+            final int id = await browser.downloads.download(
                 url: message[messageFieldUrl],
                 filename: path,
-                conflictAction: chrome.FilenameConflictAction.UNIQUIFY,
-                method: chrome.HttpMethod.GET);
+                headers: headers,
+                conflictAction: FilenameConflictAction.uniquify,
+                method: "GET",
+                saveAs: message[messageFieldPrompt] ?? false);
 
-            if (message[messageFieldPrompt] ?? false) {
-              options.saveAs = true;
-            }
-
-            //options.jsProxy["headers"] = jsHeaders;
-            _log..finer("Download options:")..finer(jsVarDump(options.jsProxy));
-
-            final int id = await chrome.downloads.download(options);
             _log.info("Download created: $id");
-
-            final chrome.DownloadItem item = (await chrome.downloads
-                    .search(new chrome.DownloadQuery(id: id)))
+            final DownloadItem item = (await browser.downloads
+                    .search(id:id))
                 .first;
 
             p.postMessage({
@@ -112,17 +103,17 @@ Future<Null> main() async {
               messageFieldPath: item.filename
             });
 
-            await for (chrome.DownloadDelta dd in chrome.downloads.onChanged
-                .where((chrome.DownloadDelta dd) => dd.id == id)) {
+            await for (DownloadDelta dd in browser.downloads.onChanged
+                .where((DownloadDelta dd) => dd.id == id)) {
               if (dd.state != null) {
                 switch (dd.state.current) {
                   case "interrupted":
-                    final List<chrome.DownloadItem> items = await chrome
+                    final List<DownloadItem> items = await browser
                         .downloads
-                        .search(new chrome.DownloadQuery(id: id));
+                        .search(id:id);
                     String error, path;
                     if (items.isNotEmpty) {
-                      final chrome.DownloadItem item = items.first;
+                      final DownloadItem item = items.first;
                       error = item.error.toString();
                       path = item.filename;
                     }
@@ -151,13 +142,13 @@ Future<Null> main() async {
             await unsubscribeFromPage(p, message[messageFieldTabId]);
             break;
           case startScrapeCommand:
-            await chrome.tabs.sendMessage(message[messageFieldTabId], {
+            await browser.tabs.sendMessage(message[messageFieldTabId], {
               messageFieldCommand: startScrapeCommand,
               messageFieldUrl: message[messageFieldUrl]
             });
             break;
           case loadWholePageCommand:
-            await chrome.tabs.sendMessage(message[messageFieldTabId], {
+            await browser.tabs.sendMessage(message[messageFieldTabId], {
               messageFieldCommand: loadWholePageCommand,
               messageFieldUrl: message[messageFieldUrl]
             });
@@ -167,11 +158,12 @@ Future<Null> main() async {
         }
       } else if (message.hasProperty(messageFieldEvent)) {
       } else {
-        throw new Exception("Unknown message received");
+        throw new Exception("Unknown message received: " + jsVarDump(message));
       }
     });
   });
-  chrome.runtime.onMessage.listen((chrome.OnMessageEvent e) async {
+
+  browser.runtime.onMessage.listen((OnMessageEvent e) async {
     try {
       _log.info("Message received");
       _log.fine(jsVarDump(e.message));
@@ -188,12 +180,10 @@ Future<Null> main() async {
             await _openTab(message[messageFieldUrl], e.sender?.tab?.windowId);
             break;
           case nextTabCommand:
-            final List<chrome.Tab> tabs = await chrome.tabs.query(
-                new chrome.TabsQueryParams(windowId: e.sender.tab.windowId));
-            for (chrome.Tab tab in tabs) {
+            final List<Tab> tabs = await browser.tabs.query(windowId:e.sender.tab.windowId);
+            for (Tab tab in tabs) {
               if (tab.index == (e.sender.tab.index + 1)) {
-                await chrome.tabs
-                    .update(new chrome.TabsUpdateParams(active: true), tab.id);
+                await browser.tabs.update(tab.id, active: true);
                 break;
               }
             }
@@ -242,29 +232,28 @@ Stream<PageUpdateEvent> get onPageSubscriptionUpdate =>
     _pageSubscriptionController.stream;
 
 Future<Null> closeTab(int windowId, int tabId) async {
-  final chrome.Tab tab = await determineTab(windowId, tabId);
+  final Tab tab = await determineTab(windowId, tabId);
   _log.info("Closing tab ${tab.id}");
-  await chrome.tabs.remove(tab.id);
+  await browser.tabs.remove(tab.id);
 }
 
-Future<chrome.Tab> determineTab(int windowId, int tabId) async {
-  chrome.Tab tab;
+Future<Tab> determineTab(int windowId, int tabId) async {
+  Tab tab;
   if (tabId != null) {
     _log.info("tabId is provided: $tabId");
     tab = await getTabById(tabId);
   } else {
     _log.info("tabId not provided, detecting current tab");
     // This is the page requesting the media from an iframe, we just forward it right back to the tab
-    final chrome.TabsQueryParams params = new chrome.TabsQueryParams();
+
+    List<Tab> tabs;
     if (windowId != null) {
       _log.info("Window ID provided: $windowId");
-      params.windowId = windowId;
+      tabs = await browser.tabs.query(active: true, windowId: windowId);
     } else {
-      params.currentWindow = true;
+      tabs = await browser.tabs.query(active: true, currentWindow: true);
     }
-    params.active = true;
 
-    final List<chrome.Tab> tabs = await chrome.tabs.query(params);
     if (tabs.isEmpty) {
       throw new Exception("No tab candidate found");
     }
@@ -274,11 +263,11 @@ Future<chrome.Tab> determineTab(int windowId, int tabId) async {
   return tab;
 }
 
-Future<chrome.Tab> getTabById(int tabId) async {
-  final List<chrome.Tab> tabs =
-      await chrome.tabs.query(new chrome.TabsQueryParams());
+Future<Tab> getTabById(int tabId) async {
+  final List<Tab> tabs =
+      await browser.tabs.query();
   for (int i = 0; i < tabs.length; i++) {
-    final chrome.Tab tab = tabs[i];
+    final Tab tab = tabs[i];
     if (tab.id == tabId) {
       return tab;
     }
@@ -287,22 +276,22 @@ Future<chrome.Tab> getTabById(int tabId) async {
 }
 
 Future<Null> scrapePage(
-    chrome.Port sourcePort, int windowId, int tabId, String url) async {
-  final chrome.Tab tab = await determineTab(windowId, tabId);
+    Port sourcePort, int windowId, int tabId, String url) async {
+  final Tab tab = await determineTab(windowId, tabId);
 
   _log.fine("Connecting to tab ${tab.id}");
-  final chrome.Port tabPort = chrome.tabs
-      .connect(tab.id, new chrome.TabsConnectParams(name: new Uuid().v4()));
+  final Port tabPort = browser.tabs
+      .connect(tab.id, name: new Uuid().v4());
   try {
     _log.info("Sending scrape page command to page");
     tabPort.postMessage(
         {messageFieldCommand: scrapePageCommand, messageFieldUrl: url});
     _log.info("Listening for response");
-    await for (chrome.OnMessageEvent tabE in tabPort.onMessage) {
+    await for (JsObject message in tabPort.onMessage) {
       _log.info("Message received, forwarding to page");
-      _log.fine(jsVarDump(tabE.message));
-      sourcePort.postMessage(tabE.message);
-      if (tabE.message == endMessageEvent) {
+      _log.fine(jsVarDump(message));
+      sourcePort.postMessage(message);
+      if (message == endMessageEvent) {
         _log.info("End message event received, disconnecting");
         break;
       }
@@ -314,7 +303,7 @@ Future<Null> scrapePage(
   _log.finest("scrapePage() end");
 }
 
-void subscribeToPage(chrome.Port p, int tabId) {
+void subscribeToPage(Port p, int tabId) {
   final StreamSubscription<PageUpdateEvent> pageSub =
       onPageSubscriptionUpdate.listen((PageUpdateEvent e) {
     if (tabId == e.tabId) {
@@ -334,7 +323,7 @@ void subscribeToPage(chrome.Port p, int tabId) {
   });
 }
 
-Future<Null> unsubscribeFromPage(chrome.Port p, int tabId) async {
+Future<Null> unsubscribeFromPage(Port p, int tabId) async {
   if (pageSubscriptions.containsKey(p.name) &&
       pageSubscriptions[p.name].containsKey(tabId)) {
     _log.fine("Unsubscribing port ${p.name} from tab $tabId");
@@ -349,8 +338,7 @@ Future<Map> _openTab(String url, int windowId) async {
   _log.finest("openTab($url, $windowId) start");
   try {
     final Map output = {messageFieldEvent: tabLoadedMessageEvent};
-    chrome.Tab tab = await chrome.tabs.create(new chrome.TabsCreateParams(
-        url: url, active: false, windowId: windowId));
+    Tab tab = await browser.tabs.create(url: url, active: false, windowId: windowId);
     _log.info("Tab created: ${tab.id}");
     _log.info("Waiting for tab to finish loading");
     //await for (chrome.OnUpdatedEvent updatedEvent in chrome.tabs.onUpdated) {
@@ -359,13 +347,13 @@ Future<Map> _openTab(String url, int windowId) async {
 //        updatedEvent.changeInfo["status"] == "complete") {
 //    _log.info("New tab open complete: ${updatedEvent.tabId}");
     for (int i = 0; i < 5; i++) {
-      chrome.OnMessageEvent e = await chrome.runtime.onMessage
-          .where((chrome.OnMessageEvent e) =>
+      final OnMessageEvent e = await browser.runtime.onMessage
+          .where((OnMessageEvent e) =>
               e.message[messageFieldEvent] == pageHealthEvent &&
               e.message[messageFieldTabId] == tab.id)
           .first;
 
-      JsObject message = e.message;
+      final JsObject message = e.message;
       _log.finest("Page health event received: ${jsVarDump(message)}");
       switch (message[messageFieldPageHealth]) {
         case pageHealthOk:
@@ -374,13 +362,13 @@ Future<Map> _openTab(String url, int windowId) async {
         case pageHealthError:
           throw new Exception("Error returned by tab while loading page!");
         case pageHealthResolvableError:
-          await chrome.tabs
-              .reload(tab.id, new chrome.TabsReloadParams(bypassCache: true));
+          await browser.tabs
+              .reload(tab.id, bypassCache: true);
           continue;
       }
     }
     // Update the tab so we can get the final URL
-    tab = await chrome.tabs.get(tab.id);
+    tab = await browser.tabs.get(tab.id);
     output[messageFieldTabId] = tab.id;
     output[messageFieldUrl] = tab.url;
     //  }
@@ -396,4 +384,79 @@ class PageUpdateEvent {
   dynamic data;
 
   PageUpdateEvent(this.tabId, this.data);
+}
+
+final RegExp pathToTagsRegex = new RegExp("/\d+ - (.+)\.([a-zA-Z0-9]+)/");
+
+String _pathToTags(String file, String path) {
+  var tags = [];
+  if (pathToTagsRegex.hasMatch(file)) {
+    final match = pathToTagsRegex.firstMatch(file);
+
+    tags = match.group(1).split(" ");
+  }
+
+  path = path.replaceAll(";", ":");
+  path = path = path.replaceAll("__", " ");
+
+
+  var category = "";
+  for(var dir in path.split("/")) {
+    var category_to_inherit = "";
+    for(var tag in dir.split(" ")) {
+      tag = tag.trim();
+      if (tag.isEmpty) {
+        continue;
+      }
+      if (tag.endsWith(":")) {
+        // This indicates a tag that ends in a colon,
+        // which is for inheriting to tags on the subfolder
+        category_to_inherit = tag;
+      } else {
+        if (category.isNotEmpty && !tag.endsWith(":")) {
+          // This indicates that category inheritance is active,
+          // and we've encountered a tag that does not specify a category.
+          // So we attach the inherited category to the tag.
+          tag = "{$category}{$tag}";
+        }
+        tags.add(tag);
+      }
+    }
+    // Category inheritance only works on the immediate subfolder,
+    // so we hold a category until the next iteration, and then set
+    // it back to an empty string after that iteration
+    category = category_to_inherit;
+  }
+
+  return tags.join(" ");
+}
+
+Future<Null> uploadItem(Port p, message) async {
+
+  final html.FormData formData = new html.FormData();
+
+
+  formData.append('tags', _pathToTags(message[messageFieldFilename], message[messageFieldPath]));
+  formData.append('source', message[messageFieldSource]);
+
+
+  p.postMessage({
+    messageFieldEvent: uploadStartEvent
+  });
+
+  final request = await html.HttpRequest.request(message[messageFieldTarget],
+      method: 'post',
+      sendData: formData);
+
+  if(request.status==302) {
+    p.postMessage({
+      messageFieldEvent: uploadEndEvent
+    });
+  } else {
+    p.postMessage({
+      messageFieldEvent: uploadErrorEvent,
+      messageFieldError: request.responseText
+    });
+  }
+
 }

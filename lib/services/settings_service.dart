@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:angular/angular.dart';
-import 'package:chrome/chrome_ext.dart' as chrome;
 import 'package:logging/logging.dart';
+import 'package:scraper/web_extensions/web_extensions.dart';
 import 'package:scraper/data/source_artist_setting.dart';
 
 export 'package:scraper/data/source_artist_setting.dart';
@@ -23,6 +23,7 @@ class SettingsService {
   static const String _availablePrefixesSetting = "availablePrefixes";
 
   static const String _downloadPathPrefixSetting = "downloadPathPrefix";
+  static const String _shimmiePathSetting = "shimmiePath";
 
   static const String _loggingLevelSetting = "";
 
@@ -31,24 +32,32 @@ class SettingsService {
   String cleanPath(String input) => input.replaceAll("\\", "/");
 
   Future<List<String>> getAvailablePrefixes() async {
-    final Map results = await chrome.storage.local
-        .get("${_settingsStore}_$_availablePrefixesSetting");
+    final Map results = await browser.storage.local
+        .get(keys:["${_settingsStore}_$_availablePrefixesSetting"]);
     if (results.isEmpty) return [];
 
     return results[results.keys.first];
   }
 
   Future<String> getDownloadPathPrefix() async {
-    final Map results = await chrome.storage.local
-        .get("${_settingsStore}_$_downloadPathPrefixSetting");
+    final Map results = await browser.storage.local
+        .get(keys:["${_settingsStore}_$_downloadPathPrefixSetting"]);
+    if (results.isEmpty) return "";
+
+    return results[results.keys.first];
+  }
+
+  Future<String> getShimmiePath() async {
+    final Map results = await browser.storage.local
+        .get(keys:["${_settingsStore}_$_shimmiePathSetting"]);
     if (results.isEmpty) return "";
 
     return results[results.keys.first];
   }
 
   Future<Level> getLoggingLevel() async {
-    final Map<dynamic, dynamic> results = await chrome.storage.local
-        .get("${_settingsStore}_$_loggingLevelSetting");
+    final Map<dynamic, dynamic> results = await browser.storage.local
+        .get(keys:["${_settingsStore}_$_loggingLevelSetting"]);
 
     if (results?.isNotEmpty ?? false) {
       final int value = results[results.keys.first];
@@ -60,14 +69,14 @@ class SettingsService {
       }
     }
 
-    return Level.INFO;
+    return Level.ALL;
   }
 
   Future<String> getMapping(String name) async {
     if (name?.trim()?.isEmpty ?? false) throw new ArgumentError.notNull("name");
     name = name.trim().toLowerCase();
-    final Map results = await chrome.storage.local.get(_artistPath(name));
-    if (results.isEmpty) return "";
+    final Map results = await browser.storage.local.get(keys:[_artistPath(name)]);
+    if (results.isEmpty||results[results.keys.first]==null) return "";
 
     return results[results.keys.first][_pathField];
   }
@@ -75,7 +84,7 @@ class SettingsService {
   Future<Map<String, String>> getMappings() async {
     final Map<String, String> output = <String, String>{};
 
-    final Map pairs = await chrome.storage.local.get();
+    final Map pairs = await browser.storage.local.get();
     for (String key in pairs.keys) {
       if (key.startsWith(_mappingStore)) {
         output[key.substring(_mappingStore.length + 1)] =
@@ -87,8 +96,8 @@ class SettingsService {
   }
 
   Future<int> getMaxConcurrentDownloads() async {
-    final Map<dynamic, dynamic> results = await chrome.storage.local
-        .get("${_settingsStore}_$_maxConcurrentDownloadsField");
+    final Map<dynamic, dynamic> results = await browser.storage.local
+        .get(keys:["${_settingsStore}_$_maxConcurrentDownloadsField"]);
 
     if (results?.isNotEmpty ?? false) {
       final int value = results[results.keys.first];
@@ -100,16 +109,16 @@ class SettingsService {
 
   Future<Null> removeMapping(String name) async {
     if (name?.trim()?.isEmpty ?? false) throw new ArgumentError.notNull("name");
-    await chrome.storage.local.remove(_artistPath(name));
+    await browser.storage.local.remove(_artistPath(name));
     _log.info("Removed mapping for $name");
   }
 
   Future<Null> saveMappings(Map<String, String> mappings, bool merge) async {
     if (!merge) {
-      final Map pairs = await chrome.storage.local.get();
+      final Map pairs = await browser.storage.local.get();
       for (String key in pairs.keys) {
         if (key.startsWith(_mappingStore)) {
-          await chrome.storage.local.remove(key);
+          await browser.storage.local.remove(key);
         }
       }
     }
@@ -123,15 +132,22 @@ class SettingsService {
 
   Future<Null> setLoggingLevel(Level level) async {
     _log.info("Setting logging level to ${level.name}");
-    await chrome.storage.local.set(<String, dynamic>{
+    await browser.storage.local.set(<String, dynamic>{
       "${_settingsStore}_$_loggingLevelSetting": level.value
     });
   }
 
   Future<Null> setDownloadPathPrefix(String path) async {
-    _log.info("Setting download prefic to $path");
-    await chrome.storage.local.set(<String, dynamic>{
+    _log.info("Setting download prefix to $path");
+    await browser.storage.local.set(<String, dynamic>{
       "${_settingsStore}_$_downloadPathPrefixSetting": path
+    });
+  }
+
+  Future<Null> setShimmiePath(String path) async {
+    _log.info("Setting shimmie path to $path");
+    await browser.storage.local.set(<String, dynamic>{
+      "${_settingsStore}_$_shimmiePathSetting": path
     });
   }
 
@@ -142,7 +158,7 @@ class SettingsService {
     final Map<String, dynamic> artistData = <String, dynamic>{
       _pathField: cleanPath
     };
-    await chrome.storage.local
+    await browser.storage.local
         .set(<String, dynamic>{_artistPath(cleaName): artistData});
     _log.info("Mapping saved for $cleaName: $cleanPath");
   }
@@ -150,7 +166,7 @@ class SettingsService {
   Future<Null> setSourceArtistSettings(
       String source, String artist, SourceArtistSetting settings) async {
     _log.finest("setSourceArtistSettings($source, $artist, $settings)");
-    await chrome.storage.local.set(<String, dynamic>{
+    await browser.storage.local.set(<String, dynamic>{
       "${_sourceArtistSettingStore}_${source}_$artist": settings.toJson()
     });
   }
@@ -159,7 +175,8 @@ class SettingsService {
       String source, String artist) async {
     _log.finest("getSourceArtistSettings($source, $artist)");
     final String key = "${_sourceArtistSettingStore}_${source}_$artist";
-    final Map<dynamic, dynamic> results = await chrome.storage.local.get(key);
+    final Map<dynamic, dynamic> results = await browser.storage.local.get(keys:[key]);
+
 
     _log.finer(results);
     if (results?.isNotEmpty ?? false) {
@@ -171,7 +188,7 @@ class SettingsService {
 
   Future<Null> setMaxConcurrentDownloads(int value) async {
     _log.info("Setting max concurrent downloads to ${value}");
-    await chrome.storage.local.set(<String, dynamic>{
+    await browser.storage.local.set(<String, dynamic>{
       "${_settingsStore}_$_maxConcurrentDownloadsField": value
     });
   }
@@ -181,7 +198,7 @@ class SettingsService {
       paths[i] = cleanPath(paths[i]);
     }
 
-    await chrome.storage.local.set(<String, dynamic>{
+    await browser.storage.local.set(<String, dynamic>{
       "${_settingsStore}_$_availablePrefixesSetting": paths
     });
   }

@@ -36,7 +36,7 @@ class LinkInfo extends Serializable {
     _log..finest("fromJson")..finest(jsVarDump(data));
     this.url = data["url"];
     this.type = LinkType.values[data["type"]];
-    this.date = data["date"];
+    this.date = data["date"]=="" ? null : data["date"];
     this.filename = data["filename"];
     this.thumbnail = data["thumbnail"];
     this.select = data["select"];

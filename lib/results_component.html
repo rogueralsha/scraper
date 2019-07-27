@@ -139,6 +139,11 @@
                 </table>
             </material-button>
         </td>
+        <td *ngIf="showUploadButton">
+            <material-button materialTooltip="Upload items to media store" [tooltipPositions]="tooltipPosition" [disabled]="disableInterface" clear-size (trigger)="uploadAllItems()">
+                <material-icon icon="cloud_upload" size="x-small"></material-icon>
+            </material-button>
+        </td>
         <td>
             <material-button materialTooltip="Close this tab (Delete)" [tooltipPositions]="tooltipPosition" [disabled]="disableInterface" clear-size (trigger)="closeButtonClick()">
                 <material-icon icon="close" size="x-small"></material-icon>

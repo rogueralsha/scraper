@@ -24,6 +24,7 @@ class OptionsComponent implements OnInit {
   Map<String, String> mappings = <String, String>{};
   String newPrefixPath = "";
   String downloadPathPrefix = "";
+  String shimmiePath = "";
 
   StringSelectionOptions<Level> loggingOptions =
       new StringSelectionOptions<Level>(Level.LEVELS);
@@ -64,6 +65,7 @@ class OptionsComponent implements OnInit {
     try {
       _loggingLevel = await _settings.getLoggingLevel();
       downloadPathPrefix = await _settings.getDownloadPathPrefix();
+      shimmiePath = await _settings.getShimmiePath();
     } on Exception catch (e, st) {
       _log.severe("OptionsComponent.ngOnInit error", e, st);
     } finally {
@@ -74,6 +76,7 @@ class OptionsComponent implements OnInit {
   Future<Null> saveSettings() async {
     await _settings.setLoggingLevel(_loggingLevel);
     await _settings.setDownloadPathPrefix(this.downloadPathPrefix);
+    await _settings.setShimmiePath(this.shimmiePath);
   }
 
   Future<Null> saveMappings() async {

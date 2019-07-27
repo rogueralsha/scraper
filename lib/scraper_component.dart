@@ -1,24 +1,24 @@
 import 'dart:async';
+import 'dart:html';
+import 'dart:js';
+
 import 'package:angular/angular.dart';
 import 'package:angular_components/angular_components.dart';
 import 'package:logging/logging.dart';
-import 'services/scraper_service.dart';
-import 'results_dialog.dart';
-import 'package:scraper/sources/sources.dart';
-import 'package:uuid/uuid.dart';
-import 'globals.dart';
-import 'dart:html';
-import 'dart:js';
-import 'package:chrome/chrome_ext.dart' as chrome;
+import 'package:logging/logging.dart';
+import 'package:scraper/globals.dart';
+import 'package:scraper/results_dialog.dart';
 import 'package:scraper/services/scraper_service.dart';
 import 'package:scraper/services/settings_service.dart';
 import 'package:scraper/sources/sources.dart';
+import 'package:scraper/sources/sources.dart';
+import 'package:scraper/web_extensions/web_extensions.dart';
 import 'package:uuid/uuid.dart';
-import 'package:chrome/chrome_ext.dart' as chrome;
-import 'package:logging/logging.dart';
-import 'package:logging_handlers/logging_handlers_shared.dart';
-import 'package:scraper/globals.dart';
-import 'package:scraper/results_dialog.dart';
+import 'package:uuid/uuid.dart';
+
+import 'globals.dart';
+import 'results_dialog.dart';
+import 'services/scraper_service.dart';
 
 // AngularDart info: https://webdev.dartlang.org/angular
 // Components info: https://webdev.dartlang.org/components
@@ -47,8 +47,7 @@ class ScraperComponent implements OnInit {
   bool showDialog = false;
 
   ScraperComponent(this._sources, this._settings) {
-    Logger.root.onRecord.listen(
-        new LogPrintHandler(messageFormat: "%t\t$_pageId\t%n\t[%p]:\t%m"));
+    Logger.root.onRecord.listen(logToConsole);
     _log.info("Logging set to ${Logger.root.level.name}");
   }
 
@@ -62,7 +61,7 @@ class ScraperComponent implements OnInit {
         _sources.getScraperForSite(window.location.href, document);
 
     if (source != null) {
-      chrome.runtime.onMessage.listen((chrome.OnMessageEvent e) async {
+      browser.runtime.onMessage.listen((OnMessageEvent e) async {
         _log.fine("onMesage handler start");
 
         try {
@@ -102,21 +101,21 @@ class ScraperComponent implements OnInit {
             _log.fine("onScrapeUpdateEvent stream event received");
             if (e is PageInfo) {
               _log.finest("Data is PageInfo, forwarding");
-              await chrome.runtime.sendMessage(<String, dynamic>{
+              await browser.runtime.sendMessage(<String, dynamic>{
                 messageFieldEvent: pageInfoEvent,
                 messageFieldTabId: tabId,
                 messageFieldData: e.toJson()
               });
             } else if (e is LinkInfo) {
               _log.finest("Data is LinkInfo, forwarding");
-              await chrome.runtime.sendMessage({
+              await browser.runtime.sendMessage({
                 messageFieldEvent: linkInfoEvent,
                 messageFieldTabId: tabId,
                 messageFieldData: e.toJson()
               });
             } else if (e == scrapeDoneEvent) {
               _log.fine("Scrape done stream event received");
-              await chrome.runtime.sendMessage({
+              await browser.runtime.sendMessage({
                 messageFieldEvent: scrapeDoneEvent,
                 messageFieldTabId: tabId
               });

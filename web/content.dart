@@ -3,8 +3,8 @@ import 'dart:html';
 import 'package:angular/angular.dart';
 import 'package:scraper/scraper_component.template.dart' as ng;
 import 'package:logging/logging.dart';
-import 'package:chrome/chrome_ext.dart' as chrome;
 import 'package:scraper/globals.dart';
+import 'package:scraper/web_extensions/web_extensions.dart';
 import 'dart:html';
 import 'dart:js';
 
@@ -16,7 +16,7 @@ Future<Null> main() async {
       document.body.text
           .contains("If you’re not redirected soon, please use this link.")) {
     await pause(seconds: 5);
-    await chrome.runtime.sendMessage({
+    await browser.runtime.sendMessage({
       messageFieldEvent: pageHealthEvent,
       messageFieldTabId: tabId,
       messageFieldPageHealth: pageHealthResolvableError
@@ -28,7 +28,7 @@ Future<Null> main() async {
   document.body.append(ele);
   runApp(ng.ScraperComponentNgFactory);
 
-  await chrome.runtime.sendMessage({
+  await browser.runtime.sendMessage({
     messageFieldEvent: pageHealthEvent,
     messageFieldTabId: tabId,
     messageFieldPageHealth: pageHealthOk

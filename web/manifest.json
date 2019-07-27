@@ -15,6 +15,7 @@
 
       ],
       "js": [
+        "browser-polyfill.js",
         "content.dart.js"
       ],
       "css": ["content.css"],
@@ -27,6 +28,7 @@
   },
   "background": {
     "scripts": [
+      "browser-polyfill.js",
       "event_page.dart.js"
     ]
   },

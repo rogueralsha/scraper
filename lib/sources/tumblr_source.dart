@@ -193,7 +193,7 @@ class TumblrSource extends ASource {
       _scrapeArchiveLinks(url);
       if (_observer == null) {
         _observer = new MutationObserver(
-            (List<MutationRecord> mutations, MutationObserver observer) {
+            (List<dynamic> mutations, MutationObserver observer) {
           for (MutationRecord mutation in mutations) {
             _scrapeArchiveLinks(url);
           }

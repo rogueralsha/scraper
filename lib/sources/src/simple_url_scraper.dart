@@ -52,7 +52,7 @@ class SimpleUrlScraper extends UrlScraper {
     if (watchForUpdates) {
       if (_observer == null) {
         _observer = new MutationObserver(
-            (List<MutationRecord> mutations, MutationObserver observer) {
+            (List<dynamic> mutations, MutationObserver observer) {
           for (MutationRecord mutation in mutations) {
             if (mutation.type != "childList" ||
                 mutation.addedNodes.length == 0) {

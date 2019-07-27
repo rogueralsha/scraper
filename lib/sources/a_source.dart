@@ -22,7 +22,7 @@ import 'package:http/http.dart' as http;
 import 'package:html/dom.dart' as dom;
 import 'package:http/browser_client.dart';
 import 'package:html/parser.dart' show parse;
-import 'package:chrome/chrome_ext.dart' as chrome;
+import 'package:scraper/web_extensions/web_extensions.dart';
 
 import '../services/page_stream_service.dart';
 

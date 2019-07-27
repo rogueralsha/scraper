@@ -7,7 +7,9 @@ class SourceArtistSetting {
   SourceArtistSetting();
 
   SourceArtistSetting.fromMap(Map data) {
-    _log.finest("SourceArtistSetting.fromJsObject($data)");
+    _log.finest("SourceArtistSetting.fromMap($data)");
+    if(data==null)
+      return;
     this.promptForDownload = data["promptForDownload"];
   }
 

@@ -1,18 +1,24 @@
 import 'dart:async';
 import 'dart:html';
 import 'dart:js';
-
-import 'package:chrome/chrome_ext.dart' as chrome;
+import 'package:stack_trace/stack_trace.dart';
+import 'web_extensions/web_extensions.dart';
 import 'package:logging/logging.dart';
 import 'package:uuid/uuid.dart';
 
 const String closeTabCommand = "closeTab";
 const String closeTabMessageEvent = "closeTab";
 const String downloadCommand = "download";
+const String uploadCommand = "upload";
 const String endMessageEvent = "endMessage";
 const String fileDownloadCompleteEvent = "fileDownloadComplete";
 const String fileDownloadErrorEvent = "fileDownloadError";
 const String fileDownloadStartEvent = "fileDownloadStarted";
+
+const String uploadStartEvent = "uploadStart";
+const String uploadEndEvent = "uploadEnd";
+const String uploadErrorEvent = "uploadError";
+
 const String getTabIdCommand = "getTabId";
 const String linkInfoEvent = "linkInfo";
 const String pageHealthEvent = "pageHealth";
@@ -24,9 +30,12 @@ const String messageFieldDownloadId = "downloadId";
 const String messageFieldError = "error";
 const String messageFieldEvent = "event";
 const String messageFieldFilename = "filename";
+const String messageFieldReferrer = "source";
+const String messageFieldSource = "source";
 const String messageFieldPrompt = "prompt";
 const String messageFieldPath = "path";
 const String messageFieldPageHealth = "pageHealth";
+const String messageFieldTarget = "target";
 
 const String messageFieldHeaders = "headers";
 const String messageFieldTabId = "tabId";
@@ -65,18 +74,18 @@ void closeTab({int tabId}) {
     message[messageFieldTabId] = tabId;
   }
   _log.info(message);
-  chrome.runtime.sendMessage(message);
+  browser.runtime.sendMessage(message);
 }
 
 Future<int> getCurrentTabId() async {
   _log.info("Getting current tab id");
-  final chrome.Port p = chrome.runtime
-      .connect(null, new chrome.RuntimeConnectParams(name: new Uuid().v4()));
+  final Port p = browser.runtime
+      .connect(name: new Uuid().v4());
   try {
     p.postMessage({messageFieldCommand: getTabIdCommand});
-    final chrome.OnMessageEvent e = await p.onMessage.first;
-    _log.info("Current tab ID is: ${e.message[messageFieldTabId]}");
-    return e.message[messageFieldTabId];
+    final JsObject message = await p.onMessage.first;
+    _log.info("Current tab ID is: ${message[messageFieldTabId]}");
+    return message[messageFieldTabId];
   } finally {
     p.disconnect();
   }
@@ -93,8 +102,18 @@ bool inIframe() {
 Future<Null> pause({int seconds = 0}) =>
     new Future<Null>.delayed(new Duration(seconds: seconds));
 
-String jsVarDump(JsObject input) =>
+String jsVarDump(JsObject input) => input==null ? "NULL" :
     context['JSON'].callMethod('stringify', <dynamic>[input]);
 
 String getFileNameFromUrl(String link) => Uri
     .decodeComponent(link.substring(link.lastIndexOf('/') + 1).split("?")[0]);
+
+void logToConsole(LogRecord rec) {
+  print('${rec.level.name}: ${rec.time}: ${rec.message}');
+  if (rec.error != null) {
+    print(rec.error.toString());
+  }
+  if (rec.stackTrace != null) {
+    print(Trace.format(rec.stackTrace));
+  }
+}
