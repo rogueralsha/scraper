@@ -47,7 +47,7 @@ class InstagramSource extends ASource {
   Future<Null> scrapePostPageInfo(
       PageInfo pi, Match m, String s, Document doc) async {
     final AnchorElement a = document.querySelector(
-        "span#react-root section main div div article header div div div a");
+        "div#react-root section main div div article header div div div a");
     pi.artist = a?.title;
 //    final MetaElement ele = document.querySelector("meta[name=\"description\"]");
 //    final String description = ele.content;
