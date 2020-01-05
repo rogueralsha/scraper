@@ -78,7 +78,7 @@ class DeviantArtSource extends ASource {
 //    pageInfo.artist = matches[1];
   }
 
-  static final RegExp _requstIdRegexp = new RegExp(r'"requestid":"([^"]+)"', caseSensitive: false);
+  static final RegExp _requestIdRegexp = new RegExp(r'"requestid":"([^"]+)"', caseSensitive: false);
 
 //  Future<Null> scrapeGalleryLinks(String url, Document doc) async {
 //    for(ScriptElement script in document.querySelectorAll("script")) {
@@ -102,13 +102,20 @@ class DeviantArtSource extends ASource {
 
   Future<Null> scrapeArtPageLinks(String url, Document doc) async {
     _log.info("scrapeArtPageLinks");
-    final ImageElement imgEle = document.querySelector("div.dev-view-deviation img");
-    _log.fine("In-page image element: $imgEle");
+    final List<ImageElement> imgEles = document.querySelectorAll("div.dev-view-deviation img");
+     ImageElement imgEle;
+      String filename;
+     if(imgEles.isNotEmpty) {
+        imgEle = imgEles.last;
+        filename = _determineFileName(imgEles.first.src);
+     }
+
+    //_log.fine("In-page image element: $imgEle");
     final AnchorElement downloadEle =
         document.querySelector(".dev-page-download");
     if (downloadEle == null) {
       // This means the download button wasn't found
-      if (imgEle == null) {
+      if (imgEles.isEmpty) {
         final IFrameElement iFrameEle =
             document.querySelector("iframe.flashtime");
         if (iFrameEle == null) {
@@ -122,37 +129,28 @@ class DeviantArtSource extends ASource {
         }
       } else {
         _log.info("Found URL: ${imgEle.src}");
-        sendLinkInfo(new LinkInfoImpl(imgEle.src, url, type: LinkType.image));
+        sendLinkInfo(new LinkInfoImpl(imgEle.src, url, type: LinkType.image, filename: filename));
       }
     } else {
-      _log.finest("Pre-redirect");
-      final String redirect = await checkForRedirect(downloadEle.href);
-      _log.finest("Post-redirect");
-
-
-
+//      _log.finest("Pre-redirect");
+//      final String redirect = await checkForRedirect(downloadEle.href);
+//      _log.finest("Post-redirect");
+      final String redirect = downloadEle.href;
       _log.info("Found URL: $redirect");
-      String filename;
-      if(_newDownloadRegexp.hasMatch(redirect)) {
-        _log.info("Download URl matches new deveiantart download format, attempting to ascertain correct file name");
-        filename = await getDispositionFilename(redirect);
-        // DeviantArt switched up their download links.
-        // Rather than allow them all to download as "file", this will use the name if the main image file.
-
-        if ((filename ?? "").isEmpty && imgEle != null) {
-          _log.info("getting file name from image element");
-          filename = getFileNameFromUrl(imgEle.src);
-          if ((filename ?? "").isNotEmpty) {
-            filename = filename.substring(0, filename.lastIndexOf("."));
-            if (filename.endsWith("-pre")) {
-              filename = filename.substring(0, filename.length - 4);
-            }
-          }
-        }
-      }
 
       sendLinkInfo(new LinkInfoImpl(redirect, url, type: LinkType.image, thumbnail: imgEle?.src, filename: filename));
     }
+  }
+
+  String _determineFileName(String link) {
+    String filename = getFileNameFromUrl(link);
+    if ((filename ?? "").isNotEmpty) {
+      filename = filename.substring(0, filename.lastIndexOf("."));
+      if (filename.endsWith("-pre")) {
+        filename = filename.substring(0, filename.length - 4);
+      }
+    }
+    return filename;
   }
 
   Future<Null> scrapeGalleryPageInfo(

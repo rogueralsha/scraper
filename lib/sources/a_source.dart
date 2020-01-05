@@ -320,30 +320,53 @@ abstract class ASource {
     return url;
   }
 
-  static final RegExp contentDispositionFilenameRegex = new RegExp("attachment; filename*=UTF-8''(.+)", caseSensitive: false);
+  static final RegExp contentDispositionFilenameRegex = new RegExp(r"attachment; filename\*=UTF-8''(.+)", caseSensitive: false);
 
   Future<String> getDispositionFilename(String url)  async {
     _log.fine("Checking for disposition filename at $url");
     final Map<String,String> headers = await getUrlHeaders(url);
-    if(!headers.containsKey("content-disposition	")||!contentDispositionFilenameRegex.hasMatch(headers["content-disposition	"]))
+    if(!headers.containsKey("content-disposition")) {
+      _log.fine("Headers do not contain content-disposition");
+      _log.finest(headers);
+      return null;
+    }
+    final contentDisposition = headers["content-disposition"];
+    if(!contentDispositionFilenameRegex.hasMatch(contentDisposition)) {
+      _log.fine("content-disposition does not contain recognized filename pattern");
+      _log.finest(contentDisposition);
       return null;
 
-    final String output = contentDispositionFilenameRegex.firstMatch(headers["content-disposition	"]).group(1);
-    _log.info("");
+    }
+
+    final String output = contentDispositionFilenameRegex.firstMatch(contentDisposition).group(1);
+    _log.info("content-disposition: $output");
     return output;
   }
 
-  Future<Map<String,String>> getUrlHeaders(String url) async {
-    _log.finest("checkForRedirect($url)");
-    final HttpRequest request = new HttpRequest()
-      ..open("HEAD", url)
-      ..send();
-    await for (Event e in request.onReadyStateChange) {
-      if (request.readyState == HttpRequest.DONE) {
-        _log.fine("Response status is ${request.status}");
-        return request.responseHeaders;
+  Future<Map<String,String>> getUrlHeaders(String url, [String method = "HEAD"]) async {
+    _log.finest("getUrlHeaders($url,$method)");
+      final HttpRequest request = new HttpRequest()
+        ..open(method, url)
+        ..send();
+
+      try {
+        await for (Event e in request.onReadyStateChange) {
+          _log.finest("Response readystate: ${request.readyState}");
+          if (request.status == 405 &&
+              method == "HEAD") { // Invalid request type
+            _log.fine(
+                "Server responded with 405, trying again with GET method");
+            return await getUrlHeaders(url, "GET");
+          }
+
+          if (request.readyState == HttpRequest.HEADERS_RECEIVED) {
+            _log.fine("Response status is ${request.status}");
+            return request.responseHeaders;
+          }
+        }
+      } finally {
+        request.abort();
       }
-    }
     throw new Exception("End of getUrlHeaders reached");
   }
 
