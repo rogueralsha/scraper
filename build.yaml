@@ -1,15 +1,14 @@
+global_options:
+  build_web_compilers|dart_source_cleanup:
+    release_options:
+      enabled: false
+  build_web_compilers|dart2js_archive_extractor:
+    release_options:
+      filter_outputs: false
 targets:
   $default:
     builders:
-      build_web_compilers|dart_source_cleanup:
-        release_options:
-          enabled: false
       build_web_compilers|entrypoint:
-        generate_for:
-        - test/**.browser_test.dart
-        - web/**.dart
         options:
-#          compiler: dart2js
           dart2js_args:
-#          - --fast-startup
-          - --csp
+            - --no-minify

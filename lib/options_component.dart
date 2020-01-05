@@ -43,13 +43,15 @@ class OptionsComponent implements OnInit {
   }
 
   void addPrefixPath() {
+    _log.finest("addPrefixPath");
     if ((newPrefixPath?.trim() ?? "").isEmpty) {
       return;
     }
-    prefixPaths.add(newPrefixPath);
+    _log.finest(this.prefixPaths);
+    this.prefixPaths.add(newPrefixPath);
   }
 
-  String levelItemRenderer(Level item) => item.name;
+  String levelItemRenderer(dynamic item) => item.name;
 
   Future<Null> loadMappings() async {
     this.mappings = await _settings.getMappings();
@@ -74,16 +76,21 @@ class OptionsComponent implements OnInit {
   }
 
   Future<Null> saveSettings() async {
+    _log.finest("saveSettings");
     await _settings.setLoggingLevel(_loggingLevel);
     await _settings.setDownloadPathPrefix(this.downloadPathPrefix);
     await _settings.setShimmiePath(this.shimmiePath);
   }
 
   Future<Null> saveMappings() async {
+    _log.finest("saveMappings");
+    _log.finest(this.mappings);
     await _settings.saveMappings(this.mappings, false);
   }
 
   Future<Null> savePaths() async {
+    _log.finest("savePaths");
+    _log.finest(this.prefixPaths);
     await _settings.setPrefixPath(this.prefixPaths);
   }
 

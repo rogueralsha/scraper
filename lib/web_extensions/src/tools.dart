@@ -1,9 +1,9 @@
 import 'dart:js';
 
-String jsVarDump(JsObject input) => input==null ? "NULL" :
+String jsVarDump(dynamic input) => input==null ? "NULL" :
 context['JSON'].callMethod('stringify', <dynamic>[input]);
 
-JsObject jsify(dynamic input) {
+dynamic jsify(dynamic input || input is String) {
   if(input is JsObject) {
     return input;
   } else {
