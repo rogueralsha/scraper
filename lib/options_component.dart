@@ -116,7 +116,7 @@ class OptionsComponent implements OnInit {
     final FileReader reader = new FileReader()..readAsText(fileUpload.files[0]);
 
     await reader.onLoad.first;
-    final Map<String, String> data = jsonDecode(reader.result);
+    final Map<String, dynamic> data = jsonDecode(reader.result);
     await _settings.saveMappings(data, true);
   }
 }

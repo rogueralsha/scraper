@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:angular/angular.dart';
 import 'package:logging/logging.dart';
 import 'package:scraper/data/source_artist_setting.dart';
-import 'package:scraper/web_extensions/web_extensions.dart' as browser;
+import 'package:scraper/web_extensions/web_extensions.dart';
 
 export 'package:scraper/data/source_artist_setting.dart';
 
@@ -41,7 +41,7 @@ class SettingsService {
     if ((results?.isEmpty)??true)
       return [];
 
-    return results[results.keys.first] ?? <String>[];
+    return new List<String>.from(results[results.keys.first]) ?? <String>[];
   }
 
   Future<String> getDownloadPathPrefix() async {
@@ -134,7 +134,7 @@ class SettingsService {
     _log.info("Removed mapping for $name");
   }
 
-  Future<Null> saveMappings(Map<String, String> mappings, bool merge) async {
+  Future<Null> saveMappings(Map<String, dynamic> mappings, bool merge) async {
     if (!merge) {
       final Map pairs = await browser.storage.local.get();
       for (String key in pairs.keys) {
@@ -146,7 +146,7 @@ class SettingsService {
 
     for (String artist in mappings.keys) {
       if (artist?.isEmpty ?? true) continue;
-      await setMapping(artist, mappings[artist]);
+      await setMapping(artist, mappings[artist]?.toString());
     }
     _log.info("Saved new paths for artists");
   }

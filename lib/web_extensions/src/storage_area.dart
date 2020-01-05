@@ -1,9 +1,14 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:js';
+import 'dart:js_util';
+
+import 'package:logging/logging.dart';
 
 import 'tools.dart';
 
 class StorageArea {
+  static final Logger _log = new Logger("StorageArea");
   final JsObject _js;
 
   StorageArea(this._js) {
@@ -12,21 +17,21 @@ class StorageArea {
   }
 
   Future<Map> get({List<String> keys}) async {
-    final args = <dynamic>[jsify(keys)];
-
-    print("storage.get");
-    print(jsVarDump(args[0]));
-
-    final JsObject results = await _js.callMethod("get", args);
-
-    print(jsVarDump(results));
-
-    Map<String,dynamic> output = <String,dynamic>{};
-    for(var key in keys) {
-      output[key] = results[key];
+    final List<dynamic> args = <dynamic>[];
+    if(keys?.isNotEmpty??false) {
+      args.add(jsify(keys));
     }
 
-    return output;
+    _log.finest("storage.get");
+    _log.finest(args);
+
+    final dynamic results = await awaitPromise(_js.callMethod("get", args));
+
+    _log.finest(results);
+    final jsonData = jsVarDump(results);
+    _log.finest(jsonData);
+
+    return json.decode(jsonData);
   }
 
   Future<void> set(Map<String,dynamic> keys) async {
