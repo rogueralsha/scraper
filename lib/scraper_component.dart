@@ -12,7 +12,7 @@ import 'package:scraper/services/scraper_service.dart';
 import 'package:scraper/services/settings_service.dart';
 import 'package:scraper/sources/sources.dart';
 import 'package:scraper/sources/sources.dart';
-import 'package:scraper/web_extensions/web_extensions.dart';
+import 'package:scraper/web_extensions/web_extensions.dart' as browser;
 import 'package:uuid/uuid.dart';
 import 'package:uuid/uuid.dart';
 
@@ -61,7 +61,7 @@ class ScraperComponent implements OnInit {
         _sources.getScraperForSite(window.location.href, document);
 
     if (source != null) {
-      browser.runtime.onMessage.listen((OnMessageEvent e) async {
+      browser.runtime.onMessage.listen((browser.OnMessageEvent e) async {
         _log.fine("onMesage handler start");
 
         try {

@@ -1,6 +1,11 @@
+@JS('browser.tabs')
+library tabs;
+
 import 'dart:async';
 import 'dart:html';
-import 'dart:js';
+import 'package:js/js.dart';
+import 'package:js/js_util.dart';
+import 'package:logging/logging.dart';
 
 import 'package:scraper/globals.dart';
 
@@ -8,13 +13,14 @@ import 'tools.dart';
 import 'tab.dart';
 import 'port.dart';
 
+@JS()
 class Tabs {
-  final JsObject _js;
+  static final Logger _log = new Logger("Tabs");
 
-  Tabs(JsObject parent): _js = parent["tabs"] {
-    if(this._js==null)
-      throw new Exception("Tabs js object is null");
-  }
+//  Tabs(JsObject parent): _js = parent["tabs"] {
+//    if(this._js==null)
+//      throw new Exception("Tabs js object is null");
+//  }
 
   Future<List<Tab>> query({bool active = null, int windowId = null, bool currentWindow = null}) async {
     var args = {};
@@ -29,41 +35,51 @@ class Tabs {
       args["currentWindowOptional"] = currentWindow;
     }
 
-    final output = <Tab>[];
-    final results = await _js.callMethod("query", [args]);
-    for(var result in results) {
-      output.add(new Tab(result));
-    }
-
-    return output;
+    //final output = <Tab>[];
+    var results =  await promiseToFuture<List<Tab>>(_query(args));
+    return results;
+//
+//    for(var result in results) {
+//      output.add(new Tab(result));
+//    }
+//
+//    return output;
   }
 
+  @JS("query")
+  external dynamic _query(Map queryInfo);
+
   Future<dynamic> sendMessage(int tabId, dynamic message, {int frameId = null}) async {
-    var args = [tabId, jsify(message), null];
-
-
     var options= {};
 
     if(frameId!=null) {
       options["frameId"] = frameId;
     }
 
+    dynamic results;
     if(options.isNotEmpty) {
-      args[2] = jsify(options);
+       results = await promiseToFuture(_sendMessageOptions(tabId, message, options));
+    } else {
+      results = await promiseToFuture(_sendMessage(tabId, message));
     }
-
-    final results = await _js.callMethod("sendMessage", args);
 
     return results;
   }
 
+  @JS("sendMessage")
+  external dynamic _sendMessageOptions(int tabId, dynamic message, Map options);
+  @JS("sendMessage")
+  external dynamic _sendMessage(int tabId, dynamic message);
+
   Future<void> remove(int tabId) async {
-    await _js.callMethod("remove", [tabId]);
+    await promiseToFuture(_remove(tabId));
   }
 
-  Port connect(int tabId, {String name = null, int frameId = null}) {
-    var args = <dynamic>[tabId];
+  @JS("remove")
+  external dynamic _remove(int tabId);
 
+
+  Port connect(int tabId, {String name = null, int frameId = null}) {
     var connectInfo = {};
 
     if(name!=null) {
@@ -73,38 +89,37 @@ class Tabs {
       connectInfo["frameId"] =  frameId;
     }
 
+    dynamic results;
     if(connectInfo.isNotEmpty) {
-      args.add(jsify(connectInfo));
+      results = _connectInfo(tabId,connectInfo);
+    } else {
+      results = _connect(tabId);
     }
 
-    final results = _js.callMethod("connect", args);
-
-    return new Port(results);
-
+    return results;
   }
 
-  Future<Tab> update(int tabId, {bool active = null}) async {
-    var args = <dynamic>[tabId];
+  @JS("connect")
+  external Port _connectInfo(int tabId, Map connectInfo);
+  @JS("connect")
+  external Port _connect(int tabId);
 
+  Future<Tab> update(int tabId, {bool active = null}) async {
     var updateProperties = {};
 
     if(active!=null) {
       updateProperties["active"] =  active;
     }
 
-    if(updateProperties.isNotEmpty) {
-      args.add(jsify(updateProperties));
-    }
-
-    final results = await _js.callMethod("update", args);
+    final results = await promiseToFuture(_update(tabId, updateProperties));
 
     return new Tab(results);
-
   }
 
-  Future<Tab> create({String url = null, bool active = null, int windowId = null}) async {
-    var args = <dynamic>[];
+  @JS("update")
+  external dynamic _update(int tabId, Map updateProperties);
 
+  Future<Tab> create({String url = null, bool active = null, int windowId = null}) async {
     var createProperties = {};
 
     if(active!=null) {
@@ -117,33 +132,38 @@ class Tabs {
       createProperties["windowId"] =  windowId;
     }
 
-    if(createProperties.isNotEmpty) {
-      args.add(jsify(createProperties));
-    }
-
-    final results = await _js.callMethod("create", args);
+    final results = await promiseToFuture(_create(createProperties));
 
     return new Tab(results);
 
   }
 
-  Future<void> reload(int tabId, {bool bypassCache = null}) async {
-    var args = <dynamic>[tabId];
+  @JS("create")
+  external dynamic _create(Map createProperties);
 
+
+  Future<void> reload(int tabId, {bool bypassCache = null}) async {
     var reloadProperties = {};
 
     if (bypassCache != null) {
       reloadProperties["bypassCache"] = bypassCache;
     }
 
-    if (reloadProperties.isNotEmpty) {
-      args.add(jsify(reloadProperties));
-    }
-
-    await _js.callMethod("reload", args);
+    await promiseToFuture(_reload(tabId, reloadProperties));
   }
+  @JS("reload")
+  external dynamic _reload(int tabId, Map reloadProperties);
 
   Future<Tab> get(int tabId) async {
-    return new Tab(await _js.callMethod("reload", [tabId]));
+    final results = await promiseToFuture(_get(tabId));
+
+    return new Tab(results);
+
   }
+
+  @JS("get")
+  external dynamic _get(int tabId);
+
 }
+
+

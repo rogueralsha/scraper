@@ -2,7 +2,8 @@ import 'dart:async';
 import 'dart:html';
 import 'dart:js';
 
-import 'package:scraper/web_extensions/web_extensions.dart';
+import 'package:scraper/web_extensions/src/parameters/connect_info.dart';
+import 'package:scraper/web_extensions/web_extensions.dart' as browser;
 import 'package:angular/angular.dart';
 import 'package:logging/logging.dart';
 import 'package:scraper/globals.dart';
@@ -22,10 +23,10 @@ class PageStreamService {
   Stream<LinkInfo> get onLinkInfo => _linkInfoStream.stream;
   StreamController<LinkInfo> _linkInfoStream = new StreamController<LinkInfo>();
 
-  final Port p;
+  final browser.Port p;
 
   PageStreamService()
-      : p = browser.runtime.connect(name: new Uuid().v4()) {
+      : p = browser.runtime.connect(connectInfo: new ConnectInfo(name: new Uuid().v4())) {
     p.onMessage.listen(messageEvented);
     setUpStreams();
   }

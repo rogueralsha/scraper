@@ -2,7 +2,7 @@ import 'dart:html' as html;
 import 'dart:async';
 import 'dart:js';
 
-import 'package:scraper/web_extensions/web_extensions.dart';
+import 'package:scraper/web_extensions/web_extensions.dart' as browser;
 import 'package:logging/logging.dart';
 import 'package:scraper/globals.dart';
 import 'package:scraper/services/settings_service.dart';
@@ -13,7 +13,7 @@ Future<Null> main() async {
   Logger.root.onRecord.listen(logToConsole);
   _log.info("Logging set to ${Logger.root.level.name}");
 
-  browser.runtime.onConnect.listen((Port p) async {
+  browser.runtime.onConnect.listen((browser.Port p) async {
     _log.info("Connection opening: ${p.name}");
     StreamSubscription<dynamic> messageSub;
     StreamSubscription<dynamic> disconnectSub;
@@ -24,7 +24,7 @@ Future<Null> main() async {
       p.disconnect();
     });
 
-    messageSub = p.onMessage.listen((JsObject message) async {
+    messageSub = p.onMessage.listen((dynamic message) async {
       _log.info("Mesage received");
       _log
         ..finer(jsVarDump(message))
@@ -88,12 +88,12 @@ Future<Null> main() async {
                 url: message[messageFieldUrl],
                 filename: path,
                 headers: headers,
-                conflictAction: FilenameConflictAction.uniquify,
+                conflictAction: browser.FilenameConflictAction.uniquify,
                 method: "GET",
                 saveAs: message[messageFieldPrompt] ?? false);
 
             _log.info("Download created: $id");
-            final DownloadItem item = (await browser.downloads
+            final browser.DownloadItem item = (await browser.downloads
                     .search(id:id))
                 .first;
 
@@ -103,17 +103,17 @@ Future<Null> main() async {
               messageFieldPath: item.filename
             });
 
-            await for (DownloadDelta dd in browser.downloads.onChanged
-                .where((DownloadDelta dd) => dd.id == id)) {
+            await for (browser.DownloadDelta dd in browser.downloads.onChanged
+                .where((browser.DownloadDelta dd) => dd.id == id)) {
               if (dd.state != null) {
                 switch (dd.state.current) {
                   case "interrupted":
-                    final List<DownloadItem> items = await browser
+                    final List<browser.DownloadItem> items = await browser
                         .downloads
                         .search(id:id);
                     String error, path;
                     if (items.isNotEmpty) {
-                      final DownloadItem item = items.first;
+                      final browser.DownloadItem item = items.first;
                       error = item.error.toString();
                       path = item.filename;
                     }
@@ -163,7 +163,7 @@ Future<Null> main() async {
     });
   });
 
-  browser.runtime.onMessage.listen((OnMessageEvent e) async {
+  browser.runtime.onMessage.listen((browser.OnMessageEvent e) async {
     try {
       _log.info("Message received");
       _log.fine(jsVarDump(e.message));
@@ -180,8 +180,8 @@ Future<Null> main() async {
             await _openTab(message[messageFieldUrl], e.sender?.tab?.windowId);
             break;
           case nextTabCommand:
-            final List<Tab> tabs = await browser.tabs.query(windowId:e.sender.tab.windowId);
-            for (Tab tab in tabs) {
+            final List<browser.Tab> tabs = await browser.tabs.query(windowId:e.sender.tab.windowId);
+            for (browser.Tab tab in tabs) {
               if (tab.index == (e.sender.tab.index + 1)) {
                 await browser.tabs.update(tab.id, active: true);
                 break;
@@ -232,13 +232,13 @@ Stream<PageUpdateEvent> get onPageSubscriptionUpdate =>
     _pageSubscriptionController.stream;
 
 Future<Null> closeTab(int windowId, int tabId) async {
-  final Tab tab = await determineTab(windowId, tabId);
+  final browser.Tab tab = await determineTab(windowId, tabId);
   _log.info("Closing tab ${tab.id}");
   await browser.tabs.remove(tab.id);
 }
 
-Future<Tab> determineTab(int windowId, int tabId) async {
-  Tab tab;
+Future<browser.Tab> determineTab(int windowId, int tabId) async {
+  browser.Tab tab;
   if (tabId != null) {
     _log.info("tabId is provided: $tabId");
     tab = await getTabById(tabId);
@@ -246,7 +246,7 @@ Future<Tab> determineTab(int windowId, int tabId) async {
     _log.info("tabId not provided, detecting current tab");
     // This is the page requesting the media from an iframe, we just forward it right back to the tab
 
-    List<Tab> tabs;
+    List<browser.Tab> tabs;
     if (windowId != null) {
       _log.info("Window ID provided: $windowId");
       tabs = await browser.tabs.query(active: true, windowId: windowId);
@@ -263,11 +263,11 @@ Future<Tab> determineTab(int windowId, int tabId) async {
   return tab;
 }
 
-Future<Tab> getTabById(int tabId) async {
-  final List<Tab> tabs =
+Future<browser.Tab> getTabById(int tabId) async {
+  final List<browser.Tab> tabs =
       await browser.tabs.query();
   for (int i = 0; i < tabs.length; i++) {
-    final Tab tab = tabs[i];
+    final browser.Tab tab = tabs[i];
     if (tab.id == tabId) {
       return tab;
     }
@@ -276,11 +276,11 @@ Future<Tab> getTabById(int tabId) async {
 }
 
 Future<Null> scrapePage(
-    Port sourcePort, int windowId, int tabId, String url) async {
-  final Tab tab = await determineTab(windowId, tabId);
+    browser.Port sourcePort, int windowId, int tabId, String url) async {
+  final browser.Tab tab = await determineTab(windowId, tabId);
 
   _log.fine("Connecting to tab ${tab.id}");
-  final Port tabPort = browser.tabs
+  final browser.Port tabPort = browser.tabs
       .connect(tab.id, name: new Uuid().v4());
   try {
     _log.info("Sending scrape page command to page");
@@ -303,7 +303,7 @@ Future<Null> scrapePage(
   _log.finest("scrapePage() end");
 }
 
-void subscribeToPage(Port p, int tabId) {
+void subscribeToPage(browser.Port p, int tabId) {
   final StreamSubscription<PageUpdateEvent> pageSub =
       onPageSubscriptionUpdate.listen((PageUpdateEvent e) {
     if (tabId == e.tabId) {
@@ -323,7 +323,7 @@ void subscribeToPage(Port p, int tabId) {
   });
 }
 
-Future<Null> unsubscribeFromPage(Port p, int tabId) async {
+Future<Null> unsubscribeFromPage(browser.Port p, int tabId) async {
   if (pageSubscriptions.containsKey(p.name) &&
       pageSubscriptions[p.name].containsKey(tabId)) {
     _log.fine("Unsubscribing port ${p.name} from tab $tabId");
@@ -338,7 +338,7 @@ Future<Map> _openTab(String url, int windowId) async {
   _log.finest("openTab($url, $windowId) start");
   try {
     final Map output = {messageFieldEvent: tabLoadedMessageEvent};
-    Tab tab = await browser.tabs.create(url: url, active: false, windowId: windowId);
+    browser.Tab tab = await browser.tabs.create(url: url, active: false, windowId: windowId);
     _log.info("Tab created: ${tab.id}");
     _log.info("Waiting for tab to finish loading");
     //await for (chrome.OnUpdatedEvent updatedEvent in chrome.tabs.onUpdated) {
@@ -347,8 +347,8 @@ Future<Map> _openTab(String url, int windowId) async {
 //        updatedEvent.changeInfo["status"] == "complete") {
 //    _log.info("New tab open complete: ${updatedEvent.tabId}");
     for (int i = 0; i < 5; i++) {
-      final OnMessageEvent e = await browser.runtime.onMessage
-          .where((OnMessageEvent e) =>
+      final e = await browser.runtime.onMessage
+          .where((e) =>
               e.message[messageFieldEvent] == pageHealthEvent &&
               e.message[messageFieldTabId] == tab.id)
           .first;
@@ -431,7 +431,7 @@ String _pathToTags(String file, String path) {
   return tags.join(" ");
 }
 
-Future<Null> uploadItem(Port p, message) async {
+Future<Null> uploadItem(browser.Port p, message) async {
 
   final html.FormData formData = new html.FormData();
 

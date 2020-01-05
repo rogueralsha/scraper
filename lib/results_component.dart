@@ -6,8 +6,9 @@ import 'dart:html';
 import 'package:angular/angular.dart';
 import 'package:angular_components/angular_components.dart';
 import 'package:logging/logging.dart';
+import 'package:scraper/web_extensions/src/parameters/connect_info.dart';
 import 'package:uuid/uuid.dart';
-import 'package:scraper/web_extensions/web_extensions.dart';
+import 'package:scraper/web_extensions/web_extensions.dart' as browser;
 
 import 'globals.dart';
 import 'services/page_stream_service.dart';
@@ -169,7 +170,7 @@ class ResultsComponent implements OnInit, OnDestroy {
 
       _log.info("Final download path: $pathPrefix");
 
-      final Port p = browser.runtime.connect(name: new Uuid().v4());
+      final p = browser.runtime.connect(connectInfo: new ConnectInfo(name: new Uuid().v4()));
       try {
         _log.info("Getting first item from queue");
 
@@ -342,8 +343,8 @@ class ResultsComponent implements OnInit, OnDestroy {
           }
         });
       }
-    } on Exception catch (e, st) {
-      _log.severe("AppComponent.ngOnInit error", e, st);
+    //} on Exception catch (e, st) {
+      //_log.severe("AppComponent.ngOnInit error", e, st);
     } finally {
       _log.finest("AppComponent.ngOnInit end");
     }
@@ -381,7 +382,7 @@ class ResultsComponent implements OnInit, OnDestroy {
 
       _log.info("Wait is set to $waitForLoad");
 
-      final Port p = browser.runtime.connect(name: new Uuid().v4());
+      final p = browser.runtime.connect(connectInfo: new ConnectInfo(name: new Uuid().v4()));
       try {
         if (waitForLoad) {
           final LinkInfo r = toOpen.removeFirst();
@@ -459,7 +460,7 @@ class ResultsComponent implements OnInit, OnDestroy {
   }
 
   void _sendMessageForScrapeResult(
-      Port p, LinkInfo r, String prefixPath) {
+      browser.Port p, LinkInfo r, String prefixPath) {
     if (r.type == LinkType.page) {
       _log.fine("Item is of type page, opening page to scrape");
       _pendingScrapes++;
@@ -521,7 +522,7 @@ class ResultsComponent implements OnInit, OnDestroy {
 
 
     await _performRequestOnAllItems(
-      (Port p, LinkInfo li) async {
+      (browser.Port p, LinkInfo li) async {
           _log.fine("Import item: ${li.url} to $shimmiePath");
 
           final Map<String, dynamic> data = <String, dynamic>{
@@ -546,7 +547,7 @@ class ResultsComponent implements OnInit, OnDestroy {
   }
 
   Future<Null> _performRequestOnAllItems(
-      Future process(Port p, LinkInfo li),
+      Future process(browser.Port p, LinkInfo li),
       error(JsObject e),
       String processStartEvent,
       String processCompleteEvent,
@@ -573,7 +574,7 @@ class ResultsComponent implements OnInit, OnDestroy {
       this.progressCurrent = 0;
       _pendingScrapes = 0;
 
-      final Port p = browser.runtime.connect(name: new Uuid().v4());
+      final p = browser.runtime.connect(connectInfo: new ConnectInfo(name: new Uuid().v4()));
       try {
         _log.info("Getting first item from queue");
 
@@ -699,8 +700,8 @@ class ResultsComponent implements OnInit, OnDestroy {
     }
   }
 
-  Future<void> _performRequestOnAllItemsProcess(Port p, LinkInfo r,
-      process(Port p, LinkInfo li), bool scrapePages) async {
+  Future<void> _performRequestOnAllItemsProcess(browser.Port p, LinkInfo r,
+      process(browser.Port p, LinkInfo li), bool scrapePages) async {
     if (r.type == LinkType.page && scrapePages) {
       _log.fine("Item is of type page, opening page to scrape");
       _pendingScrapes++;

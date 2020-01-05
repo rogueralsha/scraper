@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:html';
 import 'dart:js';
+import 'package:scraper/web_extensions/src/parameters/connect_info.dart';
 import 'package:stack_trace/stack_trace.dart';
-import 'web_extensions/web_extensions.dart';
+import 'web_extensions/web_extensions.dart' as browser;
 import 'package:logging/logging.dart';
 import 'package:uuid/uuid.dart';
 
@@ -79,8 +80,8 @@ void closeTab({int tabId}) {
 
 Future<int> getCurrentTabId() async {
   _log.info("Getting current tab id");
-  final Port p = browser.runtime
-      .connect(name: new Uuid().v4());
+  final browser.Port p = browser.runtime
+      .connect( connectInfo: new ConnectInfo(name: new Uuid().v4()));
   try {
     p.postMessage({messageFieldCommand: getTabIdCommand});
     final JsObject message = await p.onMessage.first;

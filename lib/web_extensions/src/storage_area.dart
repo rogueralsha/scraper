@@ -1,43 +1,51 @@
+@JS('storage')
+library storage_area;
+
 import 'dart:async';
-import 'dart:js';
+import 'dart:convert';
+import 'dart:developer';
+import 'package:js/js.dart';
+import 'package:js/js_util.dart';
+import 'package:logging/logging.dart';
 
 import 'tools.dart';
 
+@JS()
 class StorageArea {
-  final JsObject _js;
+  static final Logger _log = new Logger("StorageArea");
 
-  StorageArea(this._js) {
-    if(this._js==null)
-      throw new Exception("StorageArea js object is null");
+//  StorageArea(this._js) {
+//    if (this._js == null)
+//      throw new Exception("StorageArea js object is null");
+//  }
+
+  Future<Map<String, dynamic>> get({List<String> keys}) async {
+    _log.finest("storage.get");
+    _log.finest(keys);
+
+    final dynamic results = await promiseToFuture(_get(keys));
+    _log.finest(results);
+    return results;
   }
 
-  Future<Map> get({List<String> keys}) async {
-    final args = <dynamic>[jsify(keys)];
+  @JS("get")
+  external dynamic _get(List<String> keys);
 
-    print("storage.get");
-    print(jsVarDump(args[0]));
+  Future<void> remove(List<String> keys) async {
+    final List<dynamic> args = <dynamic>[keys];
 
-    final JsObject results = await _js.callMethod("get", args);
-
-    print(jsVarDump(results));
-
-    Map<String,dynamic> output = <String,dynamic>{};
-    for(var key in keys) {
-      output[key] = results[key];
-    }
-
-    return output;
+    await promiseToFuture(_remove(keys));
   }
 
-  Future<void> set(Map<String,dynamic> keys) async {
-    final args = <dynamic>[jsify(keys)];
+  @JS("remove")
+  external dynamic _remove(List<String> keys);
 
-    await _js.callMethod("set", args);
+  Future<void> set(Map<String, dynamic> keys) async {
+    final List<dynamic> args = <dynamic>[jsify(keys)];
+
+    await promiseToFuture(_set(keys));
   }
 
-  Future<void> remove(dynamic keys) async {
-    final args = <dynamic>[keys];
-
-    await _js.callMethod("remove", args);
-  }
+  @JS("set")
+  external dynamic _set(Map<String, dynamic> keys);
 }

@@ -5,7 +5,7 @@ import 'package:logging/logging.dart';
 import 'package:angular/angular.dart';
 import 'package:scraper/results/page_info.dart';
 import 'package:scraper/globals.dart';
-import 'package:scraper/web_extensions/web_extensions.dart';
+import 'package:scraper/web_extensions/web_extensions.dart' as browser;
 export '../results/page_info.dart';
 
 @Injectable()
@@ -14,11 +14,11 @@ class ScraperService {
 
   ScraperService() {}
 
-  Future<Port> openPort() async {
+  Future<browser.Port> openPort() async {
     try {
-      final List<Tab> tabs = await browser.tabs
+      final List<browser.Tab> tabs = await browser.tabs
           .query(active: true, currentWindow: true);
-      Tab tab = tabs[0];
+      browser.Tab tab = tabs[0];
       _log.info("Active tab url: ${tab.url}");
       return browser.tabs
           .connect(tab.id, name: new Uuid().v4());
@@ -35,7 +35,7 @@ class ScraperService {
     _log.finest("getScrapeResults start");
 
     try {
-      final Port p = await openPort();
+      final browser.Port p = await openPort();
       PageInfo results;
       try {
         p.postMessage(

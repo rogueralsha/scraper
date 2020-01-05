@@ -1,36 +1,40 @@
+@JS('browser.downloads')
+library downloads;
+
+
 import 'dart:async';
 import 'dart:html';
-import 'dart:js';
+import 'package:js/js.dart';
+import 'package:js/js_util.dart';
 
 import 'package:angular_components/material_datepicker/range.dart';
+import 'package:logging/logging.dart';
 
 import 'downloads/download_delta.dart';
 import 'downloads/download_item.dart';
 import 'enums/filename_conflict_action.dart';
 import 'tools.dart';
 
+@JS()
 class Downloads {
-  final JsObject _js;
-
+  static final Logger _log = new Logger("Downloads");
 
   final StreamController<DownloadDelta> _onChangedController = new StreamController<DownloadDelta>.broadcast();
 
   Stream<DownloadDelta> get onChanged => _onChangedController.stream;
 
+//  Downloads(JsObject parent): _js = parent["downloads"]
+//  {
+//    if(this._js==null)
+//      throw new Exception("Downloads js object is null");
+//    _js["onChanged"].callMethod("addListener", [this.onChangedCallback]);
+//
+//  }
 
 
-  Downloads(JsObject parent): _js = parent["downloads"]
-  {
-    if(this._js==null)
-      throw new Exception("Downloads js object is null");
-    _js["onChanged"].callMethod("addListener", [this.onChangedCallback]);
-
-  }
-
-
-  void onChangedCallback(JsObject obj) {
-    _onChangedController.add(new DownloadDelta(obj));
-  }
+//  void onChangedCallback(JsObject obj) {
+//    _onChangedController.add(new DownloadDelta(obj));
+//  }
 
   Future<int> download({
     String body,
@@ -83,10 +87,14 @@ class Downloads {
 //        }
 //    }
 
-    var result = _js.callMethod("download", [jsify(options)]);
-    print(jsVarDump(result));
+    final result = await promiseToFuture(_download(options));
+    _log.finest(result);
     return result;
   }
+
+
+  @JS("download")
+  external dynamic _download(Map options);
 
   Future<List<DownloadItem>> search({int id}) async {
     final query = {};
@@ -95,18 +103,15 @@ class Downloads {
       query["body"] = id;
     }
 
-    var args = [];
-
-    if(query.isNotEmpty) {
-      args.add(jsify(query));
-    }
-
-    final results = await _js.callMethod("search", [args]);
+    final results = await promiseToFuture(_search(query));
     final List<DownloadItem> output = <DownloadItem>[];
     for(var item in results) {
       output.add(new DownloadItem(item));
     }
     return output;
   }
+
+  @JS("search")
+  external dynamic _search(Map query);
 
 }

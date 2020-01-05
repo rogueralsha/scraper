@@ -1,19 +1,22 @@
+@JS("runtime")
+library message_sender;
+
+import 'package:js/js.dart';
+
 import 'dart:async';
 import 'dart:html';
-import 'dart:js';
 
 import 'tab.dart';
 
+@JS()
 class MessageSender {
-  JsObject js;
+  external Tab get tab;
 
-  final Tab tab;
-
-  MessageSender(this.js):
-      this.tab = js.hasProperty("tab") ? new Tab(js["tab"]) : null {
-
-    if(this.js==null)
-      throw new Exception("MessageSender js object is null");
-
-  }
+//  MessageSender(this.js):
+//      this.tab = js.hasProperty("tab") ? new Tab(js["tab"]) : null {
+//
+//    if(this.js==null)
+//      throw new Exception("MessageSender js object is null");
+//
+//  }
 }

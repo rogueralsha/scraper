@@ -17,7 +17,7 @@ dependencies:
   html: any
   stack_trace: any
   html_unescape: any
-
+  js: any
 
 dev_dependencies:
   angular_test: any

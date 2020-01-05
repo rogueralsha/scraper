@@ -4,7 +4,7 @@ import 'package:angular/angular.dart';
 import 'package:scraper/scraper_component.template.dart' as ng;
 import 'package:logging/logging.dart';
 import 'package:scraper/globals.dart';
-import 'package:scraper/web_extensions/web_extensions.dart';
+import 'package:scraper/web_extensions/web_extensions.dart' as browser;
 import 'dart:html';
 import 'dart:js';
 
