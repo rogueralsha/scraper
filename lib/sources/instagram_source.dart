@@ -9,18 +9,22 @@ import 'src/simple_url_scraper.dart';
 class InstagramSource extends ASource {
   static final Logger logImpl = new Logger("InstagramSource");
 
+
+  @override
+  String get sourceName => "instagram";
+
   static final RegExp _postRegExp =
-      new RegExp(r"https?://www\.instagram\.com/p/.*", caseSensitive: false);
+      new RegExp(r"^https?://www\.instagram\.com/p/.*$", caseSensitive: false);
   static final RegExp _userRegExp = new RegExp(
-      r"https?://www\.instagram\.com/([^/]+)/",
+      r"^https?://www\.instagram\.com/([^/]+)/$",
       caseSensitive: false);
 
   static final RegExp _metaUserRegexp = new RegExp(r"@([^ )]+)");
 
   static final RegExp _contentRegExp =
-      new RegExp(r"https?://[^.]+\.cdninstagram\.com/.+", caseSensitive: false);
+      new RegExp(r"^https?://[^.]+\.cdninstagram\.com/.+$", caseSensitive: false);
 
-  static final RegExp _profileDataRegExp = new RegExp(r"<script type=""text\/javascript"">window[.]_sharedData = {[\s\S]*};<\/script>", caseSensitive: false);
+  static final RegExp _profileDataRegExp = new RegExp(r'<script type="text/javascript">window[.]_sharedData = {[\s\S]*};</script>$', caseSensitive: false);
 
   InstagramSource(SettingsService settings) : super(settings) {
     this
@@ -29,8 +33,11 @@ class InstagramSource extends ASource {
 
     this.urlScrapers.add(new UrlScraper(
         _postRegExp, scrapePostPageInfo, scrapePostLinks));
-    this.urlScrapers.add(new UrlScraper(
-        _userRegExp, scrapeUserPageInfo, scrapeUserPageLinks));
+    this.urlScrapers.add(new SimpleUrlScraper(this, _userRegExp,
+        [
+          new SimpleUrlScraperCriteria(LinkType.page, "article > div  >div > div > div > a")
+        ],
+        watchForUpdates: true));
 
 
 //    this.urlScrapers.add(new SimpleUrlScraper(
@@ -47,8 +54,8 @@ class InstagramSource extends ASource {
   Future<Null> scrapePostPageInfo(
       PageInfo pi, Match m, String s, Document doc) async {
     final AnchorElement a = document.querySelector(
-        "div#react-root section main div div article header div div div a");
-    pi.artist = a?.title;
+        "div#react-root > section > main > div > div > article > header > div > div > div > span > a");
+    pi.artist = a?.text;
 //    final MetaElement ele = document.querySelector("meta[name=\"description\"]");
 //    final String description = ele.content;
 //    final Match m = _metaUserRegexp.firstMatch(description);
@@ -96,10 +103,6 @@ class InstagramSource extends ASource {
     pi.artist = m[1];
   }
 
-  Future<Null> scrapeUserPageLinks(String url, Document doc) async {
-
-
-  }
 
 //  handleLoadMoreButton: function() {
 //    let eles = document.querySelectorAll("main article div a");

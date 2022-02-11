@@ -8,30 +8,37 @@ import 'src/simple_url_scraper.dart';
 class GfycatSource extends ASource {
   static final Logger _log = new Logger("GfycatSource");
 
+  @override
+  String get sourceName => "gfycat";
+
   static final RegExp _regExp = new RegExp(
-      r"https?://(www\.)?gfycat\.com/([^/?]+)(\?[^/]+)?$",
+      r"^https?://(www\.)?gfycat\.com/([^/?]+)(\?[^/]+)?$",
       caseSensitive: false);
   static final RegExp _albumRegexp = new RegExp(
-      r"https?://(www\.)?gfycat\.com/@([^/]+)/collections/[^/]+/[^/]+$",
+      r"^https?://(www\.)?gfycat\.com/@([^/]+)/collections/[^/]+/[^/]+$",
       caseSensitive: false);
 
 
   static final RegExp _albumDetailRegexp = new RegExp(
-      r"https?://(www\.)?gfycat\.com/(%40[^/]+)/[^/]+/detail/([^/]+)$",
+      r"^https?://(www\.)?gfycat\.com/(%40[^/]+)/[^/]+/detail/([^/]+)$",
       caseSensitive: false);
 
   static final RegExp _detailRegexp = new RegExp(
-      r"https?://(www\.)?gfycat\.com/gifs/detail/([^/]+)$",
+      r"^https?://(www\.)?gfycat\.com/gifs/detail/([^/]+)$",
       caseSensitive: false);
 
-  static final RegExp _directRegExp = new RegExp(
-      r"https?://giant\.gfycat\.com/([^/.]+)\.(webm|mp4)$",
+  static final RegExp directRegExp = new RegExp(
+      r"^https?://giant\.gfycat\.com/([^/.]+)\.(webm|mp4)$",
+      caseSensitive: false);
+
+  static final RegExp deliveryRegExp = new RegExp(
+      r"^https?://(www\.)?gifdeliverynetwork\.com/([^/.]+)$",
       caseSensitive: false);
 
   GfycatSource(SettingsService settings) : super(settings) {
     this
         .directLinkRegexps
-        .add(new DirectLinkRegExp(LinkType.video, _directRegExp));
+        .add(new DirectLinkRegExp(LinkType.video, directRegExp));
 
     this.urlScrapers.add(new SimpleUrlScraper(
         this,
@@ -58,11 +65,18 @@ class GfycatSource extends ASource {
         _regExp,
         [
           new SimpleUrlScraperCriteria(
-              LinkType.video, "source[type=\"video/webm\"]")
+              LinkType.video, "source[type=\"video/mp4\"]", validateLinkInfo:validateLinkInfo )
         ],
         saveByDefault: false,
         urlRegexGroup: 2,
         useForEvaluation: true));
+  }
+
+  bool validateLinkInfo(LinkInfo link, Element ele) {
+    if(link.url.endsWith("-mobile.mp4")) {
+      return false;
+    }
+    return true;
   }
 
 //  @override
@@ -94,7 +108,7 @@ class GfycatSource extends ASource {
 
   @override
   LinkInfo reEvaluateLink(LinkInfo li, RegExp regExp) {
-    if (regExp == _directRegExp) {
+    if (regExp == directRegExp) {
       if (li.url?.toLowerCase()?.endsWith(".mp4")??false) {
         li.url = "${li.url.substring(0,li.url.length-4)}.webm";
       }
@@ -108,7 +122,7 @@ class GfycatSource extends ASource {
   @override
   String determineThumbnail(String url) {
     final String name = _regExp.firstMatch(url)?.group(2) ??
-        _directRegExp.firstMatch(url)?.group(1);
+        directRegExp.firstMatch(url)?.group(1);
     if (name != null) {
       return "https://thumbs.gfycat.com/$name-poster.jpg";
     }

@@ -8,14 +8,17 @@ import 'src/simple_url_scraper.dart';
 class MinitokyoSource extends ASource {
   static final Logger logImpl = new Logger("MinitokyoSource");
 
+  @override
+  String get sourceName => "minitokyo";
+
   static final RegExp _galleryRegexp = new RegExp(
-      r"https?://[^.]+\.minitokyo\.net/gallery\?.+",
+      r"^https?://[^.]+\.minitokyo\.net/gallery\?.+",
       caseSensitive: false);
   static final RegExp _downloadRegexp = new RegExp(
-      r"https?://gallery\.minitokyo\.net/download/\d+",
+      r"^https?://gallery\.minitokyo\.net/download/\d+",
       caseSensitive: false);
   static final RegExp _viewRegexp = new RegExp(
-      r"https?://gallery\.minitokyo\.net/view/(\d+)",
+      r"^https?://gallery\.minitokyo\.net/view/(\d+)",
       caseSensitive: false);
 
   MinitokyoSource(SettingsService settings) : super(settings) {

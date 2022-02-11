@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:html';
+import 'dart:core';
 import 'package:http/http.dart' as http;
 import 'package:http/browser_client.dart';
 import 'package:logging/logging.dart';
@@ -12,14 +13,25 @@ import 'src/url_scraper.dart';
 
 class RedditSource extends ASource {
   static final Logger _log = new Logger("RedditSource");
+
+  @override
+  String get sourceName => "reddit";
+
   static final RegExp _regExp = new RegExp(
-      r"https?://(www|old)\.reddit\.com/r/([^/]+)/.*",
+      r"^https?://(www|old)\.reddit\.com/r/([^/]+)/.*",
       caseSensitive: false);
   static final RegExp _postRegexp = new RegExp(
-      r"https?://(www|old)\.reddit\.com/r/([^/]+)/comments/.*",
+      r"^https?://(www|old)\.reddit\.com/r/([^/]+)/comments/.*",
       caseSensitive: false);
   static final RegExp _imageRegexp = new RegExp(
-      r"https?://i\.(redd\.it|redditmedia\.com)/.*",
+      r"^https?://i\.(redd\.it|redditmedia\.com)/.*",
+      caseSensitive: false);
+  static final RegExp _galleryRegexp = new RegExp(
+      r"^https?://(www|old)\.reddit\.com/gallery/([^/]+)",
+      caseSensitive: false);
+
+  static final RegExp _imagePreviewRegexp = new RegExp(
+      r"^https?://preview\.(redd\.it|redditmedia\.com)/([^?]+)\?.*",
       caseSensitive: false);
 
   RedditSource(SettingsService settings) : super(settings) {
@@ -57,8 +69,8 @@ class RedditSource extends ASource {
       } else if (jsonData is Map) {
         await processListingEntry(jsonData, url);
       }
-    } catch(e,st) {
-      _log.warning("Error while fetching reddit json",e.message, st);
+    } on Exception catch(e,st) {
+      _log.warning("Error while fetching reddit json $e",e, st);
     }
   }
 
@@ -66,17 +78,32 @@ class RedditSource extends ASource {
       Map<String, dynamic> listingData, String url) async {
     final List<dynamic> children = listingData["data"]["children"];
     for (Map<String, dynamic> child in children) {
-      final Map<String, dynamic> childData = child["data"];
+      Map<String, dynamic> childData = child["data"];
       final String kind = child["kind"];
+      _log.finest("Child kind: $kind");
+
       switch (kind) {
         case "t3": //Regular post
           final String thumbnail = childData["thumbnail"];
-          final String link = childData["url"];
-          LinkType type = LinkType.page;
+          String link = childData["url"];
+          const LinkType type = LinkType.page;
+
+
+          // Check if we're dealing with a crosspost.
+
+          if (childData.containsKey("crosspost_parent_list")
+              && childData["crosspost_parent_list"] != null
+              && childData["crosspost_parent_list"].length > 0) {
+            _log.fine("Post is crosspost");
+
+            childData = childData["crosspost_parent_list"][0];
+          }
 
           if (childData.containsKey("media") && childData["media"] != null) {
             final Map<String, dynamic> mediaData = childData["media"];
+            _log.fine("Post has media");
             if (mediaData.containsKey("reddit_video")) {
+              _log.fine("Post has reddit video");
               this.createAndSendLinkInfo(
                   mediaData["reddit_video"]["fallback_url"], url,
                   thumbnail: thumbnail, type: LinkType.video);
@@ -86,8 +113,61 @@ class RedditSource extends ASource {
 
           if (childData.containsKey("url") &&
               (childData["url"] ?? "").isNotEmpty) {
-            await this.evaluateLink(link, url);
+            _log.fine("Post has url: ${childData['url']}");
+            if(_imagePreviewRegexp.hasMatch(link)) {
+              final Match m = _imagePreviewRegexp.firstMatch(link);
+              link = "https://i.redd.it/${m.group(2)}";
+              _log.finest("Link was for preview, adjusted to $link");
+            }
+            if(_galleryRegexp.hasMatch(link)) {
+              _log.finest("Link was for gallery, skipping url submission");
+            } else {
+              await this.evaluateLink(link, url);
+            }
           }
+
+          if (childData.containsKey("is_gallery") &&
+              (childData["is_gallery"] ?? "")==true) {
+
+            _log.fine("Post is gallery, parsing individual images");
+            //_log.finest(childData["media_metadata"]);
+            final Map metadata = childData["media_metadata"];
+
+
+            for(String metadataKey in metadata.keys) {
+              _log.finer("Metadata key $metadataKey");
+              final Map metadatum = metadata[metadataKey];
+              _log.fine(metadatum);
+
+             Map imageData;
+              if(metadatum["o"]!=null) {
+                imageData =metadatum["o"][0];
+              } else {
+                _log.warning("o entry not found");
+
+                if(metadatum["s"]!=null) {
+                  imageData =metadatum["s"];
+                } else {
+                  _log.warning("s entry not found");
+                }
+              }
+                String link = imageData["u"];
+                _log.finest("u: $link");
+
+                if(link==null) {
+                  _log.warning("No image data found for metadata $metadataKey");
+                  continue;
+                }
+
+                _log.finest("Found gallery entry for $link");
+                if(_imagePreviewRegexp.hasMatch(link)) {
+                  final Match m = _imagePreviewRegexp.firstMatch(link);
+                  link = "https://i.redd.it/${m.group(2)}";
+                  _log.finest("Link was for preview, adjusted to $link");
+                }
+                await this.evaluateLink(link, url);
+              }
+            }
 
           break;
         case "t1": //Comment

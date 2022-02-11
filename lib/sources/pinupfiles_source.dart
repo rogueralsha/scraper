@@ -10,6 +10,9 @@ import 'src/simple_url_scraper.dart';
 class PinupfilesSource extends ASource {
   static final Logger _log = new Logger("PinupfilesSource");
 
+  @override
+  String get sourceName => "pinup_files";
+
   static final RegExp _modelRegExp = new RegExp(
       r"^https?://www\.pinupfiles\.com/members/models/([^/^?]+).html$",
       caseSensitive: false);
@@ -19,7 +22,7 @@ class PinupfilesSource extends ASource {
       caseSensitive: false);
 
   static final RegExp _videoDownloadRegExp =
-      new RegExp(r"([^(]+)\(([\d.]+) MB\)", caseSensitive: false);
+      new RegExp(r"([^(]+)\(([\d.]+) MB\)$", caseSensitive: false);
 
   PinupfilesSource(SettingsService settings) : super(settings) {
     this.urlScrapers

@@ -24,22 +24,22 @@ class ResultsDialog implements OnInit {
   bool visible = true;
 
 
-  Map<String, bool> currentClasses = <String, bool>{"resultsDialog":true,"right":true};
+  Map<String, bool> currentClasses = <String, bool>{"scraperResultsDialog":true,"right":true};
 
   final PageStreamService _pageStream;
 
 
   void setAlignment(bool leftAlign) {
-    currentClasses = <String, bool>{"resultsDialog":true,"right":!leftAlign,"left":leftAlign};
+    currentClasses = <String, bool>{"scraperResultsDialog":true,"right":!leftAlign,"left":leftAlign};
   }
 
   @override
   Future<Null> ngOnInit() async {
-    _log.finest("AppComponent.ngOnInit start");
+    _log.finest("ResultsDialog.ngOnInit start");
     try {
-      _pageStream.onPageInfo.listen((PageInfo pi) async {
-        setAlignment(pi.leftAlign);
-      });
+//      _pageStream.onPageInfo.listen((PageInfo pi) async {
+//        setAlignment(pi.leftAlign);
+//      });
     } on Exception catch (e, st) {
       _log.severe("ResultsDialog.ngOnInit error", e, st);
     } finally {

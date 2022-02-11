@@ -17,7 +17,7 @@ class UrlScraper {
   bool isMatch(String url) {
     _log.finest("Checking url $url against regex $urlRegExp");
     final bool result = urlRegExp.hasMatch(url);
-    _log.fine("Result: $result");
+    _log.finest("Result: $result");
     return result;
   }
 

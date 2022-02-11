@@ -1,4 +1,4 @@
-.resultsDialog {
+.scraperResultsDialog {
     position: fixed;
     top: 15pt;
     right: 15pt;
@@ -10,7 +10,7 @@
     max-width: 50%;
     overflow: auto;
 }
-#resultsDialog {
+#scraperResultsDialog {
 }
 #minimizedDialog {
 

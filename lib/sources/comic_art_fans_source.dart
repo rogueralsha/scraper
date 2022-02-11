@@ -8,6 +8,9 @@ import 'src/simple_url_scraper.dart';
 class ComicArtFansSource extends ASource {
   static final Logger _log = new Logger("ComicArtFansSource");
 
+  @override
+  String get sourceName => "comic_art_fans";
+
   static final RegExp _searchRegexp = new RegExp(
       r"^https?://.+\.comicartfans\.com/searchresult\.asp\?.*txtsearch=([^&]+).*",
       caseSensitive: false);
@@ -18,7 +21,7 @@ class ComicArtFansSource extends ASource {
       caseSensitive: false);
 
   static final RegExp _pieceRegexp = new RegExp(
-      r"^https?://.+\.comicartfans\.com/GalleryPiece.asp\?Piece=([^&]+).+",
+      r"^https?://.+\.comicartfans\.com/(GalleryPiece|sketchbookPiece).asp\?Piece=([^&]+).+",
       caseSensitive: false);
 
   ComicArtFansSource(SettingsService settings) : super(settings) {
@@ -26,7 +29,9 @@ class ComicArtFansSource extends ASource {
         [new SimpleUrlScraperCriteria(LinkType.page, "div#body-right div.padding div div a",
             linkRegExp: _pieceRegexp, thumbnailSubSelector: "img",validateLinkInfo: this.validateLinkElement )]));
     this.urlScrapers.add(new SimpleUrlScraper(this, _pieceRegexp,
-        [new SimpleUrlScraperCriteria(LinkType.image, "div#sharewrap img")],
+        [new SimpleUrlScraperCriteria(LinkType.image, "div#sharewrap img"),
+          new SimpleUrlScraperCriteria(LinkType.image, "div#content-left > div.padding >table td > img")
+        ],
         customPageInfoScraper:  (PageInfo pageInfo, Match m, String url, Document doc) {
           final ele = doc.querySelector("div.title-block p a");
           pageInfo.artist = ele?.text;

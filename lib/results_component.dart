@@ -52,21 +52,32 @@ class ResultsComponent implements OnInit, OnDestroy {
   final SettingsService _settings;
   final PageStreamService _pageStream;
 
-  PageInfo results = new PageInfo("none", "", -1);
+  SourceSettings _sourceSettings;
+
+  PageInfo results = new PageInfo("none", "", "", -1);
 
   bool get showLoadAllButton => loaded && results.incrementalLoader;
 
-  ResultsComponent(this._pageStream, this._settings);
+  ResultsComponent(this._pageStream, this._settings) {
+    if (this._pageStream == null) {
+      throw new Exception("pageStream component is null");
+    }
+  }
 
-  String get artistDisplay =>
-      "${results.artist} ($selectedLinkCount/$linkCount)";
+  String get artistDisplay {
+    String output = "${results.artist} ($selectedLinkCount/$linkCount)";
+    if (results.setName?.isNotEmpty ?? false) {
+      output = "$output (${results.setName})";
+    }
+    return output;
+  }
 
   bool get hasError => (results?.error ?? "").isNotEmpty;
 
   int get linkCount => links.length;
   bool get loaded => links?.isNotEmpty ?? false;
 
-  String get pathDisplay => "Path: $artistPath";
+  String get pathDisplay => "Path: ${this.determinePath()}";
 
   int get selectedLinkCount => links.where((LinkInfo r) => r.select).length;
 // Nothing here yet. All logic is in TodoListComponent.
@@ -98,6 +109,50 @@ class ResultsComponent implements OnInit, OnDestroy {
 
   int _pendingScrapes = 0;
 
+  String performSubstitutions(String input) {
+    if (input == null) {
+      return input;
+    }
+    String output = input;
+    final String artist =
+        (this.results.artist ?? "").trim().replaceAll(" ", "_");
+    final String source =
+        (this.results.source ?? "").trim().replaceAll(" ", "_");
+    final String setName =
+        (this.results.setName ?? "").trim().replaceAll(" ", "_");
+
+    output = output.replaceAll("{setName}", setName);
+    output = output.replaceAll("{artist}", artist);
+    output = output.replaceAll("{source}", source);
+    return output;
+  }
+
+  String determinePath() {
+    final StringBuffer pathBuffer = new StringBuffer();
+
+    if ((artistPath?.trim() ?? "").isNotEmpty) {
+      pathBuffer.write(artistPath?.trim());
+    }
+
+    if (_sourceSettings == null) {
+      _log.info("Source settings is null");
+    }
+
+    if (_sourceSettings?.suffix?.isNotEmpty ?? false) {
+      if (pathBuffer.isNotEmpty) {
+        pathBuffer.write("/");
+      }
+
+      pathBuffer.write(_sourceSettings.suffix);
+    } else {
+      _log.finest("Not using source setting suffix");
+    }
+
+    return performSubstitutions(pathBuffer.toString());
+  }
+
+  final Map<int, LinkInfo> startedDownloads = new Map<int, LinkInfo>();
+
   void downloadButtonClick(dynamic event, bool close) async {
     _log.finest("downloadButtonClick($event, $close) start");
 
@@ -113,18 +168,14 @@ class ResultsComponent implements OnInit, OnDestroy {
         return;
       }
 
-      String pathPrefix = "";
-
-      if ((artistPath?.trim() ?? "").isNotEmpty) {
-        pathPrefix = artistPath.trim();
-        _log.info("Path is not null, using $pathPrefix");
-        if (savePath) {
-          await _settings.setMapping(results.artist, artistPath);
+      if ((artistPath?.trim() ?? "").isEmpty) {
+        if (!promptForDownload) {
+          if (!window.confirm("No path specified, continue?")) {
+            return;
+          }
         }
-      } else if (!promptForDownload) {
-        if (!window.confirm("No path specified, continue?")) {
-          return;
-        }
+      } else if (savePath) {
+        await _settings.setMapping(results.artist, artistPath);
       }
 
       if (savePath) {
@@ -145,6 +196,8 @@ class ResultsComponent implements OnInit, OnDestroy {
       this.progressCurrent = 0;
       _pendingScrapes = 0;
 
+      String pathPrefix = determinePath();
+
       final String downloadPathPrefix = await _settings.getDownloadPathPrefix();
       if ((downloadPathPrefix?.trim() ?? "").isNotEmpty) {
         if (pathPrefix.isEmpty) {
@@ -155,6 +208,8 @@ class ResultsComponent implements OnInit, OnDestroy {
       }
 
       _log.info("Final download path: $pathPrefix");
+
+      final Map<int, LinkInfo> downloadingLinkInfos = new Map<int, LinkInfo>();
 
       final chrome.Port p = chrome.runtime.connect(
           null, new chrome.RuntimeConnectParams(name: new Uuid().v4()));
@@ -203,9 +258,18 @@ class ResultsComponent implements OnInit, OnDestroy {
                 continue;
               case linkInfoEvent:
                 _log.finest("Link info received, adding to queue");
+                _log.finest(e.message[messageFieldData]);
                 final LinkInfo li =
                     new LinkInfo.fromJson(e.message[messageFieldData]);
+
+                if (_pendingPageLinks?.containsKey(li.sourceUrl)) {
+                  _log.finest(
+                      "LinkInfo matches pending page link for ${li.sourceUrl}");
+                  li.pathSuffix = _pendingPageLinks[li.sourceUrl].pathSuffix;
+                }
+
                 toDownload.insert(insertPosition, li);
+                links.add(li);
                 if (insertPosition > 0) {
                   progressMax++;
                 }
@@ -215,7 +279,7 @@ class ResultsComponent implements OnInit, OnDestroy {
               case scrapeDoneEvent:
                 _pendingScrapes--;
                 _log.info(
-                    "Ubsubscribing from tab: ${e.message[messageFieldTabId]}");
+                    "Unsubscribing from tab: ${e.message[messageFieldTabId]}");
                 p.postMessage({
                   messageFieldCommand: unsubscribeCommand,
                   messageFieldTabId: e.message[messageFieldTabId]
@@ -229,21 +293,51 @@ class ResultsComponent implements OnInit, OnDestroy {
               case fileDownloadStartEvent:
                 _log.info("File download start event received");
                 concurrentDownloads++;
+                final String uuid = e.message[messageFieldUuid];
+                final int downloadId = e.message[messageFieldDownloadId];
+
+                final LinkInfo currentLi =
+                    links.firstWhere((LinkInfo r) => r.uuid == uuid);
+                downloadingLinkInfos[downloadId] = currentLi;
+
                 break;
               case fileDownloadCompleteEvent:
                 _log.info("File download complete event received");
+                final int downloadId = e.message[messageFieldDownloadId];
+                if (downloadingLinkInfos?.containsKey(downloadId)) {
+                  downloadingLinkInfos.remove(downloadId);
+                }
                 concurrentDownloads--;
                 progressCurrent++;
                 break;
               case fileDownloadErrorEvent:
                 _log.info("File download error event received");
+                final int downloadId = e.message[messageFieldDownloadId];
+
+                // final bool result = window.confirm(
+                //     "An error occurred for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}. Retry?");
+                // //throw new Exception(
+                // //"An error occurred for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}");
+                // concurrentDownloads--;
+                // if (result) {
+                //   if (downloadingLinkInfos?.containsKey(downloadId)) {
+                //     toDownload.insert(0, downloadingLinkInfos[downloadId]);
+                //   } else {
+                //     window.alert(
+                //         "Could not find download matching id $downloadId");
+                //     break;
+                //   }
+                // } else {
+                //   progressCurrent++;
+                //   cancelClose = true;
+                // }
+
                 window.alert(
-                    "An error occurred for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}");
-                //throw new Exception(
-                //"An error occurred for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}");
+                    "An error occurred for download ${e.message[messageFieldDownloadId]}: ${e?.message[messageFieldError]??'Unknown error'}.");
                 concurrentDownloads--;
                 progressCurrent++;
                 cancelClose = true;
+
                 break;
               default:
                 throw new Exception("Unupported event: $event");
@@ -294,18 +388,21 @@ class ResultsComponent implements OnInit, OnDestroy {
 
   @override
   Future<Null> ngOnInit() async {
-    _log.finest("AppComponent.ngOnInit start");
+    _log.finest("ResultsComponent.ngOnInit start");
     try {
       _pageStream.onPageInfo.listen((PageInfo pi) async {
-        if(pi.sourceUrl==window.location.toString()) {
-          _log.info("PageInfo received, updating component data");
+        if (pi.sourceUrl == window.location.toString()) {
+          _log.info("PageInfo received, updating component data", pi.toJson());
           this.results = pi;
           this.savePath = results.saveByDefault;
           this.promptForDownload = results.promptForDownload;
           this.artistPath = await _settings.getMapping(results.artist);
           this.availablePathPrefixes = await _settings.getAvailablePrefixes();
+          this._sourceSettings =
+              await _settings.getSourceSettings(results.sourceName);
         } else {
-        _log.info("PageInfo received, appears to be from iframe: ${pi.sourceUrl}");
+          _log.info(
+              "PageInfo received, appears to be from iframe: ${pi.sourceUrl}");
         }
       });
       _pageStream.onLinkInfo.listen((LinkInfo li) {
@@ -327,9 +424,9 @@ class ResultsComponent implements OnInit, OnDestroy {
         });
       }
     } on Exception catch (e, st) {
-      _log.severe("AppComponent.ngOnInit error", e, st);
+      _log.severe("ResultsComponent.ngOnInit error", e, st);
     } finally {
-      _log.finest("AppComponent.ngOnInit end");
+      _log.finest("ResultsComponent.ngOnInit end");
     }
   }
 
@@ -414,7 +511,8 @@ class ResultsComponent implements OnInit, OnDestroy {
 
   Future<Null> refreshButtonClick() async {
     try {
-      results = new PageInfo("none", "", -1);
+      results = new PageInfo("none", "", "", -1);
+      _sourceSettings = null;
       links.clear();
       savePath = false;
       artistPath = "";
@@ -425,47 +523,80 @@ class ResultsComponent implements OnInit, OnDestroy {
     }
   }
 
+  Future<Null> removeButtonClick() async {
+    try {
+      final Element element = document.getElementById("scraperResultsDialog");
+      element?.remove();
+    } on Exception catch (e, st) {
+      _log.severe("removeButtonClick", e, st);
+    }
+  }
+
   void selectAbove(int i) {
     for (int j = 0; j < links.length; j++) {
-      links[j].select = j <= i;
+      if (singleSelected == -1 || (singleSelected < i && singleSelected < j)) {
+        links[j].select =
+            j <= i && (singleSelected == -1 || j >= singleSelected);
+      }
     }
+    singleSelected = -1;
   }
 
   void selectBeneath(int i) {
     for (int j = 0; j < links.length; j++) {
-      links[j].select = j >= i;
+      links[j].select = j >= i && (singleSelected == -1 || j <= singleSelected);
     }
+    singleSelected = -1;
   }
 
+  int singleSelected = -1;
   void selectOnly(int i) {
     for (int j = 0; j < links.length; j++) {
       links[j].select = i == j;
     }
+    singleSelected = i;
   }
 
-  void _sendMessageForScrapeResult(
-      chrome.Port p, LinkInfo r, String prefixPath) {
+  final Map<String, LinkInfo> _pendingPageLinks = <String, LinkInfo>{};
+
+  Future<Null> _sendMessageForScrapeResult(
+      chrome.Port p, LinkInfo r, String prefixPath) async {
+    if ((r.delay ?? 0) > 0) {
+      _log.fine("Delay of ${r.delay} specified, waiting");
+
+      await pause(seconds: r.delay);
+    }
+
     if (r.type == LinkType.page) {
       _log.fine("Item is of type page, opening page to scrape");
       _pendingScrapes++;
+      _pendingPageLinks[r.url] = r;
+
       p.postMessage(
           {messageFieldCommand: openTabCommand, messageFieldUrl: r.url});
     } else {
       final StringBuffer pathBuffer = new StringBuffer();
+
       if (prefixPath.isNotEmpty) {
         pathBuffer..write(prefixPath)..write("/");
       }
+
+      if (r.pathSuffix?.isNotEmpty ?? false) {
+        pathBuffer..write(r.pathSuffix)..write("/");
+      }
+
       pathBuffer.write(r.filename);
       String fullPath = pathBuffer.toString();
-      while(fullPath.contains("//")) {
-        fullPath = fullPath.replaceAll("//","/");
+      while (fullPath.contains("//")) {
+        fullPath = fullPath.replaceAll("//", "/");
       }
 
       _log.fine("Downloading item: ${r.url} to $fullPath");
       final Map<String, dynamic> data = <String, dynamic>{
         messageFieldCommand: downloadCommand,
         messageFieldUrl: r.url,
-        messageFieldPrompt: promptForDownload
+        messageFieldPrompt: promptForDownload,
+        messageFieldUuid: r.uuid
       };
       //if (promptForDownload) {
       //data[messageFieldFilename] = r.filename;
@@ -473,12 +604,13 @@ class ResultsComponent implements OnInit, OnDestroy {
       data[messageFieldFilename] = fullPath;
       //}
 
-      if (r.referrer?.isNotEmpty ?? false) {
-        _log.finest("Referrer is not empty, sending as header ${r.referrer}");
+      if (r.referer?.isNotEmpty ?? false) {
+        _log.finest("Referer is not empty, sending as header ${r.referer}");
         data[messageFieldHeaders] = <String, String>{
-          HttpHeaders.REFERER: r.referrer
+          HttpHeaders.REFERER: r.referer
         };
       }
+
       p.postMessage(data);
     }
   }

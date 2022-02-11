@@ -10,6 +10,9 @@ import 'src/link_info_impl.dart';
 class ShimmieSource extends ASource {
   static final Logger _log = new Logger("ShimmieSource");
 
+  @override
+  String get sourceName => "shimmie";
+
   ShimmieSource(SettingsService settings) : super(settings);
 
   @override

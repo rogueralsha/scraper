@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:angular/angular.dart';
 import 'package:angular_components/angular_components.dart';
 import 'package:logging/logging.dart';
+import 'package:scraper/sources/sources.dart';
 
 import 'results_component.dart';
 import 'services/settings_service.dart';
@@ -13,15 +14,21 @@ import 'services/settings_service.dart';
   styleUrls: ['options_component.css'],
   templateUrl: 'options_component.html',
   directives: <dynamic>[NgFor, materialDirectives, NgIf, ResultsComponent],
-  providers: <dynamic>[const ClassProvider(SettingsService), materialProviders],
+  providers: <dynamic>[
+    const ClassProvider(SettingsService),
+    sourceProviders,
+    const ClassProvider(Sources),
+    materialProviders],
 )
 class OptionsComponent implements OnInit {
-  static final Logger _log = new Logger("ResultsDialog");
+  static final Logger _log = new Logger("OptionsComponent");
 
   final SettingsService _settings;
+  final Sources _sources;
 
   List<String> prefixPaths = <String>[];
   Map<String, String> mappings = <String, String>{};
+  Map<String, SourceSettings> sourceSettings = <String, SourceSettings>{};
   String newPrefixPath = "";
   String downloadPathPrefix = "";
 
@@ -33,7 +40,7 @@ class OptionsComponent implements OnInit {
 
   Level _loggingLevel;
 
-  OptionsComponent(this._settings);
+  OptionsComponent(this._settings, this._sources);
 
   Level get selectionValue => _loggingLevel;
 
@@ -52,6 +59,10 @@ class OptionsComponent implements OnInit {
 
   Future<Null> loadMappings() async {
     this.mappings = await _settings.getMappings();
+  }
+
+  Future<Null> loadSourceSettings() async {
+    this.sourceSettings = await _settings.getAllSourceSettings();
   }
 
   Future<Null> loadPaths() async {
@@ -83,6 +94,10 @@ class OptionsComponent implements OnInit {
   Future<Null> savePaths() async {
     await _settings.setPrefixPath(this.prefixPaths);
   }
+
+  Future<Null> saveSourceSettings() async {
+    await _settings.saveAllSourceSettings(this.sourceSettings);
+}
 
   Future<Null> exportMappings() async {
     final Map<String, String> mappings = await _settings.getMappings();

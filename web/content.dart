@@ -13,8 +13,10 @@ Future<Null> main() async {
   int tabId = await getCurrentTabId();
   // Page health check
   if (document.body.text.contains("429 Too Many Requests") ||
+      document.body.text.contains("403 ERROR") ||
       document.body.text
-          .contains("If you’re not redirected soon, please use this link.")) {
+          .contains("If you’re not redirected soon, please use this link.")||
+      document.body.text.contains("Request blocked")) {
     await pause(seconds: 5);
     await chrome.runtime.sendMessage({
       messageFieldEvent: pageHealthEvent,

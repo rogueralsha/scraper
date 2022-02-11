@@ -15,19 +15,22 @@ import 'package:html/parser.dart' show parse;
 class TumblrSource extends ASource {
   static final Logger _log = new Logger("TumblrSource");
 
+  @override
+  String get sourceName => "tumblr";
+
   static final RegExp _regExp =
-      new RegExp(r"https?://([^.]+)\.tumblr\.com/", caseSensitive: false);
+      new RegExp(r"^https?://([^.]+)\.tumblr\.com/$", caseSensitive: false);
   static final RegExp _postRegExp =
-      new RegExp(r"https?://[^/]+/post/(\d+)(/.+)?", caseSensitive: false);
+      new RegExp(r"^https?://[^/]+/post/(\d+)(/.+)?$", caseSensitive: false);
   static final RegExp _mobilePostRegExp =
-      new RegExp(r"https?://[^/]+/post/(\d+)/mobile", caseSensitive: false);
+      new RegExp(r"^https?://[^/]+/post/(\d+)/mobile$", caseSensitive: false);
   static final RegExp _archiveRegExp =
-      new RegExp(r"https?://[^/]+/archive", caseSensitive: false);
+      new RegExp(r"^https?://[^/]+/archive$", caseSensitive: false);
   static final RegExp _redirectRegExp =
-      new RegExp(r"redirect\?z=(.+)&t=", caseSensitive: false);
+      new RegExp(r"redirect\?z=(.+)&t=$", caseSensitive: false);
 
   static final RegExp _tumblrMediaRegExp =
-      new RegExp(r"https?://\d+\.media\.tumblr\.com/.*", caseSensitive: false);
+      new RegExp(r"^https?://\d+\.media\.tumblr\.com/.*$", caseSensitive: false);
 
   static const List<String> selectors = const <String>[
     "div.main > article",
@@ -131,13 +134,13 @@ class TumblrSource extends ASource {
         link = adjustTumblrImageUrl(link);
 
         _log.fine("Found URL: $link");
-        final LinkInfo li = new LinkInfoImpl(link, url, type: LinkType.image);
+        final LinkInfo li = new LinkInfoImpl(this.sourceName, link, url, type: LinkType.image);
         sendLinkInfo(li);
         if (link.contains("_1280.")) {
           link = link.replaceAll("_1280", "_raw");
           if (await this.urlExists(link)) {
             final LinkInfo li =
-                new LinkInfoImpl(link, url, type: LinkType.image);
+                new LinkInfoImpl(this.sourceName, link, url, type: LinkType.image);
             sendLinkInfo(li);
             _log.info("Found URL: $link");
           } else {

@@ -5,28 +5,34 @@ import 'src/simple_url_scraper.dart';
 class EtcSource extends ASource {
   static final Logger _log = new Logger("EtcSource");
 
+  @override
+  String get sourceName => "other";
+
+
   static final RegExp _squareSpaceStaticServerRegExp = new RegExp(
-      r"https?://static\d+\.squarespace\.com/.*",
+      r"^https?://static\d+\.squarespace\.com/.*",
       caseSensitive: false);
   static final RegExp _catboxRegExp =
-      new RegExp(r"https?://files\.catbox\.moe/.*", caseSensitive: false);
+      new RegExp(r"^https?://files\.catbox\.moe/.*$", caseSensitive: false);
   static final RegExp _uploaddirRegExp =
-      new RegExp(r"https?://uploadir\.com/u/.*", caseSensitive: false);
+      new RegExp(r"^https?://uploadir\.com/u/.*$", caseSensitive: false);
   static final RegExp _uploadsRuRegExp =
-      new RegExp(r"https?://[a-z0-9]+\.uploads\.ru/.*", caseSensitive: false);
+      new RegExp(r"^https?://[a-z0-9]+\.uploads\.ru/.*$", caseSensitive: false);
   static final RegExp _mixtapeRegExp =
-      new RegExp(r"https?://[^.]+\.mixtape\.moe/.*", caseSensitive: false);
+      new RegExp(r"^https?://[^.]+\.mixtape\.moe/.*$", caseSensitive: false);
 
   static final RegExp _temelRegExp =
-  new RegExp(r"https?://[^.]+\.temel\.me/.*", caseSensitive: false);
+  new RegExp(r"^https?://[^.]+\.temel\.me/.*$", caseSensitive: false);
 
   static final RegExp _imgBoxRegExp =
-  new RegExp(r"https?://[^.]+\.imgbox\.com/[0-9a-f]+/[0-9a-f]+/.*", caseSensitive: false);
+  new RegExp(r"^https?://[^.]+\.imgbox\.com/[0-9a-f]+/[0-9a-f]+/.*$", caseSensitive: false);
 
+  static final RegExp _puushRegExp =
+  new RegExp(r"^https?://puu\.sh/.*$", caseSensitive: false);
 
 
   static final RegExp _httpStatRegExp =
-      new RegExp(r"https?://httpstat\.us/.*", caseSensitive: false);
+      new RegExp(r"^https?://httpstat\.us/.*$", caseSensitive: false);
 
   EtcSource(SettingsService settings) : super(settings) {
     this.directLinkRegexps
@@ -37,6 +43,7 @@ class EtcSource extends ASource {
           checkForRedirect: true))
       ..add(new DirectLinkRegExp(LinkType.file, _temelRegExp))
       ..add(new DirectLinkRegExp(LinkType.file, _imgBoxRegExp))
+      ..add(new DirectLinkRegExp(LinkType.file, _puushRegExp))
       ..add(new DirectLinkRegExp(LinkType.file, _uploadsRuRegExp));
     this.urlScrapers.add(new SimpleUrlScraper(this, _httpStatRegExp,
         [new SimpleUrlScraperCriteria(LinkType.page, "dl dt a")]));

@@ -7,6 +7,10 @@ import 'src/simple_url_scraper.dart';
 
 class ComicArtCommunitySource extends ASource {
   static final Logger logImpl = new Logger("ComicArtCommunitySource");
+
+  @override
+  String get sourceName => "comic_art_community";
+
   static final RegExp _galleryRegexp = new RegExp(
       r"^https?://.*\.?comicartcommunity\.com/gallery/categories.php\?cat_id=(\d+).*",
       caseSensitive: false);

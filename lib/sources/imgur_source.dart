@@ -12,17 +12,20 @@ import 'src/url_scraper.dart';
 class ImgurSource extends ASource {
   static final Logger _log = new Logger("ImgurSource");
 
+  @override
+  String get sourceName => "imgur";
+
   static final RegExp _albumRegexp = new RegExp(
-      r"https?://([mi]\.)?imgur\.com/(a|gallery)/([^/]+)",
+      r"^https?://([mi]\.)?imgur\.com/(a|gallery)/([^/]+)",
       caseSensitive: false);
   static final RegExp _postRegexp = new RegExp(
-      r"https?://([mi]\.)?imgur\.com/([^/]+)$",
+      r"^https?://([mi]\.)?imgur\.com/([^/]+)$",
       caseSensitive: false);
   static final RegExp _videoRegexp = new RegExp(
-      r"https?://([mi]\.)?imgur\.com/([^/]+)\.gifv$",
+      r"^https?://([mi]\.)?imgur\.com/([^/]+)\.gifv$",
       caseSensitive: false);
   static final RegExp _directRegexp = new RegExp(
-      r"https?://([mi]\.)?imgur\.com/([^/]+)\.(jpg|png)(\?.+)?$",
+      r"^https?://([mi]\.)?imgur\.com/([^/]+)\.(jpg|png)(\?.+)?$",
       caseSensitive: false);
 
   ImgurSource(SettingsService settings) : super(settings) {
@@ -101,7 +104,7 @@ class ImgurSource extends ASource {
               final String link =
                   "http://i.imgur.com/${image['hash']}${image['ext']}";
               final LinkInfo li =
-                  new LinkInfoImpl(link, url, type: LinkType.image);
+                  new LinkInfoImpl(this.sourceName, link, url, type: LinkType.image);
               sendLinkInfo(li);
             }
           } else {

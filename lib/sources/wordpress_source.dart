@@ -9,6 +9,9 @@ import 'src/simple_url_scraper.dart';
 class WordpressSource extends ASource {
   static final Logger _log = new Logger("WordpressSource");
 
+  @override
+  String get sourceName => "wordpress";
+
   static final RegExp _contentRegExp = new RegExp(
       r"^(https?://([^/]+)/wp-content/uploads/\d{4}/\d{2}/(.+))-\d+x\d+(\.[^/]+)$",
       caseSensitive: false);
@@ -35,6 +38,11 @@ class WordpressSource extends ASource {
           }),
           new SimpleUrlScraperCriteria(
               LinkType.image, ".ngg-gallery-thumbnail-box a"),
+          new SimpleUrlScraperCriteria(
+              LinkType.image, "a.modula-item-link"),
+          new SimpleUrlScraperCriteria(
+              LinkType.page, "article.post h2.entry-title a"),
+
           new SimpleUrlScraperCriteria(LinkType.image, "p.attachment img"),
           new SimpleUrlScraperCriteria(LinkType.page, "a.next")
         ],

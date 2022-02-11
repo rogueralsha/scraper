@@ -1,4 +1,4 @@
-.resultsDialog div.content {
+.scraperResultsDialog div.content {
     z-index: auto !important;
     width: auto !important;
     height: auto !important;
@@ -9,7 +9,7 @@
     margin-bottom:0 !important;
     align-items: stretch !important;
 }
-.resultsDialog .header {
+.scraperResultsDialog .header {
     align-items: stretch !important;
     background: white !important;
 }
@@ -17,21 +17,21 @@
     position: static !important;
     height: auto !important;
 }
-.resultsDialog material-expansionpanel {
+.scraperResultsDialog material-expansionpanel {
     max-height: calc(50vh - 36pt);
     overflow:hidden;
 }
 
 
-.resultsDialog material-expansionpanel .panel.open {
+.scraperResultsDialog material-expansionpanel .panel.open {
     margin-top:0 !important;
 }
 
-.resultsDialog material-expansionpanel .content-wrapper {
+.scraperResultsDialog material-expansionpanel .content-wrapper {
     margin:0;
 }
 
-.resultsDialog .linkResults {
+.scraperResultsDialog .linkResults {
     max-height: calc(50vh - 149pt);
 }
 
@@ -40,6 +40,6 @@
     overflow:hidden;
 }
 /* Takes care of some reddit style interference */
-:not(.subscriber) .resultsDialog  div.content {
+:not(.subscriber) .scraperResultsDialog  div.content {
     margin-top:0 !important;
 }

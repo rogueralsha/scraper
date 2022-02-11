@@ -7,12 +7,16 @@ import 'src/simple_url_scraper.dart';
 
 class ImageFapSource extends ASource {
   static final Logger logImpl = new Logger("ImageFapSource");
+
+  @override
+  String get sourceName => "image_fap";
+
   static final RegExp _galleryRegExp = new RegExp(
-      r"https?://(www\.)?imagefap\.com/pictures/\d+/.*",
+      r"^https?://(www\.)?imagefap\.com/pictures/\d+/.*",
       caseSensitive: false);
 
   static final RegExp _photoRegExp = new RegExp(
-      r"https?://(www\.)?imagefap\.com/photo/\d+/.*",
+      r"^https?://(www\.)?imagefap\.com/photo/\d+/.*",
       caseSensitive: false);
 
   ImageFapSource(SettingsService settings) : super(settings) {

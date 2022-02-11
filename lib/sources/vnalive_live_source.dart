@@ -8,6 +8,9 @@ import 'src/simple_url_scraper.dart';
 class VNALiveSource extends ASource {
   static final Logger _log = new Logger("VNALiveSource");
 
+  @override
+  String get sourceName => "vna_live";
+
   static final RegExp _contentRegexp = new RegExp(
       r"^https?://.+\.vnalive\.com/members/vettenation/content.php.+",
       caseSensitive: false);

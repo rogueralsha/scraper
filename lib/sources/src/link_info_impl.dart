@@ -11,22 +11,24 @@ export 'package:scraper/results/link_info.dart';
 class LinkInfoImpl extends LinkInfo {
   static final Logger _log = new Logger("LinkInfoImpl");
 
-  LinkInfoImpl(String url, String sourceUrl,
+  LinkInfoImpl(String sourceName, String url, String sourceUrl,
       {LinkType type = LinkType.image,
       String filename,
       bool autoDownload = true,
       String thumbnail,
       DateTime date,
       bool select = true,
-      String referrer})
-      : super(
+      String referer,
+      int delay})
+      : super(sourceName,
             sourceUrl: sourceUrl,
             type: type,
             autoDownload: autoDownload,
             thumbnail: thumbnail,
             date: date,
             select: select,
-            referrer: referrer) {
+            referer: referer,
+            delay: delay) {
     if (url?.isEmpty ?? true) {
       throw new ArgumentError.notNull("url");
     }

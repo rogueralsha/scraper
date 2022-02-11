@@ -6,8 +6,11 @@ import 'src/simple_url_scraper.dart';
 class WebmShareSource extends ASource {
   static final Logger _log = new Logger("WebmShareSource");
 
+  @override
+  String get sourceName => "webmshare";
+
   static final RegExp _regExp = new RegExp(
-      r"https?://webmshare\.com/(play/)?([^/]+)$",
+      r"^https?://webmshare\.com/(play/)?([^/]+)$",
       caseSensitive: false);
 
 

@@ -26,7 +26,6 @@ import 'package:chrome/chrome_ext.dart' as chrome;
 
 import '../services/page_stream_service.dart';
 
-
 abstract class ASource {
   static final Logger _log = new Logger("ASource");
 
@@ -43,6 +42,8 @@ abstract class ASource {
 
   final SettingsService _settings;
 
+  String get sourceName;
+
   ASource(this._settings);
 
   Stream<dynamic> get onScrapeUpdateEvent => _scrapeUpdateStream.stream;
@@ -52,7 +53,6 @@ abstract class ASource {
   int get sentLinkCount => _seenLinks.length;
 
   static final PageStreamService streamService = new PageStreamService();
-
 
   /// Extracts the artist name from the URL of the site based on the first group
   /// found by the provided RegExp. If the first group returns "www.", the next
@@ -64,12 +64,12 @@ abstract class ASource {
     _log.finest(
         "artistFromRegExpPageScraper($pageInfo, $m, $url, $doc, $group}");
     if (m.groupCount >= group) {
-      if(m.group(group)==null) {
+      if (m.group(group) == null) {
         throw new Exception("Selected group was null.");
       }
       pageInfo.artist = Uri.decodeFull(m.group(group));
       int currentGroup = group;
-      while (pageInfo.artist.toLowerCase() == "www.") {
+      while (pageInfo.artist?.toLowerCase() == "www.") {
         _log.fine(
             "Specified group $currentGroup returned www., checking next group");
         currentGroup++;
@@ -79,7 +79,7 @@ abstract class ASource {
           break;
         }
       }
-      if (pageInfo.artist.toLowerCase() == "www." ||
+      if (pageInfo.artist?.toLowerCase() == "www." ||
           (pageInfo.artist?.isEmpty ?? true)) {
         _log.fine("Specified group $currentGroup returned ${pageInfo.artist ??
             "NULL"}, using URL");
@@ -100,15 +100,16 @@ abstract class ASource {
   }
 
   void createAndSendLinkInfo(String link, String sourceUrl,
-      {LinkType type = LinkType.image, String filename, String thumbnail}) {
-    _log.finest("$link, $sourceUrl,{$type, $filename, $thumbnail}");
+      {LinkType type = LinkType.image, String filename, String thumbnail, int delay}) {
+    _log.finest("createAndSendLinkInfo($link, $sourceUrl,{$type, $filename, $thumbnail})");
     if (!this._seenLinks.contains(link)) {
       this._seenLinks.add(link);
-      final LinkInfo li = new LinkInfoImpl(link, sourceUrl,
+      final LinkInfo li = new LinkInfoImpl(this.sourceName, link, sourceUrl,
           type: type,
           filename: filename,
           thumbnail: thumbnail,
-          referrer: sourceUrl);
+          referer: sourceUrl,
+          delay: delay);
       _sendLinkInfoInternal(li);
     }
   }
@@ -127,22 +128,21 @@ abstract class ASource {
   Future<LinkInfo> evaluateLinkImpl(String link, String sourceUrl) async {
     _log.finest('evaluateLinkImpl($link, $sourceUrl)');
 
-
     for (DirectLinkRegExp directRegExp in this.directLinkRegexps) {
       if (directRegExp.regExp.hasMatch(link)) {
         _log.finest("Direct link regexp match found in source $this");
-        String referrer;
+        String referer;
         if (directRegExp.checkForRedirect) {
-          referrer = link;
+          referer = link;
           link = await checkForRedirect(link);
         } else {
-          referrer = sourceUrl;
+          referer = sourceUrl;
         }
 
-        final LinkInfo li = new LinkInfoImpl(link, sourceUrl,
+        final LinkInfo li = new LinkInfoImpl(this.sourceName, link, sourceUrl,
             type: directRegExp.linkType,
             thumbnail: determineThumbnail(link),
-            referrer: referrer);
+            referer: referer);
         return reEvaluateLink(li, directRegExp.regExp);
       }
     }
@@ -150,7 +150,7 @@ abstract class ASource {
     for (UrlScraper scraper in this.urlScrapers.where((UrlScraper us) =>
         us.useForEvaluation && us.urlRegExp.hasMatch(link))) {
       _log.finest("Compatible UrlScraper found in source $this");
-      final LinkInfo li = new LinkInfoImpl(link, sourceUrl,
+      final LinkInfo li = new LinkInfoImpl(this.sourceName, link, sourceUrl,
           type: LinkType.page, thumbnail: determineThumbnail(link));
       return reEvaluateLink(li, scraper.urlRegExp);
     }
@@ -165,20 +165,18 @@ abstract class ASource {
       {bool select = true}) async {
     _log.finest('evaluateLink($link, $sourceUrl, {$select})');
 
-    if(link.contains("://t.co/")) {
+    if (link.contains("://t.co/")) {
       _log.finer("Link is twitter redirect, getting destination");
-      final String result = await this.checkForRedirect(link);
+      final String result = await this.checkForRedirect(link, sourceUrl);
       _log.info("Link $link redirects to $result");
       link = result;
     }
-
 
     int linksSent = 0;
     for (ASource source in Sources.sourceInstances) {
       _log.finest("Evaluating against ${source.runtimeType}");
       final LinkInfo li = await source.evaluateLinkImpl(link, sourceUrl);
-      if (li == null)
-        continue;
+      if (li == null) continue;
       li.select = select;
       sendLinkInfo(li);
       linksSent++;
@@ -188,13 +186,12 @@ abstract class ASource {
 
   Future<Null> selfLinkScraper(String url, Document d) async {
     _log.finest("selfLinkScraper");
-    final LinkInfo li = new LinkInfoImpl(url, url, type: LinkType.page);
+    final LinkInfo li = new LinkInfoImpl(this.sourceName, url, url, type: LinkType.page);
     sendLinkInfo(li);
   }
 
   String _cleanUpUrl(String url) {
-    if (url == null)
-      return null;
+    if (url == null) return null;
 
     String output = url;
     if (output.contains("www.rule34.paheal.net")) {
@@ -230,11 +227,15 @@ abstract class ASource {
     _scrapeUpdateStream.add(scrapeDoneEvent);
   }
 
+  Future<Null> scrapingStarting(String url, Document document) async {}
+
   Future<Null> startScrapingPage(String url, Document document) async {
     _log.finest("startScrapingPage");
     _seenLinks.clear();
+    await scrapingStarting(url, document);
+
     final PageInfo pageInfo =
-        new PageInfo(this.runtimeType.toString(), url, await getCurrentTabId());
+        new PageInfo(this.runtimeType.toString(), this.sourceName, url, await getCurrentTabId());
 
     for (UrlScraper us in urlScrapers) {
       _log.finest("Testing url scraper: ${us.urlRegExp}");
@@ -256,7 +257,7 @@ abstract class ASource {
 
         sendPageInfo(pageInfo);
         await us.startLinkInfoScraping(url, document);
-        break;
+        //break;
       }
     }
 
@@ -278,8 +279,8 @@ abstract class ASource {
 
   static final RegExp _metaRedirectRegex = new RegExp("URL=([^\"\;]+)\"");
 
-  Future<String> checkForRedirect(String url) async {
-    _log.finest("checkForRedirect($url)");
+  Future<String> checkForRedirect(String url, [String referer = null]) async {
+    _log.finest("checkForRedirect($url, $referer)");
     final HttpRequest request = new HttpRequest()
       ..open("HEAD", url)
       ..send();
@@ -288,7 +289,7 @@ abstract class ASource {
         _log.fine("Response status is ${request.status}");
         _log.fine(request.responseHeaders);
         final String contentType = request.responseHeaders["content-type"];
-        switch(request.status) {
+        switch (request.status) {
           case 302:
           case 307:
             _log.finer(request.responseHeaders);
@@ -298,21 +299,25 @@ abstract class ASource {
 
 //    <head><meta name="referrer" content="always"><noscript><META http-equiv="refresh" content="0;URL=http://webmshare.com/vJYzD"></noscript><title>http://webmshare.com/vJYzD</title></head><body><a href="http://webmshare.com/vJYzD"></a><script>window.opener = null; document.getElementsByTagName("a")[0].click();</script></body>
 
-            if(contentType?.toLowerCase().contains("text")??false) {
+            if (contentType?.toLowerCase()?.contains("text") ?? false) {
               _log.fine("Checking for redirect metadata");
-              final String content = await fetchString(url);
+              final String content = await fetchString(url, referer: referer);
               _log.finest(content);
-              if(_metaRedirectRegex.hasMatch(content)) {
-                final String result = _metaRedirectRegex.firstMatch(content).group(1);
+              if (_metaRedirectRegex.hasMatch(content)) {
+                final String result =
+                    _metaRedirectRegex.firstMatch(content).group(1);
                 _log.info("Found meta redirect: $result");
                 return result;
+              } else {
+                _log.finest("No redirect metadata found");
               }
             } else {
               return url;
             }
             break;
           default:
-            _log.finer("Request to $url responded from ${request.responseUrl} ${request.status}");
+            _log.finer(
+                "Request to $url responded from ${request.responseUrl} ${request.status}");
             return url;
         }
       }
@@ -320,56 +325,76 @@ abstract class ASource {
     return url;
   }
 
-  static final RegExp contentDispositionFilenameRegex = new RegExp(r"attachment; filename\*=UTF-8''(.+)", caseSensitive: false);
+  static final RegExp contentDispositionFilenameRegex = new RegExp(
+      r"filename\*?=['""]?(?:UTF-\d['""]*)?([^;\r\n""']*)['""]?;?",
+      caseSensitive: false);
 
-  Future<String> getDispositionFilename(String url)  async {
+  Future<String> getDispositionFilename(String url) async {
     _log.fine("Checking for disposition filename at $url");
-    final Map<String,String> headers = await getUrlHeaders(url);
-    if(!headers.containsKey("content-disposition")) {
+    final Map<String, String> headers = await getUrlHeaders(url);
+    if (!headers?.containsKey("content-disposition")) {
       _log.fine("Headers do not contain content-disposition");
       _log.finest(headers);
       return null;
     }
-    final contentDisposition = headers["content-disposition"];
-    if(!contentDispositionFilenameRegex.hasMatch(contentDisposition)) {
-      _log.fine("content-disposition does not contain recognized filename pattern");
-      _log.finest(contentDisposition);
-      return null;
+    final String contentDisposition = headers["content-disposition"];
+    String output;
+    for(String segment in contentDisposition.split(";")) {
+      _log.finest(segment);
+      segment = segment?.trim();
+      if(segment.startsWith("filename")) {
+        final int i = segment.indexOf("=");
+        if(i==-1) {
+          _log.finest("equal sign not found");
+          continue;
+        }
+        segment = segment.substring(i+1);
+        _log.finest(segment);
 
+        if(segment.startsWith("\"")) {
+          _log.finest("filename found in disposition");
+          segment = segment.substring(0);
+          output = segment.substring(1, segment.lastIndexOf("\""));
+          _log.fine("disposition candidate Output: $output");
+        }
+        if(segment.startsWith("utf-8''")) {
+          _log.finest("utf-8 filename found in disposition");
+          output = segment.substring(7);
+          _log.fine("disposition candidate Output: $output");
+        }
+
+      }
     }
-
-    final String output = contentDispositionFilenameRegex.firstMatch(contentDisposition).group(1);
-    _log.info("content-disposition: $output");
+    _log.fine("disposition Output: $output");
     return output;
   }
 
-  Future<Map<String,String>> getUrlHeaders(String url, [String method = "HEAD"]) async {
+  Future<Map<String, String>> getUrlHeaders(String url,
+      [String method = "HEAD"]) async {
     _log.finest("getUrlHeaders($url,$method)");
-      final HttpRequest request = new HttpRequest()
-        ..open(method, url)
-        ..send();
+    final HttpRequest request = new HttpRequest()
+      ..open(method, url)
+      ..send();
 
-      try {
-        await for (Event e in request.onReadyStateChange) {
-          _log.finest("Response readystate: ${request.readyState}");
-          if (request.status == 405 &&
-              method == "HEAD") { // Invalid request type
-            _log.fine(
-                "Server responded with 405, trying again with GET method");
-            return await getUrlHeaders(url, "GET");
-          }
-
-          if (request.readyState == HttpRequest.HEADERS_RECEIVED) {
-            _log.fine("Response status is ${request.status}");
-            return request.responseHeaders;
-          }
+    try {
+      await for (Event e in request.onReadyStateChange) {
+        _log.finest("Response readystate: ${request.readyState}");
+        if (request.status == 405 && method == "HEAD") {
+          // Invalid request type
+          _log.fine("Server responded with 405, trying again with GET method");
+          return await getUrlHeaders(url, "GET");
         }
-      } finally {
-        request.abort();
+
+        if (request.readyState == HttpRequest.HEADERS_RECEIVED) {
+          _log.fine("Response status is ${request.status}");
+          return request.responseHeaders;
+        }
       }
+    } finally {
+      request.abort();
+    }
     throw new Exception("End of getUrlHeaders reached");
   }
-
 
   Future<bool> urlExists(String url) async {
     final HttpRequest request = new HttpRequest()
@@ -432,6 +457,10 @@ abstract class ASource {
             _log.finest("Thumbnail element not found");
           }
         }
+      } else if (ele is MetaElement) {
+        _log.finest("MetaElement found");
+        link = ele.content;
+        type = LinkType.file;
       } else if (ele is ImageElement) {
         _log.finest("ImageElement found");
         link = ele.src;
@@ -444,12 +473,12 @@ abstract class ASource {
         _log.finest("VideoElement found");
         type = LinkType.video;
 
-        final ElementList<SourceElement> sources = ele.querySelectorAll(
-            "source");
+        final ElementList<SourceElement> sources =
+            ele.querySelectorAll("source");
         int highestResolution = 0;
         for (SourceElement source in sources) {
           _log.finest("Source sub-element found, trying src");
-          if (source.attributes.containsKey("res")) {
+          if (source.attributes?.containsKey("res")) {
             try {
               final int res = int.parse(source.attributes["res"]);
               if (res > highestResolution) {
@@ -460,7 +489,8 @@ abstract class ASource {
               }
             } on Exception catch (e, st) {
               _log.warning(
-                  "Error while parsing res attreibute on source element", e,
+                  "Error while parsing res attreibute on source element",
+                  e,
                   st);
             }
           } else {
@@ -502,21 +532,33 @@ abstract class ASource {
       return null;
     }
 
-    return new LinkInfoImpl(link, sourceUrl, type: type, thumbnail: thumbnail);
+    return new LinkInfoImpl(this.sourceName, link, sourceUrl, type: type, thumbnail: thumbnail);
   }
 
   Future<Null> loadWholePage() async {}
 
-  Future<dynamic> fetchJsonData(String url) async => json.decode(await fetchString(url));
+  Future<dynamic> fetchJsonData(String url, {String referer = null, Map<String,String> customHeaders = null}) async =>
+      json.decode(await fetchString(url, referer: referer, customHeaders: customHeaders));
 
-  Future<String> fetchString(String url) async {
+  Future<String> fetchString(String url, {String referer = null, Map<String,String> customHeaders = null}) async {
+    _log.finest("fetchString($url)");
     final BrowserClient client = new BrowserClient();
     http.Response response;
+    final Map<String,String> headers = <String,String>{};
+    if(referer!=null) {
+      headers["Referer"] = referer;
+    }
+    if(customHeaders!=null) {
+      for (var customHeader in customHeaders.keys) {
+        headers[customHeader] = customHeaders[customHeader];
+      }
+    }
     try {
-      response = await client.get(url);
+      response = await client.get(url, headers: headers);
     } finally {
       client.close();
     }
+    _log.finest("responded with: ${response.statusCode}");
     if (response.statusCode == 200) {
       return response.body;
     } else {

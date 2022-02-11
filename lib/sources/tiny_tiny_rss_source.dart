@@ -9,6 +9,9 @@ import 'a_source.dart';
 class TinyTinyRSSSource extends ASource {
   static final Logger _log = new Logger("TinyTinyRSSSource");
 
+  @override
+  String get sourceName => "tiny_tiny_rss";
+
   TinyTinyRSSSource(SettingsService settings) : super(settings);
 
   @override

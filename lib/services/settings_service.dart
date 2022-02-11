@@ -1,9 +1,10 @@
 import 'dart:async';
-
+import 'dart:html';
 import 'package:angular/angular.dart';
 import 'package:chrome/chrome_ext.dart' as chrome;
 import 'package:logging/logging.dart';
 import 'package:scraper/data/source_artist_setting.dart';
+import 'package:scraper/sources/sources.dart';
 
 export 'package:scraper/data/source_artist_setting.dart';
 
@@ -13,11 +14,14 @@ class SettingsService {
 
   static const String _mappingStore = "mappingStore";
   static const String _settingsStore = "settingsStore";
+  static const String _sourceSettingsStore = "sourceSettingsStore";
 
   static const String _sourceArtistSettingStore = "sourceArtistSettingsStore";
 
   //static const String _artistField = "artist";
+
   static const String _pathField = "path";
+  static const String _suffixField = "suffix";
   static const String _maxConcurrentDownloadsField = "maxConcurrentDownloads";
 
   static const String _availablePrefixesSetting = "availablePrefixes";
@@ -65,7 +69,7 @@ class SettingsService {
 
   Future<String> getMapping(String name) async {
     if (name?.trim()?.isEmpty ?? false) throw new ArgumentError.notNull("name");
-    name = name.trim().toLowerCase();
+    name = name?.trim()?.toLowerCase();
     final Map results = await chrome.storage.local.get(_artistPath(name));
     if (results.isEmpty) return "";
 
@@ -83,6 +87,31 @@ class SettingsService {
       }
     }
     _log..info("Found ${output.length} mappings")..info(output);
+    return output;
+  }
+
+  Future<Map<String, SourceSettings>> getAllSourceSettings() async {
+    final Map<String, SourceSettings> output = <String, SourceSettings>{};
+
+    // Sources.sourceInstances is only populated if Sources has been instantiated
+    // This will happen in the options page and nowhere else
+    for(ASource source in Sources.sourceInstances) {
+      output[source.sourceName] = await getSourceSettings(source.sourceName);
+    }
+    _log..info("Found ${output.length} sourceSettings")..info(output);
+    return output;
+  }
+
+  Future<SourceSettings> getSourceSettings(String name) async {
+    final Map results = await chrome.storage.local.get(_sourceSettingsPath(name));
+
+    final SourceSettings output = new SourceSettings();
+    if (results.isEmpty) return output;
+
+    _log..info("Found ${results.length} source setting keys")
+      ..info(results[results.keys.first]);
+      output.suffix = results[results.keys.first][_suffixField];
+    _log.info(output);
     return output;
   }
 
@@ -129,7 +158,7 @@ class SettingsService {
   }
 
   Future<Null> setDownloadPathPrefix(String path) async {
-    _log.info("Setting download prefic to $path");
+    _log.info("Setting download prefix to $path");
     await chrome.storage.local.set(<String, dynamic>{
       "${_settingsStore}_$_downloadPathPrefixSetting": path
     });
@@ -137,7 +166,7 @@ class SettingsService {
 
   Future<Null> setMapping(String name, String path) async {
     if (name?.trim()?.isEmpty ?? false) throw new ArgumentError.notNull("name");
-    final String cleaName = name.toLowerCase();
+    final String cleaName = name?.toLowerCase();
     final String cleanPath = this.cleanPath(path);
     final Map<String, dynamic> artistData = <String, dynamic>{
       _pathField: cleanPath
@@ -145,6 +174,23 @@ class SettingsService {
     await chrome.storage.local
         .set(<String, dynamic>{_artistPath(cleaName): artistData});
     _log.info("Mapping saved for $cleaName: $cleanPath");
+  }
+
+  Future<Null> saveAllSourceSettings(Map<String,SourceSettings> settings) async {
+    _log.finest("saveAllSourceSettings($settings)");
+    for(String k in settings.keys) {
+      await saveSourceSettings(k, settings[k]);
+    }
+  }
+
+  Future<Null> saveSourceSettings(String name, SourceSettings settings) async {
+    _log.finest("saveSourceSettings($name, $settings)");
+
+    final Map<String, dynamic> data = <String, dynamic>{
+      _suffixField: settings.suffix
+    };
+    await chrome.storage.local
+        .set(<String, dynamic>{_sourceSettingsPath(name): data});
   }
 
   Future<Null> setSourceArtistSettings(
@@ -187,4 +233,14 @@ class SettingsService {
   }
 
   String _artistPath(String name) => "${_mappingStore}_$name";
+  String _sourceSettingsPath(String name) => "${_sourceSettingsStore}_$name";
+}
+
+class SourceSettings {
+  String suffix;
+
+  @override
+  String toString() {
+    return "suffix: $suffix";
+  }
 }

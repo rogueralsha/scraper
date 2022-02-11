@@ -9,6 +9,7 @@ import 'package:scraper/globals.dart';
 import 'package:scraper/services/settings_service.dart';
 import 'package:uuid/uuid.dart';
 
+
 Future<Null> main() async {
   Logger.root.level = await settings.getLoggingLevel();
   Logger.root.onRecord.listen(new LogPrintHandler());
@@ -24,6 +25,7 @@ Future<Null> main() async {
       await disconnectSub.cancel();
       p.disconnect();
     });
+
 
     messageSub = p.onMessage.listen((chrome.OnMessageEvent e) async {
       _log.info("Mesage received");
@@ -67,7 +69,7 @@ Future<Null> main() async {
             if(path.endsWith("."))
               path = path.substring(0,path.length-1);
 
-            path = path.replaceAll("//", "/").replaceAll(":", "_");
+            path = path.replaceAll("//", "/").replaceAll(":", "_").replaceAll("?", "_").replaceAll("~", "_");
             _log.info("Final path: $path");
 
             final List<chrome.HeaderNameValuePair> headers = [];
@@ -80,7 +82,7 @@ Future<Null> main() async {
                       name: HttpHeaders.REFERER,
                       value: headerObj[HttpHeaders.REFERER]);
               if (headerObj[HttpHeaders.REFERER]?.toString()?.isEmpty ?? true) {
-                _log.warning("Header was passed with null referrer");
+                _log.warning("Header was passed with null referer");
               } else {
                 headers.add(header);
                 jsHeaders.add(header.jsProxy);
@@ -109,7 +111,8 @@ Future<Null> main() async {
             p.postMessage({
               messageFieldEvent: fileDownloadStartEvent,
               messageFieldDownloadId: id,
-              messageFieldPath: item.filename
+              messageFieldPath: item.filename,
+              messageFieldUuid: message[messageFieldUuid]
             });
 
             await for (chrome.DownloadDelta dd in chrome.downloads.onChanged

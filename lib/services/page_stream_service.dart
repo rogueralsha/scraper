@@ -17,10 +17,10 @@ class PageStreamService {
   static final _log = new Logger("ScraperService");
 
   Stream<PageInfo> get onPageInfo => _pageInfoStream.stream;
-  StreamController<PageInfo> _pageInfoStream = new StreamController<PageInfo>();
+  final StreamController<PageInfo> _pageInfoStream = new StreamController<PageInfo>();
 
   Stream<LinkInfo> get onLinkInfo => _linkInfoStream.stream;
-  StreamController<LinkInfo> _linkInfoStream = new StreamController<LinkInfo>();
+  final StreamController<LinkInfo> _linkInfoStream = new StreamController<LinkInfo>();
 
   final chrome.Port p;
 

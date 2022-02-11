@@ -9,12 +9,15 @@ import 'src/simple_url_scraper.dart';
 class EromeSource extends ASource {
   static final Logger _log = new Logger("EromeSource");
 
+  @override
+  String get sourceName => "erome";
+
   static final RegExp _regExp = new RegExp(
-      r"https?://(www\.)?erome\.com/[ai]/([^/]+)$",
+      r"^https?://(www\.)?erome\.com/[ai]/([^/]+)$",
       caseSensitive: false);
 
   static final RegExp _userRegExp =
-      new RegExp(r"https?://(www\.)?erome\.com/([^/]+)$", caseSensitive: false);
+      new RegExp(r"^https?://(www\.)?erome\.com/([^/]+)$$", caseSensitive: false);
 
   EromeSource(SettingsService settings) : super(settings) {
     this.urlScrapers

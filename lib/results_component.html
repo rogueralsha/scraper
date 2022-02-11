@@ -82,6 +82,11 @@
             {{progressCurrent}}/{{progressMax}}
         </td>
         <td >
+            <material-button materialTooltip="Remove Results Window" [tooltipPositions]="tooltipPosition" clear-size (trigger)="removeButtonClick()">
+                <material-icon icon="remove" size="x-small"></material-icon>
+            </material-button>
+        </td>
+        <td >
             <material-button materialTooltip="Refresh (Insert)" [tooltipPositions]="tooltipPosition" [disabled]="disableInterface" clear-size (trigger)="refreshButtonClick()">
                 <material-icon icon="refresh" size="x-small"></material-icon>
             </material-button>

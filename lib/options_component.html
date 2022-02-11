@@ -24,7 +24,7 @@ Logging Level:
 </table>
 
 <material-input [(ngModel)]="downloadPathPrefix" label="Download Path Prefix"></material-input>
-<material-button (click)="saveSettings()" label="Save"></material-button>
+<material-button (click)="saveSettings()" label="Save">Save</material-button>
 
 <material-expansionpanel name="Prefix paths" (save)="savePaths()" (cancel)="loadPaths()" (open)="loadPaths()">
     <material-list>
@@ -48,5 +48,13 @@ Logging Level:
         </material-button>
     </material-list-item>
 </material-list>
+</material-expansionpanel>
+
+<material-expansionpanel name="Source Settings" (save)="saveSourceSettings()"  (cancel)="loadSourceSettings()" (open)="loadSourceSettings()">
+    <material-list>
+        <material-list-item *ngFor="let s of sourceSettings.keys">{{s}}
+            <material-input [(ngModel)]="sourceSettings[s].suffix"  label="Suffix"></material-input>
+        </material-list-item>
+    </material-list>
 </material-expansionpanel>
 

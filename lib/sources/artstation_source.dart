@@ -9,14 +9,17 @@ import 'src/simple_url_scraper.dart';
 class ArtStationSource extends ASource {
   static final Logger logImpl = new Logger("ArtstationSource");
 
+  @override
+  String get sourceName => "artstation";
+
   static final RegExp _regExp = new RegExp(
-      r"https?://www\.artstation\.com/artwork/.*",
+      r"^https?://www\.artstation\.com/artwork/.*$",
       caseSensitive: false);
   static final RegExp _newRegExp = new RegExp(
-      r"https?://([^.]+)\.artstation\.com/projects/.*",
+      r"^https?://([^.]+)\.artstation\.com/projects/.*$",
       caseSensitive: false);
   static final RegExp _userRegExp =
-      new RegExp(r"https?://www\.artstation\.com/(.*)", caseSensitive: false);
+      new RegExp(r"^https?://www\.artstation\.com/([^/]*)$", caseSensitive: false);
 
   ArtStationSource(SettingsService settings) : super(settings) {
     this.urlScrapers.add(new SimpleUrlScraper(this, _newRegExp, [
@@ -41,10 +44,19 @@ class ArtStationSource extends ASource {
         ]));
   }
 
+
+  @override
+  Future<Null> scrapingStarting(String url, Document document) async {
+    for(var button in document.querySelectorAll("div.adult-content-notice button.btn-default")) {
+      button.click();
+    }
+  }
+
+
   Future<Null> scrapeImagePageInfo(
       PageInfo pi, Match m, String s, Document doc) async {
     AnchorElement ele =
-        document.querySelector("div.artist-name-and-headline div.name a");
+        document.querySelector('div.project-author-name a');
     pi.artist = ele.href.substring(ele.href.lastIndexOf('/') + 1);
   }
 }

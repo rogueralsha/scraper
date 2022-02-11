@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 const String closeTabCommand = "closeTab";
 const String closeTabMessageEvent = "closeTab";
 const String downloadCommand = "download";
+const String resumeCommand = "resume";
 const String endMessageEvent = "endMessage";
 const String fileDownloadCompleteEvent = "fileDownloadComplete";
 const String fileDownloadErrorEvent = "fileDownloadError";
@@ -27,6 +28,7 @@ const String messageFieldFilename = "filename";
 const String messageFieldPrompt = "prompt";
 const String messageFieldPath = "path";
 const String messageFieldPageHealth = "pageHealth";
+const String messageFieldUuid = "uuid";
 
 const String messageFieldHeaders = "headers";
 const String messageFieldTabId = "tabId";
@@ -48,7 +50,7 @@ const String pageHealthError = "Error";
 const String pageHealthResolvableError = "ResolvableError";
 
 final RegExp siteRegexp =
-    new RegExp(r"https?://([^/]+)/.*", caseSensitive: false);
+    new RegExp(r"^https?://([^/]+)/.*$", caseSensitive: false);
 
 final RegExp notCapitalRegexp = new RegExp(r"[^A-Z]");
 

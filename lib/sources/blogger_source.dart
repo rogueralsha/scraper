@@ -6,15 +6,18 @@ import 'src/simple_url_scraper.dart';
 class BloggerSource extends ASource {
   static final Logger logImpl = new Logger("BloggerSource");
 
+  @override
+  String get sourceName => "blogger";
+
   static final RegExp _regExp =
-      new RegExp(r"https?://([^.]+)\.blogspot\.com/.*", caseSensitive: false);
+      new RegExp(r"^https?://([^.]+)\.blogspot\.com/.*$", caseSensitive: false);
 
   static final RegExp _postRegExp = new RegExp(
-      r"https?://([^.]+)\.blogspot\.com/\d{4}/\d{2}/.*",
+      r"^https?://([^.]+)\.blogspot\.com/\d{4}/\d{2}/.*",
       caseSensitive: false);
 
   static final RegExp _contentRegExp = new RegExp(
-      r"https?://\d+\.([^.]+)\.blogspot\.com/-.+",
+      r"^https?://\d+\.([^.]+)\.blogspot\.com/-.+",
       caseSensitive: false);
 
   // Possible way to get bigger blogger images:

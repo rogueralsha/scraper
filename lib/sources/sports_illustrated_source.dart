@@ -9,6 +9,8 @@ import 'package:scraper/globals.dart';
 class SportsIllustratedSource extends ASource {
   static final Logger _log = new Logger("SportsIllustratedSource");
 
+  @override
+  String get sourceName => "sports_illustrated";
 
   static final RegExp _photosViewRegexp = new RegExp(
       r"^https?://.+\.si\.com/swimsuit/model/([^/]+)/\d+/.+",

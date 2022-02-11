@@ -7,8 +7,12 @@ import 'src/simple_url_scraper.dart';
 
 class HentaiFoundrySource extends ASource {
   static final Logger logImpl = new Logger("HentaiFoundrySource");
+
+  @override
+  String get sourceName => "hentai_foundry";
+
   static final RegExp _hfRegExp = new RegExp(
-      r"https?://www\.hentai-foundry\.com/pictures/user/([^/]+)/.*",
+      r"^https?://www\.hentai-foundry\.com/pictures/user/([^/]+)/.*",
       caseSensitive: false);
   static final RegExp _hfGalleryRegExp = new RegExp(
       r"^https?://www\.hentai-foundry\.com/pictures/user/([^/]+)(/page/\d+)?$",

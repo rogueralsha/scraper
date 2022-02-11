@@ -4,7 +4,7 @@
     color: black;
     background: white;
 }
-.resultsDialog div.content {
+.scraperResultsDialog div.content {
     max-height: calc(50vh - 64pt - 16pt);
 }
 

@@ -12,10 +12,6 @@ import 'dart:js';
 import 'package:chrome/chrome_ext.dart' as chrome;
 import 'package:scraper/services/scraper_service.dart';
 import 'package:scraper/services/settings_service.dart';
-import 'package:scraper/sources/sources.dart';
-import 'package:uuid/uuid.dart';
-import 'package:chrome/chrome_ext.dart' as chrome;
-import 'package:logging/logging.dart';
 import 'package:logging_handlers/logging_handlers_shared.dart';
 import 'package:scraper/globals.dart';
 import 'package:scraper/results_dialog.dart';
@@ -86,7 +82,7 @@ class ScraperComponent implements OnInit {
 
           final String targetUrl = request[messageFieldUrl];
           if (targetUrl != window.location.href) {
-            _log.warning("Scrape request is not for this url (${window.location
+            _log.finest("Scrape request is not for this url (${window.location
                     .href}), it is for $targetUrl");
             return;
           }

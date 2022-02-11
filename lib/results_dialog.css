@@ -1,4 +1,4 @@
-.resultsDialog {
+.scraperResultsDialog {
     position: fixed;
     bottom: 0;
     width: auto;
@@ -13,14 +13,14 @@
     border: solid 1px black;
 }
 
-.resultsDialog.left {
+.scraperResultsDialog.left {
     left: 0;
 }
-.resultsDialog.right {
+.scraperResultsDialog.right {
     right: 0;
 }
 
-#resultsDialog {
+#scraperResultsDialog {
 }
 #minimizedDialog {
 
